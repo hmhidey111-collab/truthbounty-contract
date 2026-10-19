@@ -3,13 +3,14 @@
 // pre-existing broken contracts (syntax errors, OZ v4/v5 API mismatches)
 // that exist in the main contracts/ directory.
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-ignition-ethers";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import hardhatIgnitionEthers from "@nomicfoundation/hardhat-ignition-ethers";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
+  plugins: [hardhatToolboxMochaEthers, hardhatIgnitionEthers],
   solidity: {
     version: "0.8.28",
     settings: {
@@ -25,7 +26,11 @@ const config: HardhatUserConfig = {
     artifacts: "./artifacts-vrm",
   },
   networks: {
-    hardhat: { allowUnlimitedContractSize: true },
+    hardhat: {
+      type: "edr-simulated",
+      chainId: 31337,
+      allowUnlimitedContractSize: true,
+    },
   },
 };
 

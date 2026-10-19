@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ContractSignerValidation} from "./libraries/ContractSignerValidation.sol";
 
 /**
  * @title MetaTxExample
@@ -12,6 +13,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  */
 contract MetaTxExample is ERC2771Context, EIP712 {
     using ECDSA for bytes32;
+    using ContractSignerValidation for address;
 
     // ============ Type Hashes ============
     
@@ -88,6 +90,7 @@ contract MetaTxExample is ERC2771Context, EIP712 {
 
     /**
      * @notice Execute a transfer via meta-transaction with signature verification
+        * @dev Accepts ECDSA signatures from EOAs and bounded ERC-1271 responses from contract `from` accounts.
      * @param from The sender address
      * @param to The recipient address
      * @param amount The amount to transfer
@@ -103,6 +106,7 @@ contract MetaTxExample is ERC2771Context, EIP712 {
     ) external {
         // Verify deadline
         require(block.timestamp <= deadline, "Signature expired");
+        if (signature.length > 65) revert InvalidSignature();
 
         // Get current nonce
         uint256 currentNonce = nonces[from];
@@ -124,8 +128,11 @@ contract MetaTxExample is ERC2771Context, EIP712 {
         require(!usedSignatures[digest], "Signature already used");
 
         // Recover signer from signature
-        address signer = digest.recover(signature);
-        require(signer == from, "Invalid signature");
+        if (from.code.length == 0) {
+            require(digest.recover(signature) == from, "Invalid signature");
+        } else {
+            require(from.isValidContractSignature(digest, signature), "Invalid signature");
+        }
 
         // Mark signature as used
         usedSignatures[digest] = true;

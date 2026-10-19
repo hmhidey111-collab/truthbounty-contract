@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://truthbounty.local/schemas/invariant-failure-seed.schema.json",
+  "title": "InvariantFailureSeed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "test",
+    "commit",
+    "toolchain",
+    "seed",
+    "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "kind": { "type": "string", "enum": ["invariant", "fuzz"] },
+    "test": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Fully qualified forge test id, e.g. ContractName:invariant_name"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "Git commit SHA that produced the counterexample"
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forge", "solc"],
+      "properties": {
+        "forge": { "type": "string", "minLength": 1 },
+        "solc": { "type": "string", "minLength": 1 },
+        "runnerOs": { "type": "string" }
+      }
+    },
+    "seed": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Foundry fuzz/invariant numeric seed"
+    },
+    "minimized": { "type": "boolean", "default": false },
+    "counterexample": {
+      "type": "object",
+      "description": "Optional minimized call sequence; must not contain secrets",
+      "additionalProperties": true
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "notes": { "type": "string", "maxLength": 2000 }
+  }
+}

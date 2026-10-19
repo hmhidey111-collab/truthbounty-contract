@@ -1,0 +1,13 @@
+# Pinned analyzer toolchain for the zero-new-finding static analysis baseline.
+# Versions are asserted by config/static-analysis.json and enforced by
+# scripts/static-analysis-gate.mjs. Bump both together, in one commit, together
+# with a re-triaged config/slither-baseline.json.
+#
+# Note: `setuptools and wheel are pinned explicitly because Python 3.12
+# removed the implicit `pkg_resources` shim from ensurepip (PREPWAVE-SC-022).
+# `slither-analyzer` and its transitive dependencies still import
+# `pkg_resources`, so `setuptools` must be installed explicitly and pinned.
+setuptools==75.8.0
+wheel==0.45.1
+slither-analyzer==0.11.6
+crytic-compile==0.4.2

@@ -1,0 +1,10 @@
+{
+  "filter_paths": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
+  "detectors_to_run": "all",
+  "ignore_compile": true,
+  "exclude_informational": false
+}

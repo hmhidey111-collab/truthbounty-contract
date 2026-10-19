@@ -45,6 +45,51 @@ contract ParameterVersionRegistry is
     /// @notice Basis points denominator for validation
     uint256 public constant BPS_DENOMINATOR = 10_000;
 
+    // ============ Safety Envelopes ============
+
+    /// @notice Minimum safe stake (1e18) to prevent sybil dust attacks
+    uint256 public constant MIN_SAFE_STAKE = 1e18;
+    /// @notice Maximum safe stake (1_000_000e18) to bound single-actor outsized influence
+    uint256 public constant MAX_SAFE_STAKE = 1_000_000 * 1e18;
+
+    /// @notice Minimum safe bond (1e18) to ensure challenges have meaningful economic weight
+    uint256 public constant MIN_SAFE_BOND = 1e18;
+    /// @notice Maximum safe bond (100_000e18) to ensure challenges remain accessible and not overly punitive
+    uint256 public constant MAX_SAFE_BOND = 100_000 * 1e18;
+
+    /// @notice Minimum safe duration (1 hours) to allow sufficient time for network propagation and response
+    uint256 public constant MIN_SAFE_DURATION = 1 hours;
+    /// @notice Maximum safe duration (30 days) to prevent indefinite lockups of protocol operations
+    uint256 public constant MAX_SAFE_DURATION = 30 days;
+
+    /// @notice Minimum safe weight cap BPS (100 = 1%) to prevent zero-weight edge cases
+    uint256 public constant MIN_SAFE_WEIGHT_CAP = 100;
+    /// @notice Maximum safe weight cap BPS (10000 = 100%)
+    uint256 public constant MAX_SAFE_WEIGHT_CAP = 10000;
+
+    /// @notice Minimum participation threshold BPS (100 = 1%) to ensure bare minimum network engagement
+    uint256 public constant MIN_SAFE_PARTICIPATION_THRESHOLD = 100;
+    /// @notice Maximum participation threshold BPS (10000 = 100%)
+    uint256 public constant MAX_SAFE_PARTICIPATION_THRESHOLD = 10000;
+
+    /// @notice Minimum confidence threshold BPS (5100 = 51%) to guarantee simple majority consensus
+    uint256 public constant MIN_SAFE_CONFIDENCE_THRESHOLD = 5100;
+    /// @notice Maximum confidence threshold BPS (10000 = 100%)
+    uint256 public constant MAX_SAFE_CONFIDENCE_THRESHOLD = 10000;
+
+    /// @notice Maximum allocation for any single economic pool (10000 = 100%) to maintain balanced distribution
+    uint256 public constant MAX_SAFE_ALLOCATION = 10000;
+
+    /// @notice Minimum reward multiplier (1e18 = 1x) to prevent negative yield scenarios
+    uint256 public constant MIN_SAFE_MULTIPLIER = 1e18;
+    /// @notice Maximum reward multiplier (10e18 = 10x) to bound hyper-inflationary reward emissions
+    uint256 public constant MAX_SAFE_MULTIPLIER = 10 * 1e18;
+
+    /// @notice Minimum appeal multiplier BPS (10000 = 1x) to ensure escalating appeal costs
+    uint256 public constant MIN_SAFE_APPEAL_MULTIPLIER = 10000;
+    /// @notice Maximum appeal multiplier BPS (50000 = 5x) to bound runaway exponential costs
+    uint256 public constant MAX_SAFE_APPEAL_MULTIPLIER = 50000;
+
     // ============ State Variables ============
     
     /// @notice Current timelock for parameter version activation (never below MIN_ECONOMIC_PARAMETER_TIMELOCK)
@@ -110,35 +155,45 @@ contract ParameterVersionRegistry is
     function _createGenesisVersion() internal {
         versionCounter = 1;
         
-        // Initialize genesis parameters with default values
-        EconomicParameters storage genesisParams = _versions[versionCounter].parameters;
-        
-        // Default tokenomics parameters
-        genesisParams.verifierRewardsBPS = 4000;
-        genesisParams.treasuryReserveBPS = 2000;
-        genesisParams.ecosystemIncentivesBPS = 1500;
-        genesisParams.governanceIncentivesBPS = 1000;
-        genesisParams.protocolDevelopmentBPS = 1000;
-        genesisParams.emergencyReserveBPS = 500;
-        genesisParams.emissionLimit = type(uint256).max;
-        genesisParams.rewardMultiplier = 1e18;
-        genesisParams.treasuryReserveTargetBPS = 2000;
-        
-        // Default fee parameters
-        genesisParams.claimSubmissionFee = 0.001e18;
-        genesisParams.verificationSubmissionFee = 0.001e18;
-        genesisParams.disputeInitiationFee = 0.002e18;
-        genesisParams.protocolReserveFeeBPS = 50; // 0.5%
-        
-        // Default staking/reputation parameters
-        genesisParams.minStakeAmount = 1e18;
-        genesisParams.minReputationScore = 0;
-        genesisParams.maxReputationScore = 10000;
-        genesisParams.defaultReputationScore = 5000;
-        genesisParams.slashPercentageBPS = 1000; // 10%
-        genesisParams.maxSlashPercentageBPS = 5000; // 50%
-        
         // Set genesis version as active
+        EconomicParameters memory genesisParams = EconomicParameters({
+            verifierRewardsBPS: 4000,
+            treasuryReserveBPS: 2000,
+            ecosystemIncentivesBPS: 1500,
+            governanceIncentivesBPS: 1000,
+            protocolDevelopmentBPS: 1000,
+            emergencyReserveBPS: 500,
+            emissionLimit: type(uint256).max,
+            rewardMultiplier: 1e18,
+            treasuryReserveTargetBPS: 2000,
+            claimSubmissionFee: 0.001e18,
+            verificationSubmissionFee: 0.001e18,
+            disputeInitiationFee: 0.002e18,
+            protocolReserveFeeBPS: 50,
+            minStakeAmount: MIN_SAFE_STAKE,
+            maxStakeAmount: 10_000e18,
+            minReputationScore: 0,
+            maxReputationScore: 10000,
+            defaultReputationScore: 5000,
+            slashPercentageBPS: 1000,
+            maxSlashPercentageBPS: 5000,
+            minBountyAmount: MIN_SAFE_BOND,
+            maxBountyAmount: MAX_SAFE_BOND,
+            weightCapBPS: 10000,
+            challengeDuration: 3 days,
+            appealDuration: 7 days,
+            pauseCooldown: 1 days,
+            participationThresholdBPS: 1000,
+            confidenceThresholdBPS: 5100,
+            challengeBond: MIN_SAFE_BOND,
+            appealMultiplierBPS: 15000,
+            roundingPolicyId: 0,
+            supportedAssets: new address[](0)
+        });
+
+        _validateParameterBounds(genesisParams);
+
+        _versions[versionCounter].parameters = genesisParams;
         _versions[versionCounter].status = VersionStatus.ACTIVE;
         _versions[versionCounter].proposedAt = block.timestamp;
         _versions[versionCounter].activatedAt = block.timestamp;
@@ -150,8 +205,8 @@ contract ParameterVersionRegistry is
         emit VersionActivated(versionCounter, block.timestamp);
     }
 
-    function _validateParameterBounds(EconomicParameters calldata parameters) internal pure {
-        // Allocation basis points must total exactly 10,000 (100%)
+    function _validateParameterBounds(EconomicParameters memory parameters) internal pure {
+        // Allocations
         uint256 allocationSum = parameters.verifierRewardsBPS
             + parameters.treasuryReserveBPS
             + parameters.ecosystemIncentivesBPS
@@ -159,30 +214,63 @@ contract ParameterVersionRegistry is
             + parameters.protocolDevelopmentBPS
             + parameters.emergencyReserveBPS;
         if (allocationSum != BPS_DENOMINATOR) revert InvalidAllocationBPS(allocationSum);
+        if (parameters.verifierRewardsBPS > MAX_SAFE_ALLOCATION || 
+            parameters.treasuryReserveBPS > MAX_SAFE_ALLOCATION ||
+            parameters.ecosystemIncentivesBPS > MAX_SAFE_ALLOCATION ||
+            parameters.governanceIncentivesBPS > MAX_SAFE_ALLOCATION ||
+            parameters.protocolDevelopmentBPS > MAX_SAFE_ALLOCATION ||
+            parameters.emergencyReserveBPS > MAX_SAFE_ALLOCATION) revert InvalidAllocationBPS(allocationSum);
 
-        // Validate emission limit and reward multiplier are non-zero
+        // Multipliers
         if (parameters.emissionLimit == 0) revert InvalidEmissionLimit();
-        if (parameters.rewardMultiplier == 0) revert InvalidRewardMultiplier();
+        if (parameters.rewardMultiplier < MIN_SAFE_MULTIPLIER || parameters.rewardMultiplier > MAX_SAFE_MULTIPLIER) revert InvalidRewardMultiplier();
+        if (parameters.appealMultiplierBPS < MIN_SAFE_APPEAL_MULTIPLIER || parameters.appealMultiplierBPS > MAX_SAFE_APPEAL_MULTIPLIER) revert InvalidAppealMultiplier();
 
-        // Validate fee parameters
+        // Fees
         if (parameters.claimSubmissionFee == 0) revert InvalidFee();
         if (parameters.verificationSubmissionFee == 0) revert InvalidFee();
         if (parameters.disputeInitiationFee == 0) revert InvalidFee();
         if (parameters.protocolReserveFeeBPS > BPS_DENOMINATOR) revert InvalidBPS();
 
-        // Validate staking bounds
-        if (parameters.minStakeAmount == 0) revert InvalidStakeAmount();
+        // Stakes
+        if (parameters.minStakeAmount < MIN_SAFE_STAKE || parameters.minStakeAmount > MAX_SAFE_STAKE) revert InvalidStakeBounds();
+        if (parameters.maxStakeAmount < MIN_SAFE_STAKE || parameters.maxStakeAmount > MAX_SAFE_STAKE || parameters.minStakeAmount > parameters.maxStakeAmount) revert InvalidStakeBounds();
 
-        // Validate reputation bounds
+        // Bonds
+        if (parameters.challengeBond < MIN_SAFE_BOND || parameters.challengeBond > MAX_SAFE_BOND) revert InvalidBountyBounds();
+        if (parameters.minBountyAmount < MIN_SAFE_BOND || parameters.minBountyAmount > MAX_SAFE_BOND) revert InvalidBountyBounds();
+        if (parameters.maxBountyAmount < MIN_SAFE_BOND || parameters.maxBountyAmount > MAX_SAFE_BOND || parameters.minBountyAmount > parameters.maxBountyAmount) revert InvalidBountyBounds();
+
+        // Durations
+        if (parameters.challengeDuration < MIN_SAFE_DURATION || parameters.challengeDuration > MAX_SAFE_DURATION) revert NonZeroDurationRequired();
+        if (parameters.appealDuration < MIN_SAFE_DURATION || parameters.appealDuration > MAX_SAFE_DURATION) revert NonZeroDurationRequired();
+        if (parameters.pauseCooldown > MAX_SAFE_DURATION) revert NonZeroDurationRequired();
+
+        // Caps
+        if (parameters.weightCapBPS < MIN_SAFE_WEIGHT_CAP || parameters.weightCapBPS > MAX_SAFE_WEIGHT_CAP) revert InvalidWeightCap();
+
+        // Thresholds
+        if (parameters.participationThresholdBPS < MIN_SAFE_PARTICIPATION_THRESHOLD || parameters.participationThresholdBPS > MAX_SAFE_PARTICIPATION_THRESHOLD) revert InvalidParticipationThreshold();
+        if (parameters.confidenceThresholdBPS < MIN_SAFE_CONFIDENCE_THRESHOLD || parameters.confidenceThresholdBPS > MAX_SAFE_CONFIDENCE_THRESHOLD) revert InvalidConfidenceThreshold();
+        if (parameters.maxStakeAmount != 0 && parameters.minStakeAmount > parameters.maxStakeAmount) {
+            revert InvalidStakeAmount();
+        }
+        // Validate bounty floors used by anti-dust claim creation (V2-SC-105)
+        if (parameters.minBountyAmount == 0) revert InvalidBountyBounds();
+        if (parameters.maxBountyAmount != 0 && parameters.minBountyAmount > parameters.maxBountyAmount) {
+            revert InvalidBountyBounds();
+        }
+
+        // Reputation
         if (parameters.minReputationScore > parameters.maxReputationScore) revert InvalidReputationRange();
         if (parameters.defaultReputationScore < parameters.minReputationScore
             || parameters.defaultReputationScore > parameters.maxReputationScore) revert InvalidReputationRange();
 
-        // Validate slashing bounds
+        // Slashing
         if (parameters.slashPercentageBPS > parameters.maxSlashPercentageBPS) revert InvalidSlashBPS();
         if (parameters.maxSlashPercentageBPS > BPS_DENOMINATOR) revert InvalidBPS();
 
-        // Validate treasury reserve target
+        // Treasury
         if (parameters.treasuryReserveTargetBPS > BPS_DENOMINATOR) revert InvalidBPS();
     }
 
@@ -298,7 +386,16 @@ contract ParameterVersionRegistry is
         if (versionId == 0) revert ClaimNotFound(claimId);
         return _versions[versionId].parameters;
     }
-    
+
+    /**
+     * @notice Get the parameter version a claim was frozen to at creation
+     * @param claimId The ID of the claim
+     * @return The linked version ID, or 0 if the claim was never recorded
+     */
+    function getClaimVersion(uint256 claimId) external view returns (uint256) {
+        return _claimVersionMap[claimId];
+    }
+
     /**
      * @notice Get the currently active parameters
      * @return The current economic parameters

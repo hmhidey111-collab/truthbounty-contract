@@ -1,0 +1,1364 @@
+{
+  "schemaVersion": 1,
+  "kind": "truthbounty.optimism-sepolia.release-package",
+  "status": "candidate",
+  "releaseName": "truthbounty-v2-op-sepolia-rc1",
+  "protocolVersion": "2.0.0",
+  "configurationVersion": 1,
+  "evidenceClass": "not-deployed",
+  "network": {
+    "name": "optimism-sepolia",
+    "chainId": 11155420,
+    "caip2": "eip155:11155420",
+    "explorerBase": "https://sepolia-optimism.etherscan.io",
+    "rpcUrlEnv": "OPTIMISM_SEPOLIA_RPC_URL"
+  },
+  "toolchain": {
+    "solc": "0.8.28",
+    "evmVersion": "cancun",
+    "viaIR": true,
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadataBytecodeHash": "ipfs",
+    "node": ">=20",
+    "npm": ">=10",
+    "foundry": "1.8.3"
+  },
+  "deterministicDeployment": {
+    "method": "create2",
+    "factory": {
+      "address": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+      "kind": "deterministic-deployment-proxy",
+      "codeHash": "0x2fa86add0aed31f33a762c9d88e807c475bd51d0f52bd0955754b2608f7e4989"
+    },
+    "saltDomain": "truthbounty:optimism-sepolia:v2.0.0-rc.1",
+    "bootstrapAdmin": {
+      "custodyRef": "bootstrapAdmin",
+      "address": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424",
+      "custody": "unassigned"
+    },
+    "noncePlan": {
+      "broadcasterTransactions": 1,
+      "note": "one factory call per contract; the broadcaster nonce sequence is irrelevant because addresses derive from CREATE2"
+    }
+  },
+  "contracts": [
+    {
+      "name": "RewardToken",
+      "kind": "token",
+      "source": "contracts/RewardToken.sol",
+      "sourceSha256": "7b4f2c71d8e24f1d7b12d45bcef6649c8ac556eb7353a6f6db833f9e42dcf132",
+      "address": "0x961bacf7c93f75e9be6a335431f4b8bf45ea207f",
+      "interfaces": [
+        "IERC20",
+        "IERC20Metadata",
+        "IAccessControl"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0xc576dc7f214aba695ef18f5f641fc18fbaca79d10f0cd381db4a9d633ff5c3b1",
+        "initCodeHash": "0x5333cafda516dca0c65a1ed0e647087de4c08e575c16785614d78a7b3aebdb43",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "1000000000000000000000000000"
+        ],
+        "constructorArgsSha256": "f6d72a99f05745136990d1206d1b624cc5ec658c7ab99d0ddadbdea778e02181",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/RewardToken.json",
+        "abiSha256": "0x8d8c3360399c19b8c1a218be9872c1236a338c200fc35db89b6a00c1a2a4de8e",
+        "abiFileSha256": "0x5bff97c67e3c95935dd44b2b0945d626ec0cec51c69a1d54884cc1c98c7135ea",
+        "bytecodeKeccak": "0x610c99433744a784b41ea3252aac90e6e2552c63fc6a09ad875aba4324b0f41f",
+        "deployedBytecodeKeccak": "0x220f6ab5dce4ff7d0c961b10903889bab3bde81eb364d529fe3fa12829500b84",
+        "creationBytes": 4306,
+        "runtimeBytes": 3066,
+        "immutableSlots": 0,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "ModuleRegistry",
+      "kind": "registry",
+      "source": "contracts/v2/ModuleRegistry.sol",
+      "sourceSha256": "08c62eefdef342c68ab55d9bde68dadfec72d0c17596342fd3cf83bfd51da194",
+      "address": "0x6e0b1e7cc621bcd740e032400109ff2dee145a85",
+      "interfaces": [
+        "IModuleRegistry",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x588db9f514e3964c3d4f6f148847a59bf4b8e6b36ebde5573306dbc68c6d7851",
+        "initCodeHash": "0x0fa4b42219efc1d8093741974f581d3d9f4e1d6194863d5b157365255902bd7e",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+        ],
+        "constructorArgsSha256": "60947351bb83ae4dee669085ba3ccd37f3667fd2d68feee50e1788ed99805e08",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/ModuleRegistry.json",
+        "abiSha256": "0x551daa6fc1143d9236b14a702c217aa4dfcb4e43d290d838c0e3dce147153194",
+        "abiFileSha256": "0x01e6a7cbe06e64742cabdddabcf4b4e375a78b38160b4ab87f277d0b96be2e23",
+        "bytecodeKeccak": "0xfa00d49d74d7eee00e28d592291efdec8923c9acee2f2da9fd8d102ddf369228",
+        "deployedBytecodeKeccak": "0x7978705ae39c0677c61d20e11735a84c15e632198dcbdce9a463415b47303437",
+        "creationBytes": 18660,
+        "runtimeBytes": 17668,
+        "immutableSlots": 0,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "Claims",
+      "kind": "module",
+      "source": "contracts/v2/Claims.sol",
+      "sourceSha256": "a6a36d315aba8c2d7ccc3cc9ff8c4f559ef7d63e2677062debe329d196c3ebd2",
+      "address": "0x7660d2346ccfa0cdcef998cd077cc55cd0a56405",
+      "interfaces": [
+        "IClaims",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x3e5f10f53e78ab21a783e4cf363000dd06b23a495188fe182448e22224c95dbc",
+        "initCodeHash": "0xc7e69dc5de4d48e5b551022398158709b92d15ea754bc6796ce14d5133c66bff",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0x961bacf7c93f75e9be6a335431f4b8bf45ea207f",
+          "0x03ef6d3add83fb59634aed72ddf05a419222f182",
+          "100000000000000000000",
+          "0"
+        ],
+        "constructorArgsSha256": "ee7a0dc8821d1ac74c965017214a80523eb7e1b202038bf432ae62fd32b3a526",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/Claims.json",
+        "abiSha256": "0x0aeea418e292d867523cc6919c21f2fc46a93272715c8df39f8a2a80629376ab",
+        "abiFileSha256": "0xf783c2c64761b6d0f84c4a2f53a7d9ee56923465dc5eaf155061d8e5e1b83dd0",
+        "bytecodeKeccak": "0xf56387d492453b611b7769bbb7d88ab8c522979a9630471e07cf11e6cd99e7e9",
+        "deployedBytecodeKeccak": "0x5876cc4d43cd99b4ac3aa768c7d727e118def79c4f1dfb3daeb8a985283ec9b2",
+        "creationBytes": 8419,
+        "runtimeBytes": 7439,
+        "immutableSlots": 1,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "StakeVault",
+      "kind": "vault",
+      "source": "contracts/v2/StakeVault.sol",
+      "sourceSha256": "d8ee55ea5c43e501ffb2b1b75729ece4a087f7f4da5bb7e6862c336a8a390bdc",
+      "address": "0x3cc97bade8b441194391e92c5ef74a42c489c716",
+      "interfaces": [
+        "IStakeCustody",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x2d3dcd9db770f9977d8bf9af5b65cb816427ab50beb5ba39e062267e2e8b49fd",
+        "initCodeHash": "0x14d4f79482f9056e690f18630b5430829861c32ede06e5fedd6952d47bce1fa8",
+        "constructorArgs": [
+          "0x6e0b1e7cc621bcd740e032400109ff2dee145a85",
+          "0x961bacf7c93f75e9be6a335431f4b8bf45ea207f",
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+        ],
+        "constructorArgsSha256": "5a9de264da3609806f1cf15e3da731b63c16fe03a05b665e49bd75eecc29d73f",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/StakeVault.json",
+        "abiSha256": "0x687fc9c8f8af6562e6a2f343c57ab056657e0caacf0c2f9c28a854abda42bcc2",
+        "abiFileSha256": "0x4a255347e70b94aed09b32dfa76deaf6af93187a67fc112420c77d35d6817263",
+        "bytecodeKeccak": "0x96bb168705aaa48ff5ac018a4c274bd68ae5e7d892d4ddc1cdb03052e06021cb",
+        "deployedBytecodeKeccak": "0xd39c55088c87a117957e7c40f471d2fcdfefc1ac6eef0c90a6e88a17b44aff24",
+        "creationBytes": 16546,
+        "runtimeBytes": 15603,
+        "immutableSlots": 2,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "EvidenceRegistry",
+      "kind": "module",
+      "source": "contracts/v2/EvidenceRegistry.sol",
+      "sourceSha256": "01aafe63addc561e7ac570618e226241659109652658f234c43fbb7569788eb6",
+      "address": "0x0a2d888be8d2b27d60826364546f510b7a7a6b9e",
+      "interfaces": [
+        "IEvidence",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x9132b7956c68c61f5c0ecb3da9fb566c0246f115d8d2f311a3ee8cb49c5ff22f",
+        "initCodeHash": "0x09ca4c003f1c6327a769502358a2b0108d1167f9c4eb5b821e03fb0b9afb3b3d",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0x7660d2346ccfa0cdcef998cd077cc55cd0a56405"
+        ],
+        "constructorArgsSha256": "1b07646171ab379631f73c0e8f86997072ea30f275f3113d1c6010327ecba9f1",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/EvidenceRegistry.json",
+        "abiSha256": "0x4482c833d8e3c17904b56280000b4f5edbb714c37d186df7a4db0b41a089f73e",
+        "abiFileSha256": "0x2b2059b45730fb3f76a45b3e33b5ef676e01697723ea5fdab4f1bc4eedf553be",
+        "bytecodeKeccak": "0x74af8f4ae7fa3eb88d070852938e07514014b4fcb4b0fae518ecb1b98c0e4e18",
+        "deployedBytecodeKeccak": "0x9b56909dbc29f5ac6566a852d0b5b7149afa0b781b6987c896b21b249bd9b889",
+        "creationBytes": 8620,
+        "runtimeBytes": 7828,
+        "immutableSlots": 1,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "Aggregation",
+      "kind": "module",
+      "source": "contracts/v2/Aggregation.sol",
+      "sourceSha256": "1ae9cec0711ca457d13492de49ce7e4461718f2ca8f067920a94bb3dd37995be",
+      "address": "0x705b0310748bfec56b80c69405bbe38760f86dcf",
+      "interfaces": [
+        "IAggregation",
+        "IV2Module"
+      ],
+      "accessControl": false,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x1abf278c757348f1c1d0c023c6fcd04273af210ecc12d5ca4908faa332fcc49c",
+        "initCodeHash": "0xd1c329a00aa4c3befd08f0341236640b7f8e29ce76638d363daca64044c27527",
+        "constructorArgs": [
+          "0x6e0b1e7cc621bcd740e032400109ff2dee145a85"
+        ],
+        "constructorArgsSha256": "645906cf02ebf0667e8fd1d3924542de460e8895e16a43d1ef10f699f9d591d7",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/Aggregation.json",
+        "abiSha256": "0x582db6c0ac0baeee25cb601ca7ef5ee3255e55c21721131892ce49557cbcb95c",
+        "abiFileSha256": "0xa37ff9b518224d70e8e5367b412f27b35a6803d943cdcefa56af5f4c908a6338",
+        "bytecodeKeccak": "0x42c604a2a8b7148f959b260eccebde6bb61ed35e33cf0e94e7a6aa5001d0d437",
+        "deployedBytecodeKeccak": "0x60ba8ee294416fe788950be9a11cec61f6f053e87015d4307141997eaee26c51",
+        "creationBytes": 4146,
+        "runtimeBytes": 3951,
+        "immutableSlots": 1,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "FinalRewardAllocator",
+      "kind": "module",
+      "source": "contracts/v2/FinalRewardAllocator.sol",
+      "sourceSha256": "9b8ce9b009dfa58cee418e325af9d6b802ff491141a7424d2ddd9de10dd460ed",
+      "address": "0x83f3558bcc609c24d9a5f7e4117b7acf947df077",
+      "interfaces": [
+        "IFinalRewardAllocator",
+        "IV2Module"
+      ],
+      "accessControl": false,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x88417ce35b81675a74fb703eb9db4c44d098ca48846e78d005b6a7d01eb6a5ff",
+        "initCodeHash": "0xdf499d94ba056d1c156812244fa2362d8ff871d71633d38aeb9859a4e6713044",
+        "constructorArgs": [
+          "0x6e0b1e7cc621bcd740e032400109ff2dee145a85",
+          "200"
+        ],
+        "constructorArgsSha256": "af82c8d373167814e3625de98cf3c586183234008bcb5cd7793f001095042477",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/FinalRewardAllocator.json",
+        "abiSha256": "0x88ea79aa6c7f5271255010c69aa6acd5a5e489299eefb4fa0d572e3408697d72",
+        "abiFileSha256": "0x6bfdcde74f753c899dae91a44a24c6262cf966325751a63dd4bedf396dee68b9",
+        "bytecodeKeccak": "0xb5f023e111067588a677816c1c82ce46afc1218fd7a0d15e378280b9ca9a4c7a",
+        "deployedBytecodeKeccak": "0xbe586991bc4265bec2483d6f3e8dc4b112b03e17830ccb37fc83e0f7d7465828",
+        "creationBytes": 5459,
+        "runtimeBytes": 5230,
+        "immutableSlots": 2,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "EmergencyControls",
+      "kind": "control",
+      "source": "contracts/v2/EmergencyControls.sol",
+      "sourceSha256": "00531bffd3f64b6307e8f5e5dd4b9bf1c715c7ad337fee53a36f3cbdcf2415ff",
+      "address": "0x28ed5055ac3edeb62cb2d321aed07692caa93e00",
+      "interfaces": [
+        "IEmergencyControls",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0xdeb54dcb9fdc408116c7f7ee297649c0ed872c2c5e3017306005a97af3394f84",
+        "initCodeHash": "0xc4c2ccf4cabc31d1bdf4b6f23541989f275d36ad63a683c55f127c5e01335ce8",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0xc8644c8ca2c2983cb1b3c7d2b5d58be411888ca4",
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+        ],
+        "constructorArgsSha256": "45f1898cba928862682dd11ec73777fafc5143168784bb87fc3a91f71afe461e",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/EmergencyControls.json",
+        "abiSha256": "0x24cd8b4fd146fd73fb6928e45daedcfcca9a6d391ee2bec828fd3e7639be0786",
+        "abiFileSha256": "0xb6b52b5c73ef8e9b9566b8133073530f3550cd98a119afd38201f10fc460db4b",
+        "bytecodeKeccak": "0x0e965b1f21db84b22d39545d05a71d6b270efb6e5bf1192a6789be2bbb5fb95f",
+        "deployedBytecodeKeccak": "0xcda01d3ed25a233b01cca46c7828821413862f5e05fcacd649a40405c3c24aae",
+        "creationBytes": 3665,
+        "runtimeBytes": 2510,
+        "immutableSlots": 0,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "EmergencyGatekeeper",
+      "kind": "control",
+      "source": "contracts/v2/EmergencyGatekeeper.sol",
+      "sourceSha256": "d974f9e6083eda46aad4f090d86e1d045a754daa1e2c0b1509ac48de4f8a9637",
+      "address": "0xab7ae690111b7e296f140c13dba9333d5cafdd74",
+      "interfaces": [
+        "IEmergencyControls",
+        "IV2Module"
+      ],
+      "accessControl": true,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x512d1fa460f1907332576e74a8022a804842166a42a16b46dc3050efb2be2f8f",
+        "initCodeHash": "0x7a2c21f3d995d88d4c0157fb46069475f9c1e2aeb6633b6773863dcb9188646b",
+        "constructorArgs": [
+          "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+          "0x08218cc901f0a1f6f3b796a77b2829b01db4a205",
+          "0x6380bb682585735a8c52cc6519706217929bb659",
+          "3600"
+        ],
+        "constructorArgsSha256": "37de5a19e5db8eaff3f758e78ba777199eb153848e79be7cc68bd08338a57812",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/EmergencyGatekeeper.json",
+        "abiSha256": "0x07bfb2ddf6ccaf7006c480e3ca6c43a2dd19dca7298b494847f51f0fc968ef22",
+        "abiFileSha256": "0xd1d336a55cd47e7105fd46dcb223dad5a05e4e3f97a272b8aaf06bbf6a918c52",
+        "bytecodeKeccak": "0x5a0d39eda93e1002526cc3423e3881cafe57fa6e9ee22f0e2eac55eeb2ff647d",
+        "deployedBytecodeKeccak": "0x6129c2cd98d6b38a5f49b5a218cec0728fe1de999c0f2cc428e1dca0fec03e09",
+        "creationBytes": 5067,
+        "runtimeBytes": 4000,
+        "immutableSlots": 0,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "EventCompletenessAnchor",
+      "kind": "anchor",
+      "source": "contracts/v2/EventCompletenessAnchor.sol",
+      "sourceSha256": "65f25cf5cc49fe85d9fca92c6ca33098de07b49c0784890d51dc6ddfb11dcb0e",
+      "address": "0x54b19840760d005866496e9a34b6607b34ad4da9",
+      "interfaces": [
+        "IEventCompleteness",
+        "IV2Module"
+      ],
+      "accessControl": false,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x6a0a136d7afdfb9684a60ed947498e1069278a9bc34263adcfc9e34350c7cd0d",
+        "initCodeHash": "0x4f628f2423dbcf74c6b5cdfa108356680e8a745033318ef279325b1d835c4aba",
+        "constructorArgs": [
+          {
+            "chainId": "11155420",
+            "completenessVersion": "1",
+            "moduleCount": "8",
+            "cellCount": "30",
+            "bindingCount": "57",
+            "catalogueRoot": "0x1764935cecbbcfc6d387c9f03037d65e6ffabaaa19450c93cfc4f800498efb58",
+            "everyMutationEmits": true,
+            "mutationsAreTerminal": true,
+            "orderIsTotal": true,
+            "projectionIsDeterministic": true
+          },
+          "0xce93ece2bca89d0fe22b3288e5de517d8ef3221c"
+        ],
+        "constructorArgsSha256": "fe868de20973e9d7e8aad7b6b6a43c5e8ba7f21927aebf5850f8c7baf0955084",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/EventCompletenessAnchor.json",
+        "abiSha256": "0x5fac4b7b9cce4929e5ed0b51a7bdf1a8b749175d61f2a81fdc9d1e032ae69e0c",
+        "abiFileSha256": "0x714c1ed1929c12a86a0cbc154cb9cec27a836daec78ad59940c384bd65899714",
+        "bytecodeKeccak": "0x6ce694cf5b023cc5307142a733f142509cfb1063f2ee1fe613a2ae01fc8d6743",
+        "deployedBytecodeKeccak": "0xa133ed1d70638611c7bba98620acb667d1544d5f7ad97db682339cc009ab256a",
+        "creationBytes": 14923,
+        "runtimeBytes": 8018,
+        "immutableSlots": 11,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    },
+    {
+      "name": "ConsumerGuaranteesAnchor",
+      "kind": "anchor",
+      "source": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+      "sourceSha256": "14f5f5d55137563e9f7886e99625cc637d82aac64c56c54f21dfc01af6a02951",
+      "address": "0x73cb28a3b807982a4e289394309b2445f40e5e8e",
+      "interfaces": [
+        "IConsumerGuarantees",
+        "IV2Module"
+      ],
+      "accessControl": false,
+      "deployment": {
+        "method": "create2",
+        "salt": "0x9f1a9f097c44572744e24a9ca02f3cdcaf66c6bf8bab1291c6ca383ac744e9e6",
+        "initCodeHash": "0xcad676758a10e133c70da4e2925174d5004fa6ef5cfe198baef275a09572048f",
+        "constructorArgs": [
+          {
+            "confirmationDepth": "1800",
+            "maxFinalityClass": "2",
+            "maxReorgDepth": "12",
+            "eventsAreReplayable": true,
+            "eventKeysAreUnique": true,
+            "eventsAreTerminalOnEmission": true
+          },
+          "0xce93ece2bca89d0fe22b3288e5de517d8ef3221c"
+        ],
+        "constructorArgsSha256": "930cc89d10223bdeb38efec775d1dd4932ae5d28fd4b3f394e996a3ae967114f",
+        "deploymentBlock": null,
+        "txHash": null
+      },
+      "artifact": {
+        "abiFile": "deployments/releases/optimism-sepolia/abis/ConsumerGuaranteesAnchor.json",
+        "abiSha256": "0x40c1b3fc4b4dd86bb28866032b24dccfb93428e4b56ea37800c5699a82326b9f",
+        "abiFileSha256": "0xf74867dfec34f9fffe8ecf3f7b0867ebf1fdcb03bb1b130687f19c87ea66b6e5",
+        "bytecodeKeccak": "0x353aa2fb6f693a8214119d921f9a5318e58153207817dda1b6573946c0e0f09e",
+        "deployedBytecodeKeccak": "0x6b95a79229c09d9e184b0bed428cef8be03dbf202b9980b75a39abcf1c1d1b0a",
+        "creationBytes": 2510,
+        "runtimeBytes": 854,
+        "immutableSlots": 8,
+        "linkReferences": 0
+      },
+      "proxy": {
+        "kind": "none",
+        "implementation": "self"
+      },
+      "sourceVerification": {
+        "status": "pending",
+        "provider": "etherscan",
+        "standardJson": true,
+        "url": null
+      },
+      "onchain": {
+        "codePresent": null,
+        "observedCodeHash": null,
+        "checkedAtBlock": null
+      }
+    }
+  ],
+  "roleOwnership": [
+    {
+      "class": "governance",
+      "description": "Protocol governance is the timelock; no EOA may hold upgrade, parameter, or treasury authority.",
+      "mechanism": "ModuleRegistry.GOVERNANCE_ROLE and EmergencyControls.GOVERNANCE_ROLE are held by the timelock custody slot.",
+      "holder": {
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      }
+    },
+    {
+      "class": "timelock",
+      "description": "Minimum 172800s delay on every governed action including module replacement and governed unpause.",
+      "mechanism": "Timelock custody slot executes all grants, replacements, and unpause resolutions.",
+      "holder": {
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      }
+    },
+    {
+      "class": "guardian",
+      "description": "Guardian can veto/pause but can never mutate the module registry or unpause unilaterally.",
+      "mechanism": "GUARDIAN_ROLE on ModuleRegistry and PAUSER_ROLE on EvidenceRegistry.",
+      "holder": {
+        "custodyRef": "guardian",
+        "custody": "unassigned",
+        "label": "unassigned guardian custody slot",
+        "address": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+      }
+    },
+    {
+      "class": "upgradeAdmin",
+      "description": "No proxy admin and no retained deployer upgrade authority; module replacement is the only upgrade path.",
+      "mechanism": "ModuleRegistry replacement requires GOVERNANCE_ROLE plus a 172800s timelock; DEPLOYMENT_ROLE is renounced at finalization.",
+      "holder": {
+        "custodyRef": "upgradeAdmin",
+        "custody": "unassigned",
+        "label": "unassigned upgradeAdmin custody slot",
+        "address": "0xbc51daa19e81442bba04c2f7dfb59e30605a9c83"
+      }
+    },
+    {
+      "class": "treasury",
+      "description": "Claim fees and treasury flows route to the treasury custody slot, never to the deployer.",
+      "mechanism": "Claims.feeRecipient and treasury role grants.",
+      "holder": {
+        "custodyRef": "treasury",
+        "custody": "unassigned",
+        "label": "unassigned treasury custody slot",
+        "address": "0x03ef6d3add83fb59634aed72ddf05a419222f182"
+      }
+    },
+    {
+      "class": "operational",
+      "description": "Pause initiation and resolution are split across two separate custody slots.",
+      "mechanism": "EmergencyGatekeeper.PAUSE_INITIATOR (initiator) and PAUSE_RESOLVER (resolver) with a 3600s rewire delay.",
+      "holder": {
+        "custodyRef": "pauseInitiator",
+        "custody": "unassigned",
+        "label": "unassigned pauseInitiator custody slot",
+        "address": "0x08218cc901f0a1f6f3b796a77b2829b01db4a205"
+      }
+    }
+  ],
+  "roleGrants": [
+    {
+      "contract": "RewardToken",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "RewardToken",
+      "role": "MINTER_ROLE",
+      "roleHash": "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "RewardToken",
+      "role": "BURNER_ROLE",
+      "roleHash": "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "ModuleRegistry",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "ModuleRegistry",
+      "role": "DEPLOYMENT_ROLE",
+      "roleHash": "0x96906d75a17571bf24626ff20d6f342bf01cbe51feffe1805135f52010fefe5c",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "ModuleRegistry",
+      "role": "GOVERNANCE_ROLE",
+      "roleHash": "0x71840dc4906352362b0cdaf79870196c8e42acafade72d5d5a6d59291253ceb1",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "ModuleRegistry",
+      "role": "GUARDIAN_ROLE",
+      "roleHash": "0x55435dd261a4b9b3364963f7738a7a662ad9c84396d64be3365284bb7f0a5041",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "guardian",
+        "custody": "unassigned",
+        "label": "unassigned guardian custody slot",
+        "address": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "Claims",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "Claims",
+      "role": "ADMIN_ROLE",
+      "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "Claims",
+      "role": "CLAIM_MANAGER_ROLE",
+      "roleHash": "0xeca77a5bbbcf8baa6d8f93054311a3e6672f982247f67ba40cb896ecf1992aec",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "StakeVault",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "StakeVault",
+      "role": "ADMIN_ROLE",
+      "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "StakeVault",
+      "role": "MODULE_SETTLEMENT",
+      "roleHash": "0x5fc49f3dd1feb5ae10b8ed3c634acc46f808a44c1a183dbe66804fc645f7f4ff",
+      "holder": {
+        "kind": "contract",
+        "contract": "FinalRewardAllocator",
+        "address": "0x83f3558bcc609c24d9a5f7e4117b7acf947df077"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "StakeVault",
+      "role": "MODULE_VERIFICATION",
+      "roleHash": "0x6664ef4dbc2906295a4da911130307e90ef4f03d681be0b6518d0dae13a06a4e",
+      "holder": {
+        "kind": "contract",
+        "contract": "Aggregation",
+        "address": "0x705b0310748bfec56b80c69405bbe38760f86dcf"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EvidenceRegistry",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EvidenceRegistry",
+      "role": "EVIDENCE_ADMIN_ROLE",
+      "roleHash": "0xa3dc52824635a545767103b91c492715749a780a50713a236d9590bc563be52a",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EvidenceRegistry",
+      "role": "PAUSER_ROLE",
+      "roleHash": "0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "guardian",
+        "custody": "unassigned",
+        "label": "unassigned guardian custody slot",
+        "address": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyControls",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyControls",
+      "role": "GOVERNANCE_ROLE",
+      "roleHash": "0x71840dc4906352362b0cdaf79870196c8e42acafade72d5d5a6d59291253ceb1",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyControls",
+      "role": "EMERGENCY_ROLE",
+      "roleHash": "0xbf233dd2aafeb4d50879c4aa5c81e96d92f6e6945c906a58f9f2d1c1631b4b26",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "emergencyCouncil",
+        "custody": "unassigned",
+        "label": "unassigned emergencyCouncil custody slot",
+        "address": "0xc8644c8ca2c2983cb1b3c7d2b5d58be411888ca4"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyGatekeeper",
+      "role": "DEFAULT_ADMIN_ROLE",
+      "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyGatekeeper",
+      "role": "ADMIN_ROLE",
+      "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "timelock",
+        "custody": "unassigned",
+        "label": "unassigned timelock custody slot",
+        "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyGatekeeper",
+      "role": "PAUSE_INITIATOR",
+      "roleHash": "0x01b613f52b5eb114171ed41c0e4d57dc5223b9ab30490d9e699c9a3a67d6751f",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "pauseInitiator",
+        "custody": "unassigned",
+        "label": "unassigned pauseInitiator custody slot",
+        "address": "0x08218cc901f0a1f6f3b796a77b2829b01db4a205"
+      },
+      "grantedAt": "finalization"
+    },
+    {
+      "contract": "EmergencyGatekeeper",
+      "role": "PAUSE_RESOLVER",
+      "roleHash": "0x0681c49ca85fb690e187466528159291ca23504aae0b1124feccf9731cf5e10a",
+      "holder": {
+        "kind": "custody",
+        "custodyRef": "pauseResolver",
+        "custody": "unassigned",
+        "label": "unassigned pauseResolver custody slot",
+        "address": "0x6380bb682585735a8c52cc6519706217929bb659"
+      },
+      "grantedAt": "finalization"
+    }
+  ],
+  "finalization": {
+    "bootstrapAdmin": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424",
+    "deployerAuthorityRemoved": true,
+    "verification": "script/deploy/VerifyRoleRenunciation.s.sol + PostDeploymentRoleCheck",
+    "steps": [
+      {
+        "step": 1,
+        "action": "grant",
+        "contract": "RewardToken",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 2,
+        "action": "grant",
+        "contract": "RewardToken",
+        "role": "MINTER_ROLE",
+        "roleHash": "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 3,
+        "action": "grant",
+        "contract": "RewardToken",
+        "role": "BURNER_ROLE",
+        "roleHash": "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 4,
+        "action": "grant",
+        "contract": "ModuleRegistry",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 5,
+        "action": "grant",
+        "contract": "ModuleRegistry",
+        "role": "DEPLOYMENT_ROLE",
+        "roleHash": "0x96906d75a17571bf24626ff20d6f342bf01cbe51feffe1805135f52010fefe5c",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 6,
+        "action": "grant",
+        "contract": "ModuleRegistry",
+        "role": "GOVERNANCE_ROLE",
+        "roleHash": "0x71840dc4906352362b0cdaf79870196c8e42acafade72d5d5a6d59291253ceb1",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 7,
+        "action": "grant",
+        "contract": "ModuleRegistry",
+        "role": "GUARDIAN_ROLE",
+        "roleHash": "0x55435dd261a4b9b3364963f7738a7a662ad9c84396d64be3365284bb7f0a5041",
+        "account": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+      },
+      {
+        "step": 8,
+        "action": "grant",
+        "contract": "Claims",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 9,
+        "action": "grant",
+        "contract": "Claims",
+        "role": "ADMIN_ROLE",
+        "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 10,
+        "action": "grant",
+        "contract": "Claims",
+        "role": "CLAIM_MANAGER_ROLE",
+        "roleHash": "0xeca77a5bbbcf8baa6d8f93054311a3e6672f982247f67ba40cb896ecf1992aec",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 11,
+        "action": "grant",
+        "contract": "StakeVault",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 12,
+        "action": "grant",
+        "contract": "StakeVault",
+        "role": "ADMIN_ROLE",
+        "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 13,
+        "action": "grant",
+        "contract": "StakeVault",
+        "role": "MODULE_SETTLEMENT",
+        "roleHash": "0x5fc49f3dd1feb5ae10b8ed3c634acc46f808a44c1a183dbe66804fc645f7f4ff",
+        "account": "0x83f3558bcc609c24d9a5f7e4117b7acf947df077"
+      },
+      {
+        "step": 14,
+        "action": "grant",
+        "contract": "StakeVault",
+        "role": "MODULE_VERIFICATION",
+        "roleHash": "0x6664ef4dbc2906295a4da911130307e90ef4f03d681be0b6518d0dae13a06a4e",
+        "account": "0x705b0310748bfec56b80c69405bbe38760f86dcf"
+      },
+      {
+        "step": 15,
+        "action": "grant",
+        "contract": "EvidenceRegistry",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 16,
+        "action": "grant",
+        "contract": "EvidenceRegistry",
+        "role": "EVIDENCE_ADMIN_ROLE",
+        "roleHash": "0xa3dc52824635a545767103b91c492715749a780a50713a236d9590bc563be52a",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 17,
+        "action": "grant",
+        "contract": "EvidenceRegistry",
+        "role": "PAUSER_ROLE",
+        "roleHash": "0x65d7a28e3265b37a6474929f336521b332c1681b933f6cb9f3376673440d862a",
+        "account": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45"
+      },
+      {
+        "step": 18,
+        "action": "grant",
+        "contract": "EmergencyControls",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 19,
+        "action": "grant",
+        "contract": "EmergencyControls",
+        "role": "GOVERNANCE_ROLE",
+        "roleHash": "0x71840dc4906352362b0cdaf79870196c8e42acafade72d5d5a6d59291253ceb1",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 20,
+        "action": "grant",
+        "contract": "EmergencyControls",
+        "role": "EMERGENCY_ROLE",
+        "roleHash": "0xbf233dd2aafeb4d50879c4aa5c81e96d92f6e6945c906a58f9f2d1c1631b4b26",
+        "account": "0xc8644c8ca2c2983cb1b3c7d2b5d58be411888ca4"
+      },
+      {
+        "step": 21,
+        "action": "grant",
+        "contract": "EmergencyGatekeeper",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 22,
+        "action": "grant",
+        "contract": "EmergencyGatekeeper",
+        "role": "ADMIN_ROLE",
+        "roleHash": "0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775",
+        "account": "0x199050d41e82bf7fac4653e1b52994d79c48154e"
+      },
+      {
+        "step": 23,
+        "action": "grant",
+        "contract": "EmergencyGatekeeper",
+        "role": "PAUSE_INITIATOR",
+        "roleHash": "0x01b613f52b5eb114171ed41c0e4d57dc5223b9ab30490d9e699c9a3a67d6751f",
+        "account": "0x08218cc901f0a1f6f3b796a77b2829b01db4a205"
+      },
+      {
+        "step": 24,
+        "action": "grant",
+        "contract": "EmergencyGatekeeper",
+        "role": "PAUSE_RESOLVER",
+        "roleHash": "0x0681c49ca85fb690e187466528159291ca23504aae0b1124feccf9731cf5e10a",
+        "account": "0x6380bb682585735a8c52cc6519706217929bb659"
+      },
+      {
+        "step": 25,
+        "action": "renounce",
+        "contract": "RewardToken",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 26,
+        "action": "renounce",
+        "contract": "ModuleRegistry",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 27,
+        "action": "renounce",
+        "contract": "Claims",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 28,
+        "action": "renounce",
+        "contract": "StakeVault",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 29,
+        "action": "renounce",
+        "contract": "EvidenceRegistry",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 30,
+        "action": "renounce",
+        "contract": "EmergencyControls",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 31,
+        "action": "renounce",
+        "contract": "EmergencyGatekeeper",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "roleHash": "0x1effbbff9c66c5e59634f24fe842750c60d18891155c32dd155fc2d661a4c86d",
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424"
+      },
+      {
+        "step": 32,
+        "action": "verify",
+        "contract": null,
+        "role": null,
+        "account": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424",
+        "check": "PostDeploymentRoleCheck.checkAllRoles(bootstrapAdmin, canonicalContracts) == 0 violations"
+      }
+    ]
+  },
+  "deployment": {
+    "blockNumber": null,
+    "blockHash": null,
+    "timestamp": null,
+    "eventStartCursor": {
+      "blockNumber": null,
+      "blockHash": null
+    },
+    "referenceBlock": {
+      "number": 50207495,
+      "hash": "0x5ae4b51ae2f8260d31da3877a5718f2f85d1fcfd149bd2fb1382b7874b6a4647",
+      "timestamp": 1792217530,
+      "chainId": 11155420
+    },
+    "pendingEvidence": [
+      "blockNumber",
+      "blockHash",
+      "timestamp",
+      "eventStartCursor"
+    ]
+  },
+  "verification": {
+    "explorer": {
+      "provider": "etherscan",
+      "baseUrl": "https://sepolia-optimism.etherscan.io",
+      "status": "pending",
+      "verifiedCount": 0,
+      "totalCount": 11
+    },
+    "onchain": {
+      "status": "not-run",
+      "command": "node scripts/check-optimism-sepolia-release.mjs --onchain --rpc-url $OPTIMISM_SEPOLIA_RPC_URL",
+      "codeChecks": 0
+    }
+  },
+  "commands": {
+    "build": "forge build && npx hardhat compile",
+    "generate": "node scripts/generateOptimismSepoliaReleasePackage.mjs --write",
+    "check": "node scripts/check-optimism-sepolia-release.mjs --with-artifacts",
+    "deploy": "npx hardhat run scripts/deployOptimismSepoliaRelease.ts --network optimismSepolia",
+    "verify": "npx hardhat run scripts/verifyOptimismSepoliaRelease.ts --network optimismSepolia",
+    "onchain": "node scripts/check-optimism-sepolia-release.mjs --onchain --rpc-url $OPTIMISM_SEPOLIA_RPC_URL",
+    "reproduce": "git clean -xdf -e node_modules && npm ci && forge build && npx hardhat compile && node scripts/check-optimism-sepolia-release.mjs --with-artifacts"
+  },
+  "rollback": {
+    "pause": "EmergencyGatekeeper.pause(scope) by PAUSE_INITIATOR — scope-bounded, never protocol-wide by default.",
+    "unpause": "Governed unpause only: the timelock executes EmergencyGatekeeper.resolve(scope) after the 172800s delay; the guardian cannot unpause.",
+    "roleTransfer": "Re-run the finalization grant/renounce sequence, then `forge script script/deploy/VerifyRoleRenunciation.s.sol` against the canonical address set.",
+    "upgradeRollback": "Before execution call ModuleRegistry.cancelModuleReplacement(moduleId); after execution re-register the previous implementation (GOVERNANCE_ROLE + 172800s timelock). Storage layouts are frozen by storage-layouts/manifest.json.",
+    "recovery": "Follow docs/runbooks/rollback.md: pause the affected scope, restore the previous release package by releaseId, replay events from the pinned eventStartCursor, and verify roles with PostDeploymentRoleCheck."
+  },
+  "consumers": {
+    "api": {
+      "issue": "#586",
+      "entry": "scripts/lib/releasePackageConsumer.mjs",
+      "releaseId": "0xbf6b4dc7bf67ed83ad4371bf8475e4deae1b4b36afc2a0d609ba70c70fb67509",
+      "packageChecksum": "sha256:d4749190dfd85dab4485d2d84f67924e766cefcd96409d9a0c296c85400d37b2",
+      "requiredContracts": [
+        "ModuleRegistry",
+        "StakeVault",
+        "EvidenceRegistry",
+        "Aggregation",
+        "Claims",
+        "FinalRewardAllocator",
+        "EventCompletenessAnchor",
+        "ConsumerGuaranteesAnchor"
+      ]
+    },
+    "frontend": {
+      "catalog": "UX-SC-001",
+      "entry": "scripts/lib/releasePackageConsumer.mjs",
+      "releaseId": "0xbf6b4dc7bf67ed83ad4371bf8475e4deae1b4b36afc2a0d609ba70c70fb67509",
+      "packageChecksum": "sha256:d4749190dfd85dab4485d2d84f67924e766cefcd96409d9a0c296c85400d37b2",
+      "requiredContracts": [
+        "ModuleRegistry",
+        "StakeVault",
+        "Claims",
+        "EvidenceRegistry",
+        "EmergencyControls",
+        "EmergencyGatekeeper",
+        "EventCompletenessAnchor",
+        "ConsumerGuaranteesAnchor"
+      ]
+    }
+  },
+  "blockers": [
+    "External custody slots (bootstrapAdmin, timelock, guardian, emergencyCouncil, treasury, pauseInitiator, pauseResolver, upgradeAdmin, releasePublisher) are unassigned until the maintainer supplies Optimism Sepolia owner addresses.",
+    "Deployment has not been broadcast: deployment.blockNumber, deployment.blockHash, deployment.timestamp and deployment.eventStartCursor are unset.",
+    "Explorer source verification has not been executed (0 of 11 contracts verified).",
+    "Read-only on-chain code/role verification has not been executed against Optimism Sepolia."
+  ],
+  "disclaimers": [
+    "This package targets Optimism Sepolia (chain id 11155420) only. It is not a mainnet deployment and is not mainnet approval.",
+    "No private key, mnemonic, API key, or production secret is embedded; deployment keys are supplied only through the operator environment.",
+    "Publication requires status=published with on-chain evidence for every canonical contract."
+  ],
+  "releaseId": "0xbf6b4dc7bf67ed83ad4371bf8475e4deae1b4b36afc2a0d609ba70c70fb67509",
+  "packageChecksum": "sha256:d4749190dfd85dab4485d2d84f67924e766cefcd96409d9a0c296c85400d37b2"
+}

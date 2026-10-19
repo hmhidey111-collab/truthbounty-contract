@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {UntrackedAssetRecovery} from "../recovery/UntrackedAssetRecovery.sol";
+
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "../libraries/BoundedSafeERC20.sol";
 import "../governance/GovernanceOwnable.sol";
 import "../governance/GovernanceHooks.sol";
 import "../interfaces/ITruthBountyEvents.sol";
 import "../IReputationOracle.sol";
 import "../treasury/ITreasuryAccounting.sol";
 
-contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBountyEvents {
+contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBountyEvents, UntrackedAssetRecovery {
     using SafeERC20 for IERC20;
     // ============ Roles ============
 
@@ -188,6 +190,17 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
     event BatchRewardAllocationCompleted(uint256 count);
     event BatchRewardClaimCompleted(address indexed recipient, uint256 count, uint256 amount);
 
+    /// @notice Emitted when an immediate payout inside `allocateRewardsBatch` could not be
+    ///         delivered to a hostile, reverting or false-returning recipient and was
+    ///         therefore recorded as a pull (claimable) credit instead. The reward remains
+    ///         owed exactly once and the recipient can claim it later; the failure is
+    ///         isolated and never blocks the other rows of the batch (SC-051).
+    event RewardAllocationDeferred(
+        address indexed recipient,
+        bytes32 indexed distributionId,
+        uint256 amount
+    );
+
     event RewardMultiplierUpdated(
         bytes32 indexed multiplier,
         uint256 oldValue,
@@ -254,6 +267,8 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
     error UnauthorizedRewardClaim();
     error InvalidDistributionBatch();
     error DistributionBatchTooLarge(uint256 provided, uint256 maximum);
+    /// @notice Only self-calls may reach the batch isolation trampoline.
+    error SelfCallOnly();
 
     // ============ Constructor ============
 
@@ -294,7 +309,10 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
         if (verifier == address(0)) revert ZeroVerifier();
         if (effectiveStake == 0) revert ZeroStake();
 
-        uint256 reputationScore = _getReputationScore(verifier);
+        // CEI: INTERACTION first — the oracle call is external and wrapped in
+        // try/catch.  All pure arithmetic is performed on the returned values.
+        // State is only mutated after every external call is complete.
+        uint256 reputationScore = _getReputationScore(verifier); // external call (try/catch)
 
         uint256 reputationMultiplier = _calculateReputationMultiplier(reputationScore);
         uint256 difficultyMultiplier = _getCategoryMultiplier(category);
@@ -312,8 +330,10 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
         if (finalAmount < minReward) finalAmount = minReward;
         if (finalAmount > maxReward) finalAmount = maxReward;
 
+        // CHECKS: enforce emission caps before any state write.
         _enforceEmissionCaps(verifier, finalAmount);
 
+        // EFFECTS: all state writes occur after the external oracle call and all checks.
         calculationId = keccak256(abi.encode(
             verifier, effectiveStake, activeStake, category, block.timestamp, calculationCount
         ));
@@ -506,6 +526,7 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
         if (newToken == address(0)) revert RewardTokenNotConfigured();
 
         address oldToken = address(rewardToken);
+        if (oldToken != address(0)) _protectRecoveryAsset(oldToken);
         rewardToken = IERC20(newToken);
 
         emit RewardTokenUpdated(oldToken, newToken);
@@ -521,8 +542,12 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
         }
         if (amount == 0) revert InvalidRewardAmount();
 
-        rewardToken.safeTransferFrom(msg.sender, address(this), amount);
+        // CEI: EFFECT before INTERACTION — credit the ledger first so any
+        // callback through the inbound transferFrom observes the already-updated
+        // totalFunded and cannot create a double-fund anomaly.
         totalFunded += amount;
+
+        rewardToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit RewardPoolFunded(
             msg.sender,
@@ -593,14 +618,64 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
         }
 
         for (uint256 i = 0; i < length;) {
-            _allocateReward(
-                recipients[i],
-                claimIds[i],
-                settlementIds[i],
-                calculationIds_[i],
-                amounts[i],
-                immediate[i]
-            );
+            address recipient = recipients[i];
+            uint256 claimId = claimIds[i];
+            bytes32 settlementId = settlementIds[i];
+            bytes32 calculationId = calculationIds_[i];
+            uint256 amount = amounts[i];
+
+            if (immediate[i]) {
+                // SC-051: isolate immediate payouts. A hostile, reverting or
+                // false-returning recipient must never block the other rows of the
+                // batch. We route the per-row allocation through an external
+                // trampoline so a failed token transfer can be caught.
+                try this._allocateRewardExternal(
+                    recipient,
+                    claimId,
+                    settlementId,
+                    calculationId,
+                    amount,
+                    true
+                ) {
+                    // Row recorded and paid immediately.
+                } catch {
+                    // The immediate transfer failed. Fall back to a pull credit so the
+                    // reward remains owed exactly once and the recipient can claim it
+                    // later once the failure is resolved. Deterministic input errors
+                    // (duplicate settlement, insufficient pool, zero amount) also fail
+                    // this fallback and therefore still revert the batch fail-closed.
+                    _allocateReward(
+                        recipient,
+                        claimId,
+                        settlementId,
+                        calculationId,
+                        amount,
+                        false
+                    );
+
+                    emit RewardAllocationDeferred(
+                        recipient,
+                        keccak256(
+                            abi.encode(
+                                recipient,
+                                claimId,
+                                settlementId,
+                                calculationId
+                            )
+                        ),
+                        amount
+                    );
+                }
+            } else {
+                _allocateReward(
+                    recipient,
+                    claimId,
+                    settlementId,
+                    calculationId,
+                    amount,
+                    false
+                );
+            }
 
             unchecked {
                 ++i;
@@ -790,6 +865,30 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
             claimId,
             settlementId,
             distributionId,
+            amount,
+            immediate
+        );
+    }
+
+    /**
+     * @dev External trampoline around `_allocateReward` used by `allocateRewardsBatch`
+     *      so that a reverting or false-returning recipient can be isolated with
+     *      `try/catch`. Guarded to self-calls so it cannot be invoked externally.
+     */
+    function _allocateRewardExternal(
+        address recipient,
+        uint256 claimId,
+        bytes32 settlementId,
+        bytes32 calculationId,
+        uint256 amount,
+        bool immediate
+    ) external returns (bytes32 distributionId) {
+        if (msg.sender != address(this)) revert SelfCallOnly();
+        distributionId = _allocateReward(
+            recipient,
+            claimId,
+            settlementId,
+            calculationId,
             amount,
             immediate
         );
@@ -1010,5 +1109,20 @@ contract RewardEngine is ReentrancyGuard, Pausable, GovernanceOwnable, ITruthBou
             EVENT_SCHEMA_VERSION
 
         );
+    }
+
+    // V2-SC-154: additive recovery only; existing liability and authority paths remain authoritative.
+    function _checkAssetRecoveryAuthority() internal view override {
+        if (!hasRole(GOVERNANCE_ROLE, msg.sender) || !governanceEnabled) revert RecoveryAuthorityUnavailable();
+    }
+
+    function _requireAssetRecoveryAllowed() internal view override {
+        if (paused()) revert RecoveryPaused();
+    }
+
+    function _reservedAssetBalance(address asset) internal view override returns (uint256) {
+        // The balance-backed funding pool includes unallocated and deferred rewards.
+        // Historical reward assets remain protected after token configuration changes.
+        return asset == address(rewardToken) || _isProtectedRecoveryAsset(asset) ? IERC20(asset).balanceOf(address(this)) : 0;
     }
 }

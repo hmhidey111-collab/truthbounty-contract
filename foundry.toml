@@ -1,9 +1,22 @@
-[profile.default]
-src = "test"
+﻿[profile.default]
+src = "contracts"
 out = "out"
 libs = ["lib"]
 test = "test"
 cache_path = "cache"
+fs_permissions = [{ access = "read", path = "./" }]
+
+# V2-SC-129: pin the exact compiler so every rebuild is byte-identical.
+# Must match hardhat.config.ts, scripts/canonicalV2Manifest.ts, and
+# deployments/releases/v2-sc-129-release-manifest.json.
+# STAB-SC-006: this is the single source of truth for the Solidity version.
+# package.json / package-lock.json (solc), hardhat.config.ts, the release
+# manifest and CI workflows must agree; drift is rejected by the gate.
+# Do not bump this value without updating hardhat.config.ts, the release
+# manifest, and package.json together; scripts/check-toolchain-drift.mjs
+# enforces agreement in CI and fails the build before any deployment step.
+solc = "0.8.28"
+evm_version = "prague"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
@@ -13,14 +26,28 @@ via_ir = true
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
-    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
     "forge-std/=lib/forge-std/src/",
-    "../../contracts/=contracts/",
-    "../contracts/=contracts/",
+    "contracts/=contracts/",
+    "contracts/settlement/=contracts/settlement/",
+    "contracts/disputes/=contracts/disputes/",
+    "contracts/governance/=contracts/governance/",
+    "contracts/upgrade/=contracts/upgrade/",
+    "contracts/libraries/=contracts/libraries/",
+    "contracts/interfaces/=contracts/interfaces/",
+    "contracts/mocks/=contracts/mocks/",
+    "contracts-vrm/=contracts-vrm/",
 ]
 
+
 [profile.default.model_checker]
-contracts = { "contracts/WeightedStaking.sol" = [ "WeightedStaking" ], "contracts/staking.sol" = [ "Staking" ] }
+contracts = {
+    "contracts/WeightedStaking.sol" = [ "WeightedStaking" ],
+    "contracts/staking.sol" = [ "Staking" ],
+    "contracts/TruthBounty.sol" = [ "TruthBounty" ],
+    "contracts/governance/EmergencyController.sol" = [ "EmergencyController" ],
+    "contracts/upgrade/ProtocolUpgradeManager.sol" = [ "ProtocolUpgradeManager" ]
+}
 engine = "chc"
 timeout = 10000
 targets = [ "assert" ]
@@ -31,8 +58,16 @@ tab_width = 4
 bracket_spacing = true
 int_types = "long"
 
+[default]
+invariant_runs = 500
+invariant_depth = 20
+fail_on_revert = false
 
-[invariant]
+[profile.default.fuzz]
+runs = 1000
+depth = 256
+
+[profile.default.invariant]
 runs = 500
 depth = 20
 fail_on_revert = false

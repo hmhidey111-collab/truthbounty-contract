@@ -1,5 +1,106 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const replayFixture = JSON.parse(
+  readFileSync(join(__dirname, "fixtures", "event-replay", "v1.json"), "utf8")
+) as {
+  fixtureVersion: number;
+  eventSchemaVersion: number;
+  eventOrder: string[];
+  journeys: Record<string, string[]>;
+};
+
+interface ReplayLog {
+  chainId: number;
+  blockNumber: number;
+  blockHash: string;
+  transactionHash: string;
+  logIndex: number;
+  eventName: string;
+  schemaVersion: number;
+  topics: string[];
+  data: string;
+}
+
+interface ReplayCheckpoint {
+  fixtureVersion: number;
+  events: ReplayLog[];
+}
+
+class VersionedLogReplay {
+  private events: ReplayLog[];
+  private seen: Set<string>;
+
+  constructor(fixtureVersion: number, checkpoint?: ReplayCheckpoint) {
+    if (fixtureVersion !== replayFixture.fixtureVersion) {
+      throw new Error(`Unsupported replay fixture version: ${fixtureVersion}`);
+    }
+    if (checkpoint && checkpoint.fixtureVersion !== fixtureVersion) {
+      throw new Error(`Checkpoint version ${checkpoint.fixtureVersion} does not match ${fixtureVersion}`);
+    }
+    this.events = checkpoint ? [...checkpoint.events] : [];
+    this.seen = new Set(this.events.map((event) => this.identity(event)));
+  }
+
+  apply(event: ReplayLog): void {
+    if (event.schemaVersion !== replayFixture.eventSchemaVersion) {
+      throw new Error(`Unsupported event schema version: ${event.schemaVersion}`);
+    }
+    const key = this.identity(event);
+    if (this.seen.has(key)) return;
+    this.events.push(event);
+    this.events.sort((left, right) =>
+      left.blockNumber - right.blockNumber || left.logIndex - right.logIndex
+    );
+    this.seen.add(key);
+  }
+
+  rollbackFrom(blockNumber: number): void {
+    this.events = this.events.filter((event) => event.blockNumber < blockNumber);
+    this.seen = new Set(this.events.map((event) => this.identity(event)));
+  }
+
+  checkpoint(): ReplayCheckpoint {
+    return { fixtureVersion: replayFixture.fixtureVersion, events: [...this.events] };
+  }
+
+  getEvents(): ReplayLog[] {
+    return [...this.events];
+  }
+
+  digest(): string {
+    const canonical = this.events.map((event) => [
+      event.chainId,
+      event.blockNumber,
+      event.blockHash,
+      event.transactionHash,
+      event.logIndex,
+      event.eventName,
+      event.schemaVersion,
+      event.topics,
+      event.data,
+    ]);
+    return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(canonical)));
+  }
+
+  private identity(event: ReplayLog): string {
+    return `${event.chainId}:${event.blockHash}:${event.transactionHash}:${event.logIndex}`;
+  }
+}
+
+function assertFixtureCompleteness(events: ReplayLog[]): void {
+  const required = Object.values(replayFixture.journeys).flat().sort();
+  expect([...replayFixture.eventOrder].sort()).to.deep.equal(required);
+  expect(events.map((event) => event.eventName)).to.deep.equal(replayFixture.eventOrder);
+}
+
+function assertReplayDigest(expectedDigest: string, replay: VersionedLogReplay): void {
+  if (replay.digest() !== expectedDigest) {
+    throw new Error("Replayed event digest does not match the on-chain query digest");
+  }
+}
 
 interface ProjectedClaim {
   id: bigint;
@@ -39,6 +140,22 @@ class ProtocolStateProjection {
   public rewardsEscrowed = new Map<string, bigint>();
   public treasury: ProjectedTreasury = { accounts: {}, totalAssets: 0n };
   public parameters = new Map<string, { version: bigint; value: bigint }>();
+  public disputes = new Map<bigint, {
+    challenger: string;
+    bondAmount: bigint;
+    open: boolean;
+    ruling?: number;
+    outcome?: number;
+  }>();
+  public roles = new Set<string>();
+  public governanceProposals = new Map<string, { proposer: string; executed: boolean }>();
+  public paused = false;
+  public upgradeProposals = new Map<string, {
+    version: [bigint, bigint, bigint];
+    implementation: string;
+    approved: boolean;
+  }>();
+  public implementationByModule = new Map<string, string>();
 
   private getVerifier(addr: string): ProjectedVerifierState {
     const key = addr.toLowerCase();
@@ -186,6 +303,86 @@ class ProtocolStateProjection {
           version: args.parameterVersion,
           value: args.newValue,
         });
+        break;
+      }
+
+      case "DisputeRaisedV1":
+      case "DisputeOpenedV1": {
+        this.disputes.set(args.disputeId, {
+          challenger: args.challenger,
+          bondAmount: args.bondAmount,
+          open: true,
+        });
+        break;
+      }
+
+      case "DisputeResolvedV1": {
+        const dispute = this.disputes.get(args.disputeId);
+        if (dispute) {
+          dispute.open = false;
+          dispute.ruling = Number(args.ruling);
+          dispute.outcome = Number(args.resultingOutcome);
+        }
+        break;
+      }
+
+      case "RoleGrantedV1": {
+        this.roles.add(`${args.role.toLowerCase()}:${args.account.toLowerCase()}`);
+        break;
+      }
+
+      case "RoleRevokedV1": {
+        this.roles.delete(`${args.role.toLowerCase()}:${args.account.toLowerCase()}`);
+        break;
+      }
+
+      case "GovernanceProposalCreatedV1": {
+        this.governanceProposals.set(args.proposalId.toLowerCase(), {
+          proposer: args.proposer.toLowerCase(),
+          executed: false,
+        });
+        break;
+      }
+
+      case "GovernanceProposalExecutedV1": {
+        const proposal = this.governanceProposals.get(args.proposalId.toLowerCase());
+        if (proposal) proposal.executed = true;
+        break;
+      }
+
+      case "EmergencyPauseActivatedV1": {
+        this.paused = true;
+        break;
+      }
+
+      case "EmergencyPauseRecoveredV1": {
+        this.paused = false;
+        break;
+      }
+
+      case "UpgradeProposedV1": {
+        const key = `${args.moduleId.toLowerCase()}:${args.proposalId}`;
+        this.upgradeProposals.set(key, {
+          version: [args.toMajor, args.toMinor, args.toPatch],
+          implementation: args.newImplementation.toLowerCase(),
+          approved: false,
+        });
+        break;
+      }
+
+      case "UpgradeApprovedV1": {
+        const proposal = this.upgradeProposals.get(`${args.moduleId.toLowerCase()}:${args.proposalId}`);
+        if (proposal) proposal.approved = true;
+        break;
+      }
+
+      case "UpgradeExecutedV1": {
+        this.implementationByModule.set(args.moduleId.toLowerCase(), args.newImplementation.toLowerCase());
+        break;
+      }
+
+      case "UpgradeRolledBackV1": {
+        this.implementationByModule.set(args.moduleId.toLowerCase(), args.restoredImplementation.toLowerCase());
         break;
       }
     }
@@ -401,5 +598,183 @@ describe("State Replay Projection Fixture (From Logs Only)", function () {
     expect(param).to.not.be.undefined;
     expect(param!.version).to.equal(1n);
     expect(param!.value).to.equal(200n);
+  });
+
+  it("replays versioned journeys across restart, duplicate delivery, missing logs, reorgs, and schema changes", async function () {
+    const [admin, creator, verifier, challenger, implementation] = await ethers.getSigners();
+    const factory = await ethers.getContractFactory("EventArchitectureHarness");
+    const harness = await factory.deploy();
+    await harness.waitForDeployment();
+
+    const chainId = Number((await ethers.provider.getNetwork()).chainId);
+    const claimId = 57n;
+    const moduleId = ethers.keccak256(ethers.toUtf8Bytes("truth-bounty-module"));
+    const proposalId = ethers.keccak256(ethers.toUtf8Bytes("sc-057-proposal"));
+    const reasonHash = ethers.keccak256(ethers.toUtf8Bytes("fixture-reason"));
+    const metadataHash = ethers.keccak256(ethers.toUtf8Bytes("fixture-metadata"));
+    const canonicalLogs: ReplayLog[] = [];
+
+    const record = async (send: () => Promise<any>) => {
+      const receipt = await (await send()).wait();
+      for (const log of receipt!.logs) {
+        if (log.address.toLowerCase() !== (await harness.getAddress()).toLowerCase()) continue;
+        const parsed = harness.interface.parseLog(log);
+        if (!parsed) continue;
+        canonicalLogs.push({
+          chainId,
+          blockNumber: log.blockNumber,
+          blockHash: log.blockHash,
+          transactionHash: log.transactionHash,
+          logIndex: log.index,
+          eventName: parsed.name,
+          schemaVersion: Number(parsed.args[parsed.args.length - 1]),
+          topics: [...log.topics],
+          data: log.data,
+        });
+      }
+    };
+
+    const calls: Array<() => Promise<any>> = [
+      () => harness.emitClaimCreatedV1(claimId, creator.address, metadataHash),
+      () => harness.emitEvidenceSubmittedV1(claimId, 1n, creator.address, reasonHash),
+      () => harness.emitClaimStatusTransitionedV1(claimId, admin.address, 0, 1),
+      () => harness.emitStakeDepositedV1(verifier.address, 1000n, 1000n),
+      () => harness.emitStakeLockedV1(claimId, verifier.address, 1n, 500n, 500n),
+      () => harness.emitVerificationSubmittedV1(claimId, verifier.address, true, 500n),
+      () => harness.emitOutcomeAggregatedV1(claimId, 1n, 1, 500n, 0n, 10000n),
+      () => harness.emitDisputeRaisedV1(claimId, 1n, challenger.address, 100n, reasonHash),
+      () => harness.emitDisputeOpenedV1(
+        claimId, 1n, challenger.address, 1, 2, ethers.ZeroAddress, 100n, 1900000000n, reasonHash
+      ),
+      () => harness.emitDisputeResolvedV1(claimId, 1n, admin.address, 1, 1),
+      () => harness.emitClaimResolvedV1(claimId, admin.address, true),
+      () => harness.emitSlashExecutedV1(claimId, verifier.address, reasonHash, 100n),
+      () => harness.emitRewardEscrowedV1(claimId, verifier.address, 80n),
+      () => harness.emitRewardClaimedV1(claimId, verifier.address, 80n),
+      () => harness.emitStakeUnlockedV1(claimId, verifier.address, 1n, 500n, 0n),
+      () => harness.emitTreasuryDepositV1(proposalId, 2, ethers.ZeroAddress, 20n, admin.address),
+      () => harness.emitClaimFinalizedV1(claimId, admin.address),
+      () => harness.emitParameterUpdatedV1(reasonHash, 2n, 100n, 200n, 1700000000n),
+      () => harness.emitRoleGrantedV1(reasonHash, verifier.address, admin.address),
+      () => harness.emitGovernanceProposalCreatedV1(proposalId, admin.address, metadataHash),
+      () => harness.emitGovernanceProposalExecutedV1(proposalId, admin.address),
+      () => harness.emitEmergencyPauseActivatedV1(admin.address, reasonHash),
+      () => harness.emitEmergencyPauseRecoveredV1(admin.address),
+      () => harness.emitUpgradeProposedV1(
+        1n, moduleId, implementation.address, 2n, 0n, 0n, metadataHash, admin.address
+      ),
+      () => harness.emitUpgradeApprovedV1(1n, moduleId, 1700000000n, admin.address),
+      () => harness.emitUpgradeExecutedV1(1n, moduleId, admin.address, implementation.address, admin.address),
+      () => harness.emitUpgradeRolledBackV1(
+        moduleId, implementation.address, admin.address, reasonHash, admin.address
+      ),
+    ];
+    for (const call of calls) await record(call);
+
+    const uninterrupted = new VersionedLogReplay(replayFixture.fixtureVersion);
+    canonicalLogs.forEach((log) => uninterrupted.apply(log));
+    assertFixtureCompleteness(uninterrupted.getEvents());
+
+    const queriedLogs = await ethers.provider.getLogs({
+      address: await harness.getAddress(),
+      fromBlock: canonicalLogs[0].blockNumber,
+      toBlock: canonicalLogs[canonicalLogs.length - 1].blockNumber,
+    });
+    const onChainQuery = new VersionedLogReplay(replayFixture.fixtureVersion);
+    for (const log of queriedLogs) {
+      const parsed = harness.interface.parseLog(log);
+      if (!parsed) continue;
+      onChainQuery.apply({
+        chainId,
+        blockNumber: log.blockNumber,
+        blockHash: log.blockHash,
+        transactionHash: log.transactionHash,
+        logIndex: log.index,
+        eventName: parsed.name,
+        schemaVersion: Number(parsed.args[parsed.args.length - 1]),
+        topics: [...log.topics],
+        data: log.data,
+      });
+    }
+    assertFixtureCompleteness(onChainQuery.getEvents());
+    const onChainQueryDigest = onChainQuery.digest();
+    assertReplayDigest(onChainQueryDigest, uninterrupted);
+
+    const replayedState = new ProtocolStateProjection();
+    for (const log of queriedLogs) {
+      const parsed = harness.interface.parseLog(log);
+      if (parsed) replayedState.applyLog(parsed.name, parsed.args);
+    }
+    const projectedClaim = replayedState.claims.get(claimId);
+    expect(projectedClaim?.status).to.equal(1);
+    expect(projectedClaim?.resolved).to.equal(true);
+    expect(projectedClaim?.outcome).to.equal(true);
+    expect(projectedClaim?.finalized).to.equal(true);
+    const verifierState = replayedState.verifiers.get(verifier.address.toLowerCase());
+    expect(verifierState?.totalStaked).to.equal(1000n);
+    expect(verifierState?.activeStaked).to.equal(0n);
+    expect(verifierState?.slashed).to.equal(100n);
+    expect(verifierState?.rewardsClaimed).to.equal(80n);
+    expect(replayedState.rewardsEscrowed.get(verifier.address.toLowerCase())).to.equal(0n);
+    expect(replayedState.treasury.accounts[2]).to.equal(20n);
+    expect(verifierState!.slashed).to.equal(
+      verifierState!.rewardsClaimed + replayedState.treasury.accounts[2]
+    );
+    const dispute = replayedState.disputes.get(1n);
+    expect(dispute?.open).to.equal(false);
+    expect(dispute?.ruling).to.equal(1);
+    expect(dispute?.outcome).to.equal(1);
+    expect(replayedState.parameters.get(reasonHash)?.version).to.equal(2n);
+    expect(replayedState.parameters.get(reasonHash)?.value).to.equal(200n);
+    expect(replayedState.roles.has(`${reasonHash}:${verifier.address.toLowerCase()}`)).to.equal(true);
+    expect(replayedState.governanceProposals.get(proposalId)?.executed).to.equal(true);
+    expect(replayedState.paused).to.equal(false);
+    expect(replayedState.upgradeProposals.get(`${moduleId}:1`)?.approved).to.equal(true);
+    expect(replayedState.upgradeProposals.get(`${moduleId}:1`)?.version).to.deep.equal([2n, 0n, 0n]);
+    expect(replayedState.implementationByModule.get(moduleId)).to.equal(admin.address.toLowerCase());
+
+    const split = Math.floor(canonicalLogs.length / 2);
+    const beforeRestart = new VersionedLogReplay(replayFixture.fixtureVersion);
+    canonicalLogs.slice(0, split).forEach((log) => beforeRestart.apply(log));
+    const afterRestart = new VersionedLogReplay(
+      replayFixture.fixtureVersion,
+      beforeRestart.checkpoint()
+    );
+    canonicalLogs.slice(split).forEach((log) => afterRestart.apply(log));
+    assertReplayDigest(onChainQueryDigest, afterRestart);
+
+    const duplicateDelivery = new VersionedLogReplay(replayFixture.fixtureVersion);
+    [...canonicalLogs, ...canonicalLogs].forEach((log) => duplicateDelivery.apply(log));
+    assertReplayDigest(onChainQueryDigest, duplicateDelivery);
+
+    const missingLog = new VersionedLogReplay(replayFixture.fixtureVersion);
+    canonicalLogs.filter((_, index) => index !== 6).forEach((log) => missingLog.apply(log));
+    expect(() => assertFixtureCompleteness(missingLog.getEvents())).to.throw();
+    expect(() => assertReplayDigest(onChainQueryDigest, missingLog)).to.throw();
+
+    const changedLog = new VersionedLogReplay(replayFixture.fixtureVersion);
+    canonicalLogs.forEach((log, index) => changedLog.apply(
+      index === 6 ? { ...log, data: `${log.data.slice(0, -2)}00` } : log
+    ));
+    expect(() => assertReplayDigest(onChainQueryDigest, changedLog)).to.throw();
+
+    const reorgBlock = canonicalLogs[split].blockNumber;
+    const reorgReplay = new VersionedLogReplay(replayFixture.fixtureVersion);
+    canonicalLogs.forEach((log) => reorgReplay.apply(log));
+    reorgReplay.rollbackFrom(reorgBlock);
+    canonicalLogs
+      .filter((log) => log.blockNumber >= reorgBlock)
+      .map((log) => ({ ...log, blockHash: ethers.keccak256(ethers.toUtf8Bytes(`fork-${log.blockHash}`)) }))
+      .forEach((log) => reorgReplay.apply(log));
+    expect(reorgReplay.getEvents().some((log) => log.blockNumber >= reorgBlock &&
+      log.blockHash === canonicalLogs.find((canonical) => canonical.blockNumber === log.blockNumber)?.blockHash
+    )).to.equal(false);
+    expect(() => assertReplayDigest(onChainQueryDigest, reorgReplay)).to.throw();
+
+    expect(() => new VersionedLogReplay(replayFixture.fixtureVersion + 1)).to.throw();
+    expect(() => {
+      const replay = new VersionedLogReplay(replayFixture.fixtureVersion);
+      replay.apply({ ...canonicalLogs[0], schemaVersion: replayFixture.eventSchemaVersion + 1 });
+    }).to.throw();
   });
 });

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ProtocolExecutionBounds} from "../contracts/performance/ProtocolExecutionBounds.sol";
 import {GasBudgetRegistry} from "../contracts/performance/GasBudgetRegistry.sol";
@@ -10,6 +12,7 @@ import {LoopBoundsCatalog} from "../contracts/performance/LoopBoundsCatalog.sol"
 import {ICriticalPathGasBudgets} from "../contracts/performance/ICriticalPathGasBudgets.sol";
 import {MockERC20} from "../contracts/MockERC20.sol";
 import {HostileTokenRecipient, HostileERC20} from "../contracts/mocks/HostileTokenRecipient.sol";
+import {EmergencyController} from "../contracts/governance/EmergencyController.sol";
 
 contract GasBoundedExecutionTest is Test {
     GasBudgetRegistry internal budgets;
@@ -71,8 +74,8 @@ contract GasBoundedExecutionTest is Test {
     }
 
     function test_GasBudgetsSeededForAllCriticalPaths() public view {
-        assertEq(budgets.budgetCount(), 9);
-        for (uint256 i = 0; i < 9; ++i) {
+        assertEq(budgets.budgetCount(), 12);
+        for (uint256 i = 0; i < 12; ++i) {
             (uint256 maxGas,) = budgets.getBudget(ICriticalPathGasBudgets.Operation(i));
             assertGt(maxGas, 0);
             assertLe(maxGas, ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING);
@@ -80,7 +83,7 @@ contract GasBoundedExecutionTest is Test {
     }
 
     function test_LoopCatalogDocumentsBounds() public view {
-        assertEq(catalog.catalogSize(), 12);
+        assertEq(catalog.catalogSize(), 14);
         LoopBoundsCatalog.LoopBound memory first = catalog.getLoopBound(0);
         assertEq(first.maxIterations, ProtocolExecutionBounds.MAX_VERIFIERS_PER_CLAIM);
     }
@@ -94,6 +97,92 @@ contract GasBoundedExecutionTest is Test {
         ledger.withdraw(1 ether);
         uint256 gasUsed = gasBefore - gasleft();
         assertLe(gasUsed, budget);
+    }
+
+    function test_GovernanceConfigurationGasWithinBudget() public {
+        (uint256 budget,) = budgets.getBudget(ICriticalPathGasBudgets.Operation.GOVERNANCE_CONFIGURATION);
+
+        uint256 gasBefore = gasleft();
+        budgets.updateBudget(
+            ICriticalPathGasBudgets.Operation.GOVERNANCE_CONFIGURATION,
+            budget,
+            "GasBudgetRegistry.updateBudget role-gated configuration"
+        );
+        assertLe(gasBefore - gasleft(), budget);
+    }
+
+    function test_EmergencyPauseGasWithinBudget() public {
+        EmergencyController controller = new EmergencyController(userA, address(this), userB);
+        (uint256 budget,) = budgets.getBudget(ICriticalPathGasBudgets.Operation.EMERGENCY_PAUSE);
+
+        vm.prank(userA);
+        uint256 gasBefore = gasleft();
+        controller.activatePause(controller.LEVEL_HIGH_RISK(), "gas-budget", bytes32("gas"));
+        assertLe(gasBefore - gasleft(), budget);
+    }
+
+    function test_UpdateBudgetRejectsUnauthorizedCaller() public {
+        vm.prank(userA);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                userA,
+                budgets.BUDGET_ADMIN_ROLE()
+            )
+        );
+        budgets.updateBudget(
+            ICriticalPathGasBudgets.Operation.REWARD_CLAIM,
+            1,
+            "unauthorized"
+        );
+    }
+
+    function test_UpdateBudgetRejectsCeilingAndEmptyDescription() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                GasBudgetRegistry.GasBudgetExceedsTransactionCeiling.selector,
+                ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING + 1,
+                ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING
+            )
+        );
+        budgets.updateBudget(
+            ICriticalPathGasBudgets.Operation.REWARD_CLAIM,
+            ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING + 1,
+            "over ceiling"
+        );
+
+        vm.expectRevert(GasBudgetRegistry.EmptyBudgetDescription.selector);
+        budgets.updateBudget(ICriticalPathGasBudgets.Operation.REWARD_CLAIM, 1, "");
+    }
+
+    function test_UpdateBudgetRejectsZeroBudget() public {
+        (uint256 before,) = budgets.getBudget(ICriticalPathGasBudgets.Operation.REWARD_CLAIM);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                GasBudgetRegistry.ZeroGasBudget.selector,
+                ICriticalPathGasBudgets.Operation.REWARD_CLAIM
+            )
+        );
+        budgets.updateBudget(ICriticalPathGasBudgets.Operation.REWARD_CLAIM, 0, "zero budget");
+
+        (uint256 afterUpdate,) = budgets.getBudget(ICriticalPathGasBudgets.Operation.REWARD_CLAIM);
+        assertEq(afterUpdate, before);
+    }
+
+    function test_UpdateBudgetAcceptsCeilingBoundary() public {
+        budgets.updateBudget(
+            ICriticalPathGasBudgets.Operation.APPEAL_SETTLEMENT,
+            ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING,
+            "ceiling boundary"
+        );
+        (uint256 maxGas,) = budgets.getBudget(ICriticalPathGasBudgets.Operation.APPEAL_SETTLEMENT);
+        assertEq(maxGas, ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING);
+    }
+
+    function test_ZeroAdminDeploymentFailsClosed() public {
+        vm.expectRevert(GasBudgetRegistry.ZeroAdmin.selector);
+        new GasBudgetRegistry(address(0));
     }
 
     function test_CreditBatchAtMaxBoundSucceeds() public {

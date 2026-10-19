@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "issue": "V2-SC-038",
+  "issue": "V2-SC-072",
   "referenceBlockGasLimit": 30000000,
   "recommendedTxGasCeiling": 12000000,
   "budgets": {
@@ -12,12 +12,90 @@
     "CHALLENGE_OPEN": 120000,
     "APPEAL_SETTLEMENT": 650000,
     "FINALIZATION": 200000,
-    "WITHDRAWAL": 120000
+    "WITHDRAWAL": 120000,
+    "REWARD_CLAIM": 450000,
+    "GOVERNANCE_CONFIGURATION": 120000,
+    "EMERGENCY_PAUSE": 180000
   },
   "bounds": {
     "MAX_VERIFIERS_PER_CLAIM": 200,
     "MAX_EVIDENCE_PER_CLAIM": 100,
     "MAX_SETTLEMENT_BATCH_SIZE": 200,
     "MAX_REWARD_BATCH_SIZE": 100
-  }
+  },
+  "requiredScenarioFamilies": [
+    "cold",
+    "warm",
+    "first",
+    "repeat",
+    "max-size",
+    "failure",
+    "upgrade",
+    "batch"
+  ],
+  "toolchain": {
+    "foundryVersion": "1.8.3",
+    "solcVersion": "0.8.28",
+    "foundryEvmVersion": "prague",
+    "optimizerRuns": 200,
+    "viaIR": true
+  },
+  "scenarios": [
+    {
+      "id": "registry.read.cold",
+      "families": ["cold"],
+      "function": "GasBudgetRegistry.getBudget",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_registryReadCold()",
+      "maxGas": 100000,
+      "setup": "First registry read in the test transaction"
+    },
+    {
+      "id": "registry.read.warm",
+      "families": ["warm"],
+      "function": "GasBudgetRegistry.getBudget",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_registryReadWarm()",
+      "maxGas": 100000,
+      "setup": "Second registry read after warming the same storage path"
+    },
+    {
+      "id": "registry.update.first",
+      "families": ["first"],
+      "function": "GasBudgetRegistry.updateBudget",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_registryUpdateFirst()",
+      "maxGas": 120000,
+      "setup": "First update of the configured reward-claim budget"
+    },
+    {
+      "id": "registry.update.repeat",
+      "families": ["repeat"],
+      "function": "GasBudgetRegistry.updateBudget",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_registryUpdateRepeat()",
+      "maxGas": 120000,
+      "setup": "Repeated update after the same budget has already been written"
+    },
+    {
+      "id": "settlement.batch.max",
+      "families": ["max-size", "batch"],
+      "function": "PullSettlementLedger.creditBatch",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_settlementBatchAtMaximumBound()",
+      "maxGas": 11000000,
+      "setup": "MAX_SETTLEMENT_BATCH_SIZE beneficiaries"
+    },
+    {
+      "id": "settlement.batch.over-limit",
+      "families": ["failure"],
+      "function": "PullSettlementLedger.creditBatch",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_settlementBatchOverMaximumReverts()",
+      "maxGas": 250000,
+      "setup": "One item above MAX_SETTLEMENT_BATCH_SIZE; expected BatchTooLarge revert"
+    },
+    {
+      "id": "upgrade.proposal",
+      "families": ["upgrade"],
+      "function": "ProtocolUpgradeManager.proposeUpgrade",
+      "snapshotKey": "ScenarioGasSnapshotsTest:test_gas_upgradeProposal()",
+      "maxGas": 600000,
+      "setup": "Registered module and predeployed candidate implementation"
+    }
+  ]
 }

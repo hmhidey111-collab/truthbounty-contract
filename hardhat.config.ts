@@ -1,66 +1,73 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "hardhat-gas-reporter";
-import "@nomicfoundation/hardhat-ignition-ethers";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import hardhatIgnitionEthers from "@nomicfoundation/hardhat-ignition-ethers";
+import hardhatUpgrades from "@openzeppelin/hardhat-upgrades";
 import * as dotenv from "dotenv";
-import "@openzeppelin/hardhat-upgrades";
+
+import {
+  COMPILER_SETTINGS,
+  NETWORKS,
+  RESOLVE_NETWORK_ALIAS,
+} from "./config/networks";
+
+for (const key of Object.keys(NETWORKS)) {
+  const network = NETWORKS[key];
+  if (network.rpcUrlEnv && !network.defaultRpcUrl) {
+    throw new Error(`Network ${key} is missing a defaultRpcUrl`);
+  }
+}
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
-solidity: {
-    version: "0.8.28",
-    settings: {
-      evmVersion: "cancun",
-      viaIR: true,
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-    },
-  },
+  plugins: [hardhatToolboxMochaEthers, hardhatIgnitionEthers, hardhatUpgrades],
+  solidity: COMPILER_SETTINGS,
   networks: {
-    hardhat: {
+    hardhat:{
+      type: "edr-simulated",
+      chainId: 31337,
+      allowUnlimitedContractSize: true,
+    },
+    hardhatMainnet: {
+      type: "edr-simulated",
+      chainId: 31337,
       allowUnlimitedContractSize: true,
     },
     optimismSepolia: {
+      type: "http",
       url:
-        process.env.OPTIMISM_SEPOLIA_RPC_URL || "https://sepolia.optimism.io",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 11155420,
+        process.env.OPTIMISM_SEPOLIA_RPC_URL ||
+        NETWORKS.optimismSepolia.defaultRpcUrl,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : "remote",
+      chainId: NETWORKS.optimismSepolia.chainId,
       gas: "auto",
       gasPrice: process.env.OPTIMISM_SEPOLIA_GAS_PRICE
         ? parseInt(process.env.OPTIMISM_SEPOLIA_GAS_PRICE)
         : undefined,
     },
     optimismMainnet: {
+      type: "http",
       url:
-        process.env.OPTIMISM_MAINNET_RPC_URL || "https://mainnet.optimism.io",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 10,
+        process.env.OPTIMISM_MAINNET_RPC_URL ||
+        NETWORKS.optimismMainnet.defaultRpcUrl,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : "remote",
+      chainId: NETWORKS.optimismMainnet.chainId,
       gas: "auto",
       gasPrice: process.env.OPTIMISM_MAINNET_GAS_PRICE
         ? parseInt(process.env.OPTIMISM_MAINNET_GAS_PRICE)
         : undefined,
     },
   },
-  etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY || "",
-      optimisticEthereum: process.env.OPTIMISM_ETHERSCAN_API_KEY || "",
-      optimisticSepolia: process.env.OPTIMISM_ETHERSCAN_API_KEY || "",
-    },
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS === "true",
-    outputFile: ".gas-reports.json",
-    noColors: true,
-    excludeContracts: [],
-    // @ts-ignore
-    snapshots: {
-      outputFile: ".gas-snapshots.json",
+  verify: {
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY || "",
     },
   },
 };
+
+// Normalize legacy / aliased network names (e.g. `optimism_sepolia` -> `optimismSepolia`).
+// Hardhat does not expose a public alias API, so we export the mapping for tooling and
+// deployment scripts to resolve network names consistently.
+export const networkAliases = RESOLVE_NETWORK_ALIAS;
 
 export default config;

@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 1,
+  "kind": "truthbounty.release-definition",
+  "releaseName": "truthbounty-v2-op-sepolia-rc1",
+  "protocolVersion": "2.0.0",
+  "configurationVersion": 1,
+  "status": "candidate",
+  "evidenceClass": "not-deployed",
+  "build": {
+    "solc": "0.8.28",
+    "evmVersion": "cancun",
+    "viaIR": true,
+    "optimizerRuns": 200,
+    "metadataBytecodeHash": "ipfs",
+    "node": ">=20",
+    "npm": ">=10",
+    "foundry": "1.8.3"
+  },
+  "deterministicDeployment": {
+    "factory": {
+      "address": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+      "kind": "deterministic-deployment-proxy",
+      "codeHash": "0x2fa86add0aed31f33a762c9d88e807c475bd51d0f52bd0955754b2608f7e4989"
+    },
+    "saltDomain": "truthbounty:optimism-sepolia:v2.0.0-rc.1",
+    "noncePlan": {
+      "broadcasterTransactions": 1,
+      "note": "one factory call per contract; the broadcaster nonce sequence is irrelevant because addresses derive from CREATE2"
+    }
+  },
+  "referenceBlock": {
+    "number": 50207495,
+    "hash": "0x5ae4b51ae2f8260d31da3877a5718f2f85d1fcfd149bd2fb1382b7874b6a4647",
+    "timestamp": 1792217530,
+    "chainId": 11155420
+  },
+  "custody": {
+    "bootstrapAdmin": {
+      "address": "0x7c01ef6f969f3b6065b558ea6f565ee8453a1424",
+      "custody": "unassigned",
+      "label": "unassigned bootstrapAdmin custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "timelock": {
+      "address": "0x199050d41e82bf7fac4653e1b52994d79c48154e",
+      "custody": "unassigned",
+      "label": "unassigned timelock custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "guardian": {
+      "address": "0x0cb3043ca94b8cac2aa8e54476fc60f78fea0c45",
+      "custody": "unassigned",
+      "label": "unassigned guardian custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "emergencyCouncil": {
+      "address": "0xc8644c8ca2c2983cb1b3c7d2b5d58be411888ca4",
+      "custody": "unassigned",
+      "label": "unassigned emergencyCouncil custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "treasury": {
+      "address": "0x03ef6d3add83fb59634aed72ddf05a419222f182",
+      "custody": "unassigned",
+      "label": "unassigned treasury custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "pauseInitiator": {
+      "address": "0x08218cc901f0a1f6f3b796a77b2829b01db4a205",
+      "custody": "unassigned",
+      "label": "unassigned pauseInitiator custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "pauseResolver": {
+      "address": "0x6380bb682585735a8c52cc6519706217929bb659",
+      "custody": "unassigned",
+      "label": "unassigned pauseResolver custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "upgradeAdmin": {
+      "address": "0xbc51daa19e81442bba04c2f7dfb59e30605a9c83",
+      "custody": "unassigned",
+      "label": "unassigned upgradeAdmin custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    },
+    "releasePublisher": {
+      "address": "0xce93ece2bca89d0fe22b3288e5de517d8ef3221c",
+      "custody": "unassigned",
+      "label": "unassigned releasePublisher custody slot",
+      "derivation": "keccak256(\"truthbounty:optimism-sepolia:custody:<slot>\")[12:]"
+    }
+  },
+  "contracts": [
+    {
+      "name": "RewardToken",
+      "kind": "token",
+      "source": "contracts/RewardToken.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IERC20",
+        "IERC20Metadata",
+        "IAccessControl"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        "1000000000000000000000000000"
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "MINTER_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "BURNER_ROLE",
+          "custody": "timelock"
+        }
+      ]
+    },
+    {
+      "name": "ModuleRegistry",
+      "kind": "registry",
+      "source": "contracts/v2/ModuleRegistry.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IModuleRegistry",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        {
+          "custody": "timelock"
+        },
+        {
+          "custody": "guardian"
+        }
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "DEPLOYMENT_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "GOVERNANCE_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "GUARDIAN_ROLE",
+          "custody": "guardian"
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "kind": "module",
+      "source": "contracts/v2/Claims.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IClaims",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        "$contract:RewardToken",
+        {
+          "custody": "treasury"
+        },
+        "100000000000000000000",
+        "0"
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "CLAIM_MANAGER_ROLE",
+          "custody": "timelock"
+        }
+      ]
+    },
+    {
+      "name": "StakeVault",
+      "kind": "vault",
+      "source": "contracts/v2/StakeVault.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IStakeCustody",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        "$contract:ModuleRegistry",
+        "$contract:RewardToken",
+        {
+          "custody": "timelock"
+        }
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "MODULE_SETTLEMENT",
+          "contract": "FinalRewardAllocator"
+        },
+        {
+          "role": "MODULE_VERIFICATION",
+          "contract": "Aggregation"
+        }
+      ]
+    },
+    {
+      "name": "EvidenceRegistry",
+      "kind": "module",
+      "source": "contracts/v2/EvidenceRegistry.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IEvidence",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        "$contract:Claims"
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "EVIDENCE_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "PAUSER_ROLE",
+          "custody": "guardian"
+        }
+      ]
+    },
+    {
+      "name": "Aggregation",
+      "kind": "module",
+      "source": "contracts/v2/Aggregation.sol",
+      "accessControl": false,
+      "interfaces": [
+        "IAggregation",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        "$contract:ModuleRegistry"
+      ],
+      "roles": []
+    },
+    {
+      "name": "FinalRewardAllocator",
+      "kind": "module",
+      "source": "contracts/v2/FinalRewardAllocator.sol",
+      "accessControl": false,
+      "interfaces": [
+        "IFinalRewardAllocator",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        "$contract:ModuleRegistry",
+        "200"
+      ],
+      "roles": []
+    },
+    {
+      "name": "EmergencyControls",
+      "kind": "control",
+      "source": "contracts/v2/EmergencyControls.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IEmergencyControls",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        {
+          "custody": "emergencyCouncil"
+        },
+        {
+          "custody": "timelock"
+        }
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "GOVERNANCE_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "EMERGENCY_ROLE",
+          "custody": "emergencyCouncil"
+        }
+      ]
+    },
+    {
+      "name": "EmergencyGatekeeper",
+      "kind": "control",
+      "source": "contracts/v2/EmergencyGatekeeper.sol",
+      "accessControl": true,
+      "interfaces": [
+        "IEmergencyControls",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "custody": "timelock"
+        },
+        {
+          "custody": "pauseInitiator"
+        },
+        {
+          "custody": "pauseResolver"
+        },
+        "3600"
+      ],
+      "roles": [
+        {
+          "role": "DEFAULT_ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "ADMIN_ROLE",
+          "custody": "timelock"
+        },
+        {
+          "role": "PAUSE_INITIATOR",
+          "custody": "pauseInitiator"
+        },
+        {
+          "role": "PAUSE_RESOLVER",
+          "custody": "pauseResolver"
+        }
+      ]
+    },
+    {
+      "name": "EventCompletenessAnchor",
+      "kind": "anchor",
+      "source": "contracts/v2/EventCompletenessAnchor.sol",
+      "accessControl": false,
+      "interfaces": [
+        "IEventCompleteness",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "chainId": "11155420",
+          "completenessVersion": "1",
+          "moduleCount": "8",
+          "cellCount": "30",
+          "bindingCount": "57",
+          "catalogueRoot": "0x1764935cecbbcfc6d387c9f03037d65e6ffabaaa19450c93cfc4f800498efb58",
+          "everyMutationEmits": true,
+          "mutationsAreTerminal": true,
+          "orderIsTotal": true,
+          "projectionIsDeterministic": true
+        },
+        {
+          "custody": "releasePublisher"
+        }
+      ],
+      "roles": []
+    },
+    {
+      "name": "ConsumerGuaranteesAnchor",
+      "kind": "anchor",
+      "source": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+      "accessControl": false,
+      "interfaces": [
+        "IConsumerGuarantees",
+        "IV2Module"
+      ],
+      "constructorArgs": [
+        {
+          "confirmationDepth": "1800",
+          "maxFinalityClass": "2",
+          "maxReorgDepth": "12",
+          "eventsAreReplayable": true,
+          "eventKeysAreUnique": true,
+          "eventsAreTerminalOnEmission": true
+        },
+        {
+          "custody": "releasePublisher"
+        }
+      ],
+      "roles": []
+    }
+  ],
+  "roleOwnership": [
+    {
+      "class": "governance",
+      "description": "Protocol governance is the timelock; no EOA may hold upgrade, parameter, or treasury authority.",
+      "mechanism": "ModuleRegistry.GOVERNANCE_ROLE and EmergencyControls.GOVERNANCE_ROLE are held by the timelock custody slot.",
+      "holder": {
+        "custodyRef": "timelock"
+      }
+    },
+    {
+      "class": "timelock",
+      "description": "Minimum 172800s delay on every governed action including module replacement and governed unpause.",
+      "mechanism": "Timelock custody slot executes all grants, replacements, and unpause resolutions.",
+      "holder": {
+        "custodyRef": "timelock"
+      }
+    },
+    {
+      "class": "guardian",
+      "description": "Guardian can veto/pause but can never mutate the module registry or unpause unilaterally.",
+      "mechanism": "GUARDIAN_ROLE on ModuleRegistry and PAUSER_ROLE on EvidenceRegistry.",
+      "holder": {
+        "custodyRef": "guardian"
+      }
+    },
+    {
+      "class": "upgradeAdmin",
+      "description": "No proxy admin and no retained deployer upgrade authority; module replacement is the only upgrade path.",
+      "mechanism": "ModuleRegistry replacement requires GOVERNANCE_ROLE plus a 172800s timelock; DEPLOYMENT_ROLE is renounced at finalization.",
+      "holder": {
+        "custodyRef": "upgradeAdmin"
+      }
+    },
+    {
+      "class": "treasury",
+      "description": "Claim fees and treasury flows route to the treasury custody slot, never to the deployer.",
+      "mechanism": "Claims.feeRecipient and treasury role grants.",
+      "holder": {
+        "custodyRef": "treasury"
+      }
+    },
+    {
+      "class": "operational",
+      "description": "Pause initiation and resolution are split across two separate custody slots.",
+      "mechanism": "EmergencyGatekeeper.PAUSE_INITIATOR (initiator) and PAUSE_RESOLVER (resolver) with a 3600s rewire delay.",
+      "holder": {
+        "custodyRef": "pauseInitiator"
+      }
+    }
+  ],
+  "consumers": {
+    "api": [
+      "ModuleRegistry",
+      "StakeVault",
+      "EvidenceRegistry",
+      "Aggregation",
+      "Claims",
+      "FinalRewardAllocator",
+      "EventCompletenessAnchor",
+      "ConsumerGuaranteesAnchor"
+    ],
+    "frontend": [
+      "ModuleRegistry",
+      "StakeVault",
+      "Claims",
+      "EvidenceRegistry",
+      "EmergencyControls",
+      "EmergencyGatekeeper",
+      "EventCompletenessAnchor",
+      "ConsumerGuaranteesAnchor"
+    ]
+  },
+  "commands": {
+    "build": "forge build && npx hardhat compile",
+    "generate": "node scripts/generateOptimismSepoliaReleasePackage.mjs --write",
+    "check": "node scripts/check-optimism-sepolia-release.mjs --with-artifacts",
+    "deploy": "npx hardhat run scripts/deployOptimismSepoliaRelease.ts --network optimismSepolia",
+    "verify": "npx hardhat run scripts/verifyOptimismSepoliaRelease.ts --network optimismSepolia",
+    "onchain": "node scripts/check-optimism-sepolia-release.mjs --onchain --rpc-url $OPTIMISM_SEPOLIA_RPC_URL",
+    "reproduce": "git clean -xdf -e node_modules && npm ci && forge build && npx hardhat compile && node scripts/check-optimism-sepolia-release.mjs --with-artifacts"
+  },
+  "rollback": {
+    "pause": "EmergencyGatekeeper.pause(scope) by PAUSE_INITIATOR \u2014 scope-bounded, never protocol-wide by default.",
+    "unpause": "Governed unpause only: the timelock executes EmergencyGatekeeper.resolve(scope) after the 172800s delay; the guardian cannot unpause.",
+    "roleTransfer": "Re-run the finalization grant/renounce sequence, then `forge script script/deploy/VerifyRoleRenunciation.s.sol` against the canonical address set.",
+    "upgradeRollback": "Before execution call ModuleRegistry.cancelModuleReplacement(moduleId); after execution re-register the previous implementation (GOVERNANCE_ROLE + 172800s timelock). Storage layouts are frozen by storage-layouts/manifest.json.",
+    "recovery": "Follow docs/runbooks/rollback.md: pause the affected scope, restore the previous release package by releaseId, replay events from the pinned eventStartCursor, and verify roles with PostDeploymentRoleCheck."
+  },
+  "blockers": [
+    "External custody slots (bootstrapAdmin, timelock, guardian, emergencyCouncil, treasury, pauseInitiator, pauseResolver, upgradeAdmin, releasePublisher) are unassigned until the maintainer supplies Optimism Sepolia owner addresses.",
+    "Deployment has not been broadcast: deployment.blockNumber, deployment.blockHash, deployment.timestamp and deployment.eventStartCursor are unset.",
+    "Explorer source verification has not been executed (0 of 11 contracts verified).",
+    "Read-only on-chain code/role verification has not been executed against Optimism Sepolia."
+  ],
+  "disclaimers": [
+    "This package targets Optimism Sepolia (chain id 11155420) only. It is not a mainnet deployment and is not mainnet approval.",
+    "No private key, mnemonic, API key, or production secret is embedded; deployment keys are supplied only through the operator environment.",
+    "Publication requires status=published with on-chain evidence for every canonical contract."
+  ]
+}

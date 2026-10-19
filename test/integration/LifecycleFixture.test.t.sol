@@ -21,9 +21,17 @@ contract LifecycleFixtureTest is LifecycleFixture {
         (, , , , , bool settled, , , , , , ) = truthBounty.claims(claimId);
         assertTrue(settled, "Claim should be settled");
         
-        // Verify balances (verifiers won the undisputed claim and should receive rewards)
-        assertTrue(bountyToken.balanceOf(verifier1) > initialBal1, "Verifier 1 should have received rewards");
-        assertTrue(bountyToken.balanceOf(verifier2) > initialBal2, "Verifier 2 should have received rewards");
+        // A unanimous settlement has no losing stake to slash, so the reward pool is zero
+        // by construction: winners get their full stake back and the claim is finalised.
+        (, , , , , bool v1RewardClaimed, bool v1StakeReturned, , , , ) = truthBounty.votes(claimId, verifier1);
+        assertTrue(v1RewardClaimed, "V1 claim processed");
+        assertTrue(v1StakeReturned, "V1 stake returned");
+        assertEq(bountyToken.balanceOf(verifier1), initialBal1, "Verifier 1 recovered full stake");
+
+        (, , , , , bool v2RewardClaimed, bool v2StakeReturned, , , , ) = truthBounty.votes(claimId, verifier2);
+        assertTrue(v2RewardClaimed, "V2 claim processed");
+        assertTrue(v2StakeReturned, "V2 stake returned");
+        assertEq(bountyToken.balanceOf(verifier2), initialBal2, "Verifier 2 recovered full stake");
     }
 
     function testChallengedClaimLifecycle_ChallengerWins() public {

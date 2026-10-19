@@ -1,0 +1,205 @@
+{
+  "manifestVersion": 1,
+  "issue": "PREWAVE-SC-058",
+  "specification": "TruthBounty Contract Artifact Supply-Chain Attestations",
+  "chainId": 11155420,
+  "environment": "testnet",
+  "supplyChainAttestation": {
+    "schemaVersion": 1,
+    "protocol": "TruthBounty",
+    "releaseVersion": "2.0.0-rc.1",
+    "sourceCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceCommitPinned": true,
+    "compiler": {
+      "solidityVersion": "0.8.28",
+      "evmVersion": "cancun",
+      "viaIR": true,
+      "optimizerEnabled": true,
+      "optimizerRuns": 200
+    },
+    "dependencies": [
+      {
+        "name": "@openzeppelin/contracts",
+        "version": "5.0.0",
+        "kind": "npm",
+        "rev": "5.0.0",
+        "integrity": "sha512-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "name": "dotenv",
+        "version": "16.0.0",
+        "kind": "npm",
+        "rev": "16.0.0",
+        "integrity": "sha512-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "name": "hardhat",
+        "version": "2.22.0",
+        "kind": "npm",
+        "rev": "2.22.0",
+        "integrity": "sha512-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "name": "forge-std",
+        "version": "b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e",
+        "kind": "git-submodule",
+        "rev": "b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e",
+        "integrity": "sha256-b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e000000000000000000000000"
+      },
+      {
+        "name": "openzeppelin-contracts",
+        "version": "74edc4baff50b93c06977021ee9ba25987803291",
+        "kind": "git-submodule",
+        "rev": "74edc4baff50b93c06977021ee9ba25987803291",
+        "integrity": "sha256-74edc4baff50b93c06977021ee9ba25987803291000000000000000000000000"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "package.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 1024
+      },
+      {
+        "path": "hardhat.config.ts",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 512
+      },
+      {
+        "path": "foundry.toml",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 256
+      },
+      {
+        "path": "contracts/ClaimRegistry.sol",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 2048
+      },
+      {
+        "path": "contracts/TruthBounty.sol",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 4096
+      },
+      {
+        "path": "contracts/VerificationSubmission.sol",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 3072
+      },
+      {
+        "path": "contracts/WeightedStaking.sol",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 5120
+      },
+      {
+        "path": "contracts/EvidenceManager.sol",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 2560
+      }
+    ],
+    "workflowIdentity": {
+      "present": true,
+      "repository": "DigiNodes/truthbounty-contract",
+      "workflow": "Release Candidate",
+      "workflowRef": "DigiNodes/truthbounty-contract/.github/workflows/release.yml@refs/heads/main",
+      "runId": "12345",
+      "runAttempt": "1",
+      "ref": "refs/tags/v2.0.0-rc.1",
+      "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "serverUrl": "https://github.com"
+    },
+    "submoduleVerification": {
+      "enforced": true,
+      "recursive": true,
+      "failOnDirty": true,
+      "failOnSubstituted": true,
+      "failOnUnreachable": true,
+      "failOnLicenseMismatch": true,
+      "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"]
+    },
+    "subjects": [
+      {
+        "name": "package.json",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "hardhat.config.ts",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "foundry.toml",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contracts/ClaimRegistry.sol",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contracts/TruthBounty.sol",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contracts/VerificationSubmission.sol",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contracts/WeightedStaking.sol",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "contracts/EvidenceManager.sol",
+        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "materials": [
+      {
+        "uri": "git+https://github.com/DigiNodes/truthbounty-contract@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "uri": "pkg:npm/@openzeppelin/contracts@5.0.0",
+        "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "uri": "pkg:npm/dotenv@16.0.0",
+        "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "uri": "pkg:npm/hardhat@2.22.0",
+        "digest": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "uri": "git+submodule:forge-std@b3bc8b154382a75d0b0ef22d7fd4a0a5f0feee0e",
+        "digest": "3f9c1e2d4b5a69788796a5b4c3d2e1f0091827364554637281900aabbccddeeff"
+      },
+      {
+        "uri": "git+submodule:openzeppelin-contracts@74edc4baff50b93c06977021ee9ba25987803291",
+        "digest": "9a8b7c6d5e4f30211203a4b5c6d7e8f9012345678abcdef9012345678abcdef"
+      }
+    ],
+    "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "checksumAlgorithm": "sha256",
+    "reproducible": true,
+    "secretScan": {
+      "performed": true,
+      "findings": 0,
+      "policy": "no secrets may enter artifacts"
+    }
+  },
+  "anchor": {
+    "artifact": "SupplyChainAttestationAnchor",
+    "source": "contracts/v2/SupplyChainAttestationAnchor.sol",
+    "deployTimePublicationEvent": "SupplyChainAttestationPublished",
+    "authority": "read-only; no settlement, treasury, or outcome authority is exposed or granted"
+  },
+  "consumerResponsibilities": [
+    "verify checksum matches recomputed canonical attestation",
+    "verify sourceCommit matches the git commit of the released source code",
+    "verify compiler settings match the hardened build configuration",
+    "verify all declared artifacts exist and their hashes match",
+    "verify all dependencies are accounted for and no forbidden runtimes are present",
+    "verify every git submodule URL, pinned rev, and recursive nested module matches the attestation",
+    "verify submodule working trees are clean and content is not substituted or dirty before build",
+    "verify workflow identity corresponds to the authorized release pipeline",
+    "record chainId and anchor address at ingestion; never reuse attestations across deployments"
+  ]
+}

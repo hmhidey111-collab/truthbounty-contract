@@ -10,12 +10,14 @@ import {IGovernedModuleRegistry} from "./IGovernedModuleRegistry.sol";
  * @dev Only the timelock (via governance) or admin may mutate the registry during bootstrap.
  */
 contract GovernedModuleRegistry is IGovernedModuleRegistry, AccessControl {
+    /// @notice Role permitted to mutate the governed module allowlist.
     bytes32 public constant REGISTRY_ADMIN_ROLE = keccak256("REGISTRY_ADMIN_ROLE");
 
     mapping(address => bool) private _isRegistered;
     mapping(bytes32 => address) private _moduleByKey;
     address[] private _modules;
 
+    /// @param admin Bootstrap administrator receiving the default admin and registry admin roles.
     constructor(address admin) {
         if (admin == address(0)) revert ZeroModuleAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);

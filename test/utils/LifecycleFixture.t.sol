@@ -67,11 +67,11 @@ contract LifecycleFixture is Test {
     function driveUndisputedClaim(bool pass) public returns (uint256 claimId) {
         claimId = _createAndStake(submitter, "Undisputed Claim Content");
         
-        // Verifiers stake
-        vm.prank(verifier1);
+        // Verifiers stake. `stake` requires msg.sender == tx.origin, so prank both.
+        vm.prank(verifier1, verifier1);
         truthBounty.stake(100 ether);
         
-        vm.prank(verifier2);
+        vm.prank(verifier2, verifier2);
         truthBounty.stake(100 ether);
 
         // Verifiers vote
@@ -104,25 +104,23 @@ contract LifecycleFixture is Test {
     function driveChallengedClaim(bool challengerWins) public returns (uint256 claimId) {
         claimId = _createAndStake(submitter, "Challenged Claim Content");
         
-        // Verifier 1 & 2 support, Verifier 3 & 4 oppose
-        vm.prank(verifier1); truthBounty.stake(100 ether);
-        vm.prank(verifier2); truthBounty.stake(100 ether);
-        vm.prank(verifier3); truthBounty.stake(100 ether);
-        vm.prank(verifier4); truthBounty.stake(100 ether);
+        // Vote sizes are chosen so one side clears the 60% settlement threshold and the
+        // other cannot, with every vote >= the 100 minimum stake and within available stake.
+        uint256 supportStake = challengerWins ? 100 ether : 200 ether;
+        uint256 opposeStake = challengerWins ? 200 ether : 100 ether;
+
+        // Verifier 1 & 2 support, Verifier 3 & 4 oppose.
+        // `stake` requires msg.sender == tx.origin, so prank both.
+        vm.prank(verifier1, verifier1); truthBounty.stake(supportStake);
+        vm.prank(verifier2, verifier2); truthBounty.stake(supportStake);
+        vm.prank(verifier3, verifier3); truthBounty.stake(opposeStake);
+        vm.prank(verifier4, verifier4); truthBounty.stake(opposeStake);
         
-        vm.prank(verifier1); truthBounty.vote(claimId, true, 100 ether);
-        vm.prank(verifier2); truthBounty.vote(claimId, true, 100 ether);
+        vm.prank(verifier1); truthBounty.vote(claimId, true, supportStake);
+        vm.prank(verifier2); truthBounty.vote(claimId, true, supportStake);
         
-        // Challengers
-        if (challengerWins) {
-            // Oppose with more stake (or reputation)
-            vm.prank(verifier3); truthBounty.vote(claimId, false, 150 ether);
-            vm.prank(verifier4); truthBounty.vote(claimId, false, 150 ether);
-        } else {
-            // Oppose with less stake
-            vm.prank(verifier3); truthBounty.vote(claimId, false, 50 ether);
-            vm.prank(verifier4); truthBounty.vote(claimId, false, 50 ether);
-        }
+        vm.prank(verifier3); truthBounty.vote(claimId, false, opposeStake);
+        vm.prank(verifier4); truthBounty.vote(claimId, false, opposeStake);
 
         vm.warp(block.timestamp + truthBounty.verificationWindowDuration() + truthBounty.confirmationDelay() + 1);
         

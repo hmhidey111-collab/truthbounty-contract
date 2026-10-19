@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 1,
+  "protocol": "TruthBounty",
+  "releaseVersion": "2.0.0",
+  "model": {
+    "base": 375,
+    "topic": 375,
+    "dataByte": 8,
+    "indexToggleGasPerStaticWord": 119,
+    "note": "LOG gas only; excludes memory expansion and the emitting call's own execution."
+  },
+  "eventCount": 46,
+  "totalLogGas": 113876,
+  "maxLogGas": {
+    "signature": "CommitSubmitted(uint256,uint256,address,bytes32,uint64,uint64,uint256,uint64)",
+    "logGas": 3155
+  },
+  "events": [
+    {
+      "signature": "AggregationFinalized(uint256,bool,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 2,
+      "indexedFields": 1,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 2405
+    },
+    {
+      "signature": "AssetRecoveryCancelledV2(bytes32,address)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 0,
+      "dynamic": false,
+      "logGas": 1500
+    },
+    {
+      "signature": "AssetRecoveryExecutedV2(bytes32,address,address,uint256,address,uint256)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "AssetRecoveryQueuedV2(bytes32,address,address,uint256,address,uint256,uint256)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "ClaimCreated(uint256,address,bytes32,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "ClaimStateChanged(uint256,uint8,uint8,address,uint64,bytes32,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 2780
+    },
+    {
+      "signature": "CommitReplaced(uint256,uint256,address,bytes32,bytes32,uint16,uint64)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "CommitSubmitted(uint256,uint256,address,bytes32,uint64,uint64,uint256,uint64)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 3155
+    },
+    {
+      "signature": "DisputeOpened(uint256,uint256,address,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "DisputeResolved(uint256,uint8,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "EmergencyPaused(bytes32,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "EmergencyUnpaused(bytes32,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "EvidenceStatusChanged(uint256,uint8,uint8,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2524
+    },
+    {
+      "signature": "EvidenceSubmitted(uint256,uint256,address,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "FundsDeposited(address,uint256,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "FundsWithdrawn(address,uint256,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "GovernanceActionAuthorized(bytes32,address,bytes4,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2387
+    },
+    {
+      "signature": "GovernanceActionConsumed(bytes32,address,bytes4,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2387
+    },
+    {
+      "signature": "MissedRevealRecorded(uint256,uint256,address,bytes32,uint256,uint64)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "ModuleRegistered(bytes32,address,uint16,uint16,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2524
+    },
+    {
+      "signature": "ModuleRemoved(bytes32,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "ParameterSetPublished(uint256,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "RewardAccrued(uint256,address,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "RewardAllocated(bytes32,uint8,address,address,uint256)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2387
+    },
+    {
+      "signature": "RewardClaimed(address,address,uint256)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 32,
+      "dynamic": false,
+      "logGas": 1756
+    },
+    {
+      "signature": "RewardClaimed(address,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 2,
+      "indexedFields": 1,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 1893
+    },
+    {
+      "signature": "RewardPoolFunded(address,uint256,bytes32)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 32,
+      "dynamic": false,
+      "logGas": 1756
+    },
+    {
+      "signature": "RewardsFinalized(bytes32,address,uint8,uint256)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "RootAccepted(uint256,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2012
+    },
+    {
+      "signature": "RootProposed(uint256,bytes32,address,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 64,
+      "dynamic": false,
+      "logGas": 2387
+    },
+    {
+      "signature": "RoundRegistered(uint256,uint256,uint64,uint64,uint64,uint8)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2524
+    },
+    {
+      "signature": "SettlementExecuted(uint256,address,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "SettlementQueued(uint256,address,uint256,uint256,uint64,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 2780
+    },
+    {
+      "signature": "SlashExecuted(bytes32,address,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "SlashProposed(bytes32,uint256,address,uint256,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "StakeDeposited(address,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "StakeReleased(address,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 3,
+      "indexedFields": 2,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2268
+    },
+    {
+      "signature": "StakeSlashed(address,uint256,uint256,bytes32,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 96,
+      "dynamic": false,
+      "logGas": 2643
+    },
+    {
+      "signature": "VaultCarriedForward(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 3155
+    },
+    {
+      "signature": "VaultFinalUnlocked(address,address,uint256,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "VaultRefundedInconclusive(address,address,uint256,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "VaultRolledOver(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 3155
+    },
+    {
+      "signature": "VaultSettledConclusive(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 160,
+      "dynamic": false,
+      "logGas": 3155
+    },
+    {
+      "signature": "VerificationSubmitted(uint256,uint256,address,bool,uint256,uint64,uint16)",
+      "source": "released-layout",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "VoteRevealed(uint256,uint256,address,uint8,bytes32,uint256,uint64)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    },
+    {
+      "signature": "VoterSlashed(uint256,uint256,address,uint256,uint256,bytes32,uint64)",
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "topics": 4,
+      "indexedFields": 3,
+      "dataBytes": 128,
+      "dynamic": false,
+      "logGas": 2899
+    }
+  ]
+}

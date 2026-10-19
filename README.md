@@ -1,5 +1,6 @@
 # 📜 TruthBounty Smart Contracts
 
+
 **On-chain Incentives & Verification Logic**  
 *Smart contracts powering decentralized truth verification across Ethereum and Stellar*
 
@@ -48,6 +49,7 @@ The protocol release process is documented in:
 - docs/release/release-candidate-process.md
 - docs/release/mainnet-readiness-scorecard.md
 - docs/runbooks/
+- [docs/storage-layout-compatibility.md](docs/storage-layout-compatibility.md) — automated upgradeable storage layout gate (V2-SC-046)
 
 ### Core Modules
 
@@ -114,17 +116,21 @@ OPTIMISM_ETHERSCAN_API_KEY=your_optimism_etherscan_api_key
 
 ### Prerequisites
 
-- Node.js v18+
-- npm or yarn
+- Node.js v20 LTS or v22 LTS (`>=20.0.0`, enforced via `engines` in `package.json`)
+- npm v10+ (required — this repository is npm-managed; no lockfile is maintained for yarn/pnpm)
 - Git
+
+### Toolchain note (Hardhat 2 baseline)
+
+This repository is standardized on the **Hardhat 2** toolchain (Hardhat `2.29.1` with matching plugin majors). A migration to **Hardhat 3 is explicitly out of scope** and must be proposed as a separate, individually approved epic — do not bundle it into other work. When bumping dependencies, keep every plugin inside its Hardhat 2 peer range (e.g. `@nomicfoundation/hardhat-ethers` 3.x, `@typechain/hardhat` 9.x, `typechain` 8.x, `chai` 4.x); `hardhat-toolbox@6.1.2` pins the compatible set.
 
 ---
 
 ### Installation
 
 ```bash
-git clone https://github.com/DigiNodes/truthbounty-contracts.git
-cd truthbounty-contracts
+git clone https://github.com/DigiNodes/truthbounty-contract.git
+cd truthbounty-contract
 
 npm install
 ```

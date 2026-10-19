@@ -2,6 +2,12 @@ import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { ethers } from "hardhat";
 
+// V2-SC-062: all settleClaim / settleClaimsBatch calls require a unique settlementId.
+// Helper to produce deterministic test ids.
+function sid(tag: string) {
+  return ethers.keccak256(ethers.toUtf8Bytes(tag));
+}
+
 describe("TruthBountyClaims", function () {
   async function deployFixture() {
     const [admin, user, other] = await ethers.getSigners();
@@ -26,9 +32,9 @@ describe("TruthBountyClaims", function () {
     // Fund the claims contract
     await token.mint(claims.target, amount);
 
-    await expect(claims.connect(admin).settleClaim(user.address, amount))
+    await expect(claims.connect(admin).settleClaim(user.address, amount, sid("single-1")))
       .to.emit(claims, "ClaimSettled")
-      .withArgs(user.address, amount);
+      .withArgs(user.address, amount, sid("single-1"));
 
     expect(await token.balanceOf(user.address)).to.equal(amount);
   });
@@ -43,9 +49,11 @@ describe("TruthBountyClaims", function () {
     // Fund contract
     await token.mint(claims.target, total);
 
-    await expect(claims.connect(admin).settleClaimsBatch([user.address, other.address], [a1, a2]))
+    await expect(
+      claims.connect(admin).settleClaimsBatch([user.address, other.address], [a1, a2], sid("batch-1"))
+    )
       .to.emit(claims, "BatchSettlementCompleted")
-      .withArgs(2);
+      .withArgs(2, sid("batch-1"));
 
     expect(await token.balanceOf(user.address)).to.equal(a1);
     expect(await token.balanceOf(other.address)).to.equal(a2);
@@ -63,16 +71,16 @@ describe("TruthBountyClaims", function () {
     await token.mint(claims.target, singleAmount + batch1 + batch2);
 
     // Single path
-    await expect(claims.connect(admin).settleClaim(user.address, singleAmount))
+    await expect(claims.connect(admin).settleClaim(user.address, singleAmount, sid("shadow-single")))
       .to.emit(claims, "ClaimSettled")
-      .withArgs(user.address, singleAmount);
+      .withArgs(user.address, singleAmount, sid("shadow-single"));
 
     // Batch path - same internal _settle, no shadowing across iterations
     const tx = claims
       .connect(admin)
-      .settleClaimsBatch([user.address, other.address], [batch1, batch2]);
-    await expect(tx).to.emit(claims, "ClaimSettled").withArgs(user.address, batch1);
-    await expect(tx).to.emit(claims, "ClaimSettled").withArgs(other.address, batch2);
+      .settleClaimsBatch([user.address, other.address], [batch1, batch2], sid("shadow-batch"));
+    await expect(tx).to.emit(claims, "ClaimSettled").withArgs(user.address, batch1, sid("shadow-batch"));
+    await expect(tx).to.emit(claims, "ClaimSettled").withArgs(other.address, batch2, sid("shadow-batch"));
 
     expect(await token.balanceOf(user.address)).to.equal(singleAmount + batch1);
     expect(await token.balanceOf(other.address)).to.equal(batch2);
@@ -123,10 +131,11 @@ describe("TruthBountyClaims", function () {
       const { token, claims, beneficiary1 } = await loadFixture(deployFixture);
 
       const amount = hre.ethers.parseUnits("10", 18);
+      const id = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("test-single-1"));
 
-      await expect(claims.settleClaim(beneficiary1.address, amount))
+      await expect(claims.settleClaim(beneficiary1.address, amount, id))
         .to.emit(claims, "ClaimSettled")
-        .withArgs(beneficiary1.address, amount);
+        .withArgs(beneficiary1.address, amount, id);
 
       expect(await token.balanceOf(beneficiary1.address)).to.equal(amount);
     });
@@ -147,9 +156,11 @@ describe("TruthBountyClaims", function () {
         beneficiary3.address,
       ];
 
-      await expect(claims.settleClaimsBatch(beneficiaries, amounts))
+      const id = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("test-batch-1"));
+
+      await expect(claims.settleClaimsBatch(beneficiaries, amounts, id))
         .to.emit(claims, "BatchSettlementCompleted")
-        .withArgs(3);
+        .withArgs(3, id);
 
       expect(await token.balanceOf(beneficiary1.address)).to.equal(amounts[0]);
       expect(await token.balanceOf(beneficiary2.address)).to.equal(amounts[1]);
@@ -159,16 +170,18 @@ describe("TruthBountyClaims", function () {
     it("Should revert on array mismatch", async function () {
       const { claims, beneficiary1 } = await loadFixture(deployFixture);
 
+      const id = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("mismatch"));
       await expect(
-        claims.settleClaimsBatch([beneficiary1.address], []),
+        claims.settleClaimsBatch([beneficiary1.address], [], id),
       ).to.be.revertedWith("Arrays length mismatch");
     });
 
     it("Should revert if caller is not owner", async function () {
       const { claims, otherAccount, beneficiary1 } =
         await loadFixture(deployFixture);
+      const id = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("rbac-1"));
       await expect(
-        claims.connect(otherAccount).settleClaim(beneficiary1.address, 100),
+        claims.connect(otherAccount).settleClaim(beneficiary1.address, 100, id),
       )
         .to.be.revertedWithCustomError(claims, "AccessControlUnauthorizedAccount");
     });
@@ -178,21 +191,22 @@ describe("TruthBountyClaims", function () {
         await loadFixture(deployFixture);
       const amount = hre.ethers.parseUnits("10", 18);
 
-      // Estimate gas for single claim
+      const id1 = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("gas-single"));
       const gasSingle = await claims.settleClaim.estimateGas(
         beneficiary1.address,
         amount,
+        id1,
       );
       console.log(`Gas for single claim: ${gasSingle.toString()}`);
 
-      // Estimate gas for batch of 2 claims
+      const id2 = hre.ethers.keccak256(hre.ethers.toUtf8Bytes("gas-batch"));
       const gasBatch = await claims.settleClaimsBatch.estimateGas(
         [beneficiary1.address, beneficiary2.address],
         [amount, amount],
+        id2,
       );
       console.log(`Gas for batch of 2 claims: ${gasBatch.toString()}`);
       console.log(`Average gas per claim in batch: ${Number(gasBatch) / 2}`);
-
     });
   });
 

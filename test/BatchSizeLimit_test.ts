@@ -55,9 +55,14 @@ describe("Batch Size Limit (#156)", function () {
       expect(await claims.MAX_BATCH_SIZE()).to.equal(200);
     });
 
+    // V2-SC-062: all settleClaimsBatch calls require a unique settlementId.
+    function batchId(tag: string) {
+      return ethers.keccak256(ethers.toUtf8Bytes(tag));
+    }
+
     it("reverts on an empty batch", async function () {
       const { claims } = await loadFixture(deployClaimsFixture);
-      await expect(claims.settleClaimsBatch([], [])).to.be.revertedWith(
+      await expect(claims.settleClaimsBatch([], [], batchId("empty"))).to.be.revertedWith(
         "No claims to settle"
       );
     });
@@ -66,23 +71,23 @@ describe("Batch Size Limit (#156)", function () {
       const { claims } = await loadFixture(deployClaimsFixture);
       const a = ethers.Wallet.createRandom().address;
       await expect(
-        claims.settleClaimsBatch([a], [1n, 2n])
+        claims.settleClaimsBatch([a], [1n, 2n], batchId("mismatch"))
       ).to.be.revertedWith("Arrays length mismatch");
     });
 
     it("succeeds at exactly MAX_BATCH_SIZE", async function () {
       const { claims, MAX } = await loadFixture(deployClaimsFixture);
       const { beneficiaries, amounts } = buildBatch(MAX);
-      await expect(claims.settleClaimsBatch(beneficiaries, amounts))
+      await expect(claims.settleClaimsBatch(beneficiaries, amounts, batchId("max")))
         .to.emit(claims, "BatchSettlementCompleted")
-        .withArgs(MAX);
+        .withArgs(MAX, batchId("max"));
     });
 
     it("reverts at MAX_BATCH_SIZE + 1", async function () {
       const { claims, MAX } = await loadFixture(deployClaimsFixture);
       const { beneficiaries, amounts } = buildBatch(MAX + 1);
       await expect(
-        claims.settleClaimsBatch(beneficiaries, amounts)
+        claims.settleClaimsBatch(beneficiaries, amounts, batchId("oversize"))
       ).to.be.revertedWith("Batch size too large");
     });
   });

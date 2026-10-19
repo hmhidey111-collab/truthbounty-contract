@@ -1,0 +1,1065 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "generateStorageLayouts",
+    "version": "1.0.0"
+  },
+  "solc": "0.8.28+pinned",
+  "generatedAt": "2026-09-25T10:50:47.716Z",
+  "contracts": {
+    "ClaimLifecycle": {
+      "sourcePath": "contracts/ClaimLifecycle.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xaf3587c3213c55c52df9dc203d89dc4a96246283ad43a1178aef27cb94637523",
+      "frozenAt": "2026-09-25T10:50:47.730Z",
+      "slots": {
+        "_status@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:enum ClaimLifecycle.ClaimStatus:1b)",
+          "numberOfBytes": "32"
+        },
+        "_verificationWindowEnd@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_disputeDeadline@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "DisputeResolution": {
+      "sourcePath": "contracts/DisputeResolution.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x66f77509cd72d16a886c5fdfc08291d32766ba0efc265114aec98f6f99fad2a7",
+      "frozenAt": "2026-09-25T10:50:47.728Z",
+      "slots": {
+        "_paused@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "_roles@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "vault@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "udt:contract ISTakeVault:20b",
+          "numberOfBytes": "20"
+        },
+        "feeManager@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "bondToken@4": {
+          "slot": "4",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "bondAmount@5": {
+          "slot": "5",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "challengeWindowDuration@6": {
+          "slot": "6",
+          "offset": 0,
+          "type": "t_uint64",
+          "numberOfBytes": "8"
+        },
+        "_nextDisputeId@7": {
+          "slot": "7",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_disputes@8": {
+          "slot": "8",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:struct IDisputeResolution.Dispute:256b)",
+          "numberOfBytes": "32"
+        },
+        "_disputesByClaim@9": {
+          "slot": "9",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "__gap@10": {
+          "slot": "10",
+          "offset": 0,
+          "type": "t_array(t_uint256)44_storage",
+          "numberOfBytes": "1408"
+        }
+      }
+    },
+    "FeeManager": {
+      "sourcePath": "contracts/fees/FeeManager.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x0908ddec5c1adb6156f1a133c4c73a7d0ca0010bbf7322d128ccb4798fcea550",
+      "frozenAt": "2026-09-25T10:50:47.725Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "_feeSchedules@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct IFeeManager.FeeSchedule:256b)",
+          "numberOfBytes": "32"
+        },
+        "_feeScheduleHistory@54": {
+          "slot": "54",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_mapping(t_uint256,udt:struct IFeeManager.FeeSchedule:256b))",
+          "numberOfBytes": "32"
+        },
+        "feeScheduleVersion@55": {
+          "slot": "55",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_totalFeesCollected@56": {
+          "slot": "56",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_feesByType@57": {
+          "slot": "57",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_totalByAllocation@58": {
+          "slot": "58",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_totalFeesDistributed@59": {
+          "slot": "59",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_feeRecords@60": {
+          "slot": "60",
+          "offset": 0,
+          "type": "t_array(udt:struct IFeeManager.FeeRecord:160b)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "_recordExists@61": {
+          "slot": "61",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "_allocationTargets@62": {
+          "slot": "62",
+          "offset": 0,
+          "type": "t_array(udt:struct IFeeManager.AllocationTarget:128b)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "_feeToken@63": {
+          "slot": "63",
+          "offset": 0,
+          "type": "udt:contract IERC20:20b",
+          "numberOfBytes": "20"
+        },
+        "globalGovVersion@64": {
+          "slot": "64",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "__gap@65": {
+          "slot": "65",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "GovernanceOwnable": {
+      "sourcePath": "contracts/governance/GovernanceOwnable.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xc2d81af3a321682a689a58e89017c780552d6f3d91a9e44b5fefc530296d9e87",
+      "frozenAt": "2026-09-25T10:50:47.733Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "ProtocolUpgradeable": {
+      "sourcePath": "contracts/upgrade/ProtocolUpgradeable.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x8287ba5bb8618ad44d3afbfa75542c566650735342b1f1e7a7dd5167bcde112b",
+      "frozenAt": "2026-09-25T10:50:47.721Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "upgradeController@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "udt:contract IUpgradeController:20b",
+          "numberOfBytes": "20"
+        },
+        "__gap@54": {
+          "slot": "54",
+          "offset": 0,
+          "type": "t_array(t_uint256)46_storage",
+          "numberOfBytes": "1472"
+        }
+      }
+    },
+    "ReputationDecay": {
+      "sourcePath": "contracts/ReputationDecay.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x9e3431629cd3c3c2f0cb19268cbd1d56d39bcb09423f03dead97e9d47e554e95",
+      "frozenAt": "2026-09-25T10:50:47.730Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "baseReputation@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "lastActivityTimestamp@54": {
+          "slot": "54",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "inactivityTracking@55": {
+          "slot": "55",
+          "offset": 0,
+          "type": "t_mapping(t_address,udt:struct ReputationDecay.InactivityTracking:96b)",
+          "numberOfBytes": "32"
+        },
+        "decayConfig@56": {
+          "slot": "56",
+          "offset": 0,
+          "type": "udt:struct ReputationDecay.ReputationDecayConfig:128b",
+          "numberOfBytes": "128"
+        },
+        "__gap@60": {
+          "slot": "60",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "ReputationEngine": {
+      "sourcePath": "contracts/reputation/ReputationEngine.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xb0ef15dc29629fe545d23e1f4369108e71d581b560c52275ebb098806bd14d09",
+      "frozenAt": "2026-09-25T10:50:47.729Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "__gap@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "reputations@103": {
+          "slot": "103",
+          "offset": 0,
+          "type": "t_mapping(t_address,udt:struct ReputationEngine.Reputation:224b)",
+          "numberOfBytes": "32"
+        },
+        "protocolStats@104": {
+          "slot": "104",
+          "offset": 0,
+          "type": "udt:struct ReputationEngine.ProtocolStatistics:192b",
+          "numberOfBytes": "192"
+        },
+        "defaultInitialScore@110": {
+          "slot": "110",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "minReputationScore@111": {
+          "slot": "111",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "maxReputationScore@112": {
+          "slot": "112",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "restrictedInitialization@113": {
+          "slot": "113",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        }
+      }
+    },
+    "StakeVault": {
+      "sourcePath": "contracts/StakeVault.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xbf0b363e40878b47f5b272f82cedbafd32d9a50a86ecd7bf090da12ed042933c",
+      "frozenAt": "2026-09-25T10:50:47.731Z",
+      "slots": {
+        "_paused@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "_roles@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_bondToken@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "_locks@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:struct ISTakeVault.BondLock:160b)",
+          "numberOfBytes": "32"
+        },
+        "_totalLocked@4": {
+          "slot": "4",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "__gap@5": {
+          "slot": "5",
+          "offset": 0,
+          "type": "t_array(t_uint256)48_storage",
+          "numberOfBytes": "1536"
+        }
+      }
+    },
+    "TimelockOwnedProxyAdmin": {
+      "sourcePath": "contracts/upgrade/TimelockOwnedProxyAdmin.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x260673f7a17d1c0f8cead24c74a086795b2da432b1285ffec389cdbbdd55aeb1",
+      "frozenAt": "2026-09-25T10:50:47.723Z",
+      "slots": {
+        "_owner@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "pendingUpgrades@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct TimelockOwnedProxyAdmin.PendingUpgrade:160b)",
+          "numberOfBytes": "32"
+        },
+        "storageValidator@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "udt:contract StorageCompatibilityValidator:20b",
+          "numberOfBytes": "20"
+        },
+        "usedImplementations@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "__gap@4": {
+          "slot": "4",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "TokenomicsEngine": {
+      "sourcePath": "contracts/tokenomics/TokenomicsEngine.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xd6d191406bfc6814ee5fae37ce95438564ebeba2e5634cbb9a7909b88157ffd4",
+      "frozenAt": "2026-09-25T10:50:47.726Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "sourceAllocations@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITokenomicsEngine.RevenueSource:1b,udt:struct ITokenomicsEngine.SourceAllocation:224b)",
+          "numberOfBytes": "32"
+        },
+        "distributionHistory@54": {
+          "slot": "54",
+          "offset": 0,
+          "type": "t_array(udt:struct ITokenomicsEngine.DistributionRecord:352b)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "distributionIds@55": {
+          "slot": "55",
+          "offset": 0,
+          "type": "t_array(t_bytes32)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "processedDistributions@56": {
+          "slot": "56",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "totalDistributed@57": {
+          "slot": "57",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "totalBySource@58": {
+          "slot": "58",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITokenomicsEngine.RevenueSource:1b,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "emissionLimit@59": {
+          "slot": "59",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "rewardMultiplier@60": {
+          "slot": "60",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "treasuryReserveTargetBPS@61": {
+          "slot": "61",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "__gap@62": {
+          "slot": "62",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "TreasuryManagement": {
+      "sourcePath": "contracts/treasury/TreasuryManagement.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x8676395cdefb843656eac4a07bf45f420b76217e9708bfc9c8d940f57ab90bc1",
+      "frozenAt": "2026-09-25T10:50:47.727Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "_pools@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_array(udt:struct ITreasuryManagement.PoolBalance:160b)7_storage",
+          "numberOfBytes": "1120"
+        },
+        "_authorisedModules@88": {
+          "slot": "88",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "_config@89": {
+          "slot": "89",
+          "offset": 0,
+          "type": "udt:struct ITreasuryManagement.TreasuryConfig:160b",
+          "numberOfBytes": "160"
+        },
+        "_recordCount@94": {
+          "slot": "94",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_records@95": {
+          "slot": "95",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct ITreasuryManagement.TreasuryRecord:256b)",
+          "numberOfBytes": "32"
+        },
+        "_recordIds@96": {
+          "slot": "96",
+          "offset": 0,
+          "type": "t_array(t_bytes32)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "_lastOperationBlock@97": {
+          "slot": "97",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITreasuryManagement.TreasuryPool:1b,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_recordExists@98": {
+          "slot": "98",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "_snapshots@99": {
+          "slot": "99",
+          "offset": 0,
+          "type": "t_array(udt:struct TreasuryManagement.SnapshotData:1184b)dyn_storage",
+          "numberOfBytes": "32"
+        },
+        "_withdrawalLimitPerBlock@100": {
+          "slot": "100",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITreasuryManagement.TreasuryPool:1b,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_withdrawnCurrentBlock@101": {
+          "slot": "101",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITreasuryManagement.TreasuryPool:1b,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_withdrawalBlockSnapshot@102": {
+          "slot": "102",
+          "offset": 0,
+          "type": "t_mapping(udt:enum ITreasuryManagement.TreasuryPool:1b,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "__gap@103": {
+          "slot": "103",
+          "offset": 0,
+          "type": "t_array(t_uint256)46_storage",
+          "numberOfBytes": "1472"
+        }
+      }
+    },
+    "TruthBounty": {
+      "sourcePath": "contracts/TruthBounty.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0xce49000220c10a7cfd47d54c6b61d77d4a6777ae6403435584743412e125e449",
+      "frozenAt": "2026-09-25T10:50:47.733Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "governanceController@1": {
+          "slot": "1",
+          "offset": 1,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "governanceEnabled@1": {
+          "slot": "1",
+          "offset": 21,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "emergencyAdmin@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "__gap@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        },
+        "claims@53": {
+          "slot": "53",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:struct TruthBounty.Claim:288b)",
+          "numberOfBytes": "32"
+        },
+        "settlementResults@54": {
+          "slot": "54",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:struct TruthBounty.SettlementResult:160b)",
+          "numberOfBytes": "32"
+        },
+        "votes@55": {
+          "slot": "55",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_mapping(t_address,udt:struct TruthBounty.Vote:96b))",
+          "numberOfBytes": "32"
+        },
+        "verifierStakes@56": {
+          "slot": "56",
+          "offset": 0,
+          "type": "t_mapping(t_address,udt:struct TruthBounty.VerifierStake:64b)",
+          "numberOfBytes": "32"
+        },
+        "verifierRewards@57": {
+          "slot": "57",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "verificationWindowDuration@58": {
+          "slot": "58",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "minStakeAmount@59": {
+          "slot": "59",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "settlementThresholdPercent@60": {
+          "slot": "60",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "rewardPercent@61": {
+          "slot": "61",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "slashPercent@62": {
+          "slot": "62",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "claimCounter@63": {
+          "slot": "63",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "totalSlashed@64": {
+          "slot": "64",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "totalRewarded@65": {
+          "slot": "65",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        }
+      }
+    },
+    "TruthBountyToken": {
+      "sourcePath": "contracts/TruthBounty.sol",
+      "kind": "proxy",
+      "canonicalHash": "0xd113d5a83ac3ea71183b44b1349632014e9168eeb04dfb8118554e539f1616db",
+      "frozenAt": "2026-09-25T10:50:47.731Z",
+      "slots": {
+        "_balances@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "_allowances@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+          "numberOfBytes": "32"
+        },
+        "_totalSupply@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_name@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_string_storage",
+          "numberOfBytes": "32"
+        },
+        "_symbol@4": {
+          "slot": "4",
+          "offset": 0,
+          "type": "t_string_storage",
+          "numberOfBytes": "32"
+        },
+        "_roles@5": {
+          "slot": "5",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "resolverRoleChangeReadyAt@6": {
+          "slot": "6",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "settlementContract@7": {
+          "slot": "7",
+          "offset": 0,
+          "type": "t_address",
+          "numberOfBytes": "20"
+        },
+        "slashPercentage@8": {
+          "slot": "8",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "verifierStake@9": {
+          "slot": "9",
+          "offset": 0,
+          "type": "t_mapping(t_address,t_uint256)",
+          "numberOfBytes": "32"
+        },
+        "__gap@10": {
+          "slot": "10",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    },
+    "VerificationRoundManager": {
+      "sourcePath": "contracts/VerificationRoundManager.sol",
+      "kind": "upgradeable",
+      "canonicalHash": "0x7ee5ffecc93d61d0d188bcc26bef959a3a066aac64dc5cc9816e596c8d9f5ee6",
+      "frozenAt": "2026-09-25T10:50:47.728Z",
+      "slots": {
+        "_roles@0": {
+          "slot": "0",
+          "offset": 0,
+          "type": "t_mapping(t_bytes32,udt:struct AccessControl.RoleData:64b)",
+          "numberOfBytes": "32"
+        },
+        "_paused@1": {
+          "slot": "1",
+          "offset": 0,
+          "type": "t_bool",
+          "numberOfBytes": "1"
+        },
+        "_nextRoundId@2": {
+          "slot": "2",
+          "offset": 0,
+          "type": "t_uint256",
+          "numberOfBytes": "32"
+        },
+        "_rounds@3": {
+          "slot": "3",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,udt:struct IVerificationRoundManager.RoundParams:192b)",
+          "numberOfBytes": "32"
+        },
+        "_participants@4": {
+          "slot": "4",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_array(udt:struct IVerificationRoundManager.ParticipantRecord:96b)dyn_storage)",
+          "numberOfBytes": "32"
+        },
+        "_participated@5": {
+          "slot": "5",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_mapping(t_address,t_bool))",
+          "numberOfBytes": "32"
+        },
+        "_activeRound@6": {
+          "slot": "6",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_mapping(t_uint8,t_uint256))",
+          "numberOfBytes": "32"
+        },
+        "_firstRoundClosed@7": {
+          "slot": "7",
+          "offset": 0,
+          "type": "t_mapping(t_uint256,t_bool)",
+          "numberOfBytes": "32"
+        },
+        "__gap@8": {
+          "slot": "8",
+          "offset": 0,
+          "type": "t_array(t_uint256)50_storage",
+          "numberOfBytes": "1600"
+        }
+      }
+    }
+  }
+}

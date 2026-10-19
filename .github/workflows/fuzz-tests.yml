@@ -14,17 +14,17 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
     
     - name: Install Foundry
-      uses: foundry-rs/foundry-toolchain@v1
+      uses: foundry-rs/foundry-toolchain@6dff6b4a1c8a6f3a5c8e2f1b9a0d7c6e5f4b3a21 # v1.8.3
       with:
-        version: nightly
+        version: v1.8.3
         
-    - name: Install dependencies
-      run: forge install
+    - name: Verify pinned Foundry dependencies
+      run: git submodule status --recursive
       
     - name: Run fuzz tests - WeightedStaking
       run: forge test --match-contract WeightedStakingFuzzTest -vvv
@@ -45,7 +45,7 @@ jobs:
       run: forge coverage --ir-minimum --report lcov --skip script
       
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
       with:
         file: ./lcov.info
         flags: fuzz-tests
@@ -55,17 +55,17 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         submodules: recursive
     
     - name: Install Foundry
-      uses: foundry-rs/foundry-toolchain@v1
+      uses: foundry-rs/foundry-toolchain@6dff6b4a1c8a6f3a5c8e2f1b9a0d7c6e5f4b3a21 # v1.8.3
       with:
-        version: nightly
+        version: v1.8.3
         
-    - name: Install dependencies
-      run: forge install
+    - name: Verify pinned Foundry dependencies
+      run: git submodule status --recursive
       
     - name: Run property-based tests
       run: |

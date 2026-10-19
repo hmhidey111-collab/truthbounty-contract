@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {UntrackedAssetRecovery} from "../recovery/UntrackedAssetRecovery.sol";
+
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "../libraries/BoundedSafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "../governance/GovernanceOwnable.sol";
@@ -28,7 +30,8 @@ contract InsuranceFund is
     IInsuranceFund,
     ReentrancyGuard,
     Pausable,
-    GovernanceOwnable
+    GovernanceOwnable,
+    UntrackedAssetRecovery
 {
     using SafeERC20 for IERC20;
 
@@ -45,6 +48,8 @@ contract InsuranceFund is
 
     /// @notice Maximum batch size for history queries
     uint256 public constant MAX_BATCH_SIZE = 200;
+    /// @notice Maximum stored insurance claim description URI length in bytes.
+    uint256 public constant MAX_DESCRIPTION_URI_BYTES = 512;
 
     /// @notice Policy IDs for governance events
     bytes32 public constant POLICY_MAX_PAYOUT = keccak256("MAX_PAYOUT_PER_CLAIM");
@@ -165,6 +170,10 @@ contract InsuranceFund is
     ) external whenNotPaused returns (uint256 claimId) {
         if (!coverageEnabled[category]) revert CoverageDisabled(category);
         if (requestedAmount == 0) revert InvalidFundingAmount();
+        uint256 uriLength = bytes(descriptionURI).length;
+        if (uriLength > MAX_DESCRIPTION_URI_BYTES) {
+            revert DescriptionUriTooLong(uriLength, MAX_DESCRIPTION_URI_BYTES);
+        }
 
         // Check for duplicate claims (same claimant + category + amount + URI)
         bytes32 incidentHash = keccak256(
@@ -271,7 +280,7 @@ contract InsuranceFund is
         claim.state = ClaimState.APPROVED;
 
         emit InsuranceClaimStateUpdated(claimId, oldState, ClaimState.APPROVED, msg.sender);
-        emit InsuranceClaimApproved(bytes32(claimId), approvedAmount);
+        emit InsuranceClaimApproved(claimId, approvedAmount);
     }
 
     /**
@@ -676,5 +685,19 @@ contract InsuranceFund is
                 return;
             }
         }
+    }
+
+    // V2-SC-154: additive recovery only; existing liability and authority paths remain authoritative.
+    function _checkAssetRecoveryAuthority() internal view override {
+        if (!hasRole(GOVERNANCE_ROLE, msg.sender) || !governanceEnabled) revert RecoveryAuthorityUnavailable();
+    }
+
+    function _requireAssetRecoveryAllowed() internal view override {
+        if (paused()) revert RecoveryPaused();
+    }
+
+    function _reservedAssetBalance(address asset) internal view override returns (uint256) {
+        // All reserve-token balance is the insurance reserve, including direct funding.
+        return asset == address(reserveToken) ? reserveToken.balanceOf(address(this)) : 0;
     }
 }

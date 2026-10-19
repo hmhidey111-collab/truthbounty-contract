@@ -3,6 +3,26 @@
   "chainId": 31337,
   "rpcUrl": "http://127.0.0.1:8545",
   "admin": "${DEPLOYER_ADDRESS}",
+  "releaseId": "local-v2-genesis",
+  "configVersion": 1,
+  "configChecksum": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "broadcaster": "${DEPLOYER_ADDRESS}",
+  "noncePlan": {
+    "startNonce": 0,
+    "maxNonce": 64,
+    "mode": "sequential"
+  },
+  "configExpiry": 4102444800,
+  "allowedChainIds": [31337],
+  "allowedReleaseIds": ["local-v2-genesis"],
+  "replayProtection": {
+    "bindChainId": true,
+    "bindReleaseId": true,
+    "bindChecksum": true,
+    "bindBroadcaster": true,
+    "bindNoncePlan": true,
+    "bindExpiry": true
+  },
   "verificationWindowDuration": 604800,
   "minStakeAmount": "100000000000000000000",
   "settlementThresholdPercent": 60,

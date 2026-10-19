@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "../libraries/BoundedSafeERC20.sol";
 import "../governance/GovernanceOwnable.sol";
 import "./IFeeManager.sol";
 
@@ -90,6 +90,9 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
     /// @notice Cumulative fees collected per fee type
     mapping(bytes32 => uint256) private _feesByType;
 
+    /// @notice Reserved fees awaiting distribution (per token)
+    uint256 private _reservedFees;
+
     /// @notice Cumulative amounts distributed per allocation name
     mapping(bytes32 => uint256) private _totalByAllocation;
 
@@ -117,6 +120,24 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
     /// @notice Global governance version counter (bumped on every schedule update)
     uint256 public globalGovVersion;
 
+    // ============ SC-039 Events ============
+
+    /**
+     * @notice SC-039 — exact integer attribution for a fee-schedule change.
+     * @dev Emitted alongside `FeeScheduleUpdated` (which only carries the fixed
+     *      amount) so every parameter of the new schedule — fixed amount, basis
+     *      points, minimum, and maximum, all exact integers — is exposed on-chain
+     *      together with the governance version that authored it.
+     */
+    event FeeScheduleConfigUpdated(
+        bytes32 indexed feeType,
+        uint256 fixedAmount,
+        uint256 basisPoints,
+        uint256 minValue,
+        uint256 maxValue,
+        uint256 govVersion
+    );
+
     // ============ Errors ============
 
     error ZeroAmount();
@@ -127,9 +148,14 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
     error InvalidBasisPoints(uint256 total);
     error TooManyAllocationTargets(uint256 count, uint256 max);
     error AllocationRecipientZero(bytes32 name);
+    error DuplicateAllocationName(bytes32 name);
+    error ReservedFeesOutstanding(uint256 reserved);
     error DuplicateFeeRecord(bytes32 recordId);
     error PageLimitExceeded(uint256 limit, uint256 max);
     error AllocationTransferFailed(bytes32 allocation);
+    error NoReservedFees();
+    error DistributionInProgress();
+    error InsufficientReservedFees(uint256 requested, uint256 available);
 
     // ============ Constructor ============
 
@@ -317,73 +343,126 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
         _recordExists[recordId] = true;
 
         // Pull fee token from payer
+        uint256 balanceBefore = _feeToken.balanceOf(address(this));
         _feeToken.safeTransferFrom(payer, address(this), amount);
+        uint256 actualReceived = _feeToken.balanceOf(address(this)) - balanceBefore;
 
         // Update accounting
-        _totalFeesCollected += amount;
-        _feesByType[feeType] += amount;
+        _totalFeesCollected += actualReceived;
+        _feesByType[feeType] += actualReceived;
+        _reservedFees += actualReceived;
 
         // Record the event
         _feeRecords.push(FeeRecord({
             feeType:  feeType,
             payer:    payer,
-            amount:   amount,
+            amount:   actualReceived,
             timestamp: block.timestamp,
             recordId: recordId
         }));
 
-        emit FeeCollected(feeType, payer, amount);
-
-        // Distribute immediately
-        _distribute(amount);
+        emit FeeCollected(feeType, payer, actualReceived);
+        emit ReservedFeesAdded(actualReceived, _reservedFees);
     }
 
-    // ============ Internal Distribution ============
+    // ============ Distribution State ============
+
+    /// @notice Whether a distribution is currently in progress (prevents reentrancy and concurrent distributions)
+    bool private _isDistributing;
+
+    // ============ Public Distribution ============
 
     /**
-     * @notice Distribute `amount` tokens across allocation targets
-     * @dev Uses basis-point splits. Any dust (from rounding) remains in the last active target.
+     * @notice Distribute all currently reserved fees across allocation targets
+     * @dev Uses deterministic rounding: all intermediate calculations use integer division,
+     *      and the exact remaining amount after all proportional shares is sent to a 
+     *      deterministically fixed recipient (TREASURY_RESERVE) to ensure dust is always
+     *      handled the same way regardless of allocation target order.
+     *      Can only be called by COLLECTOR_ROLE or ADMIN_ROLE to prevent spam.
      */
-    function _distribute(uint256 amount) internal {
-        uint256 remaining = amount;
-        uint256 activeCount = 0;
+    function distributeReservedFees() external nonReentrant onlyRole(COLLECTOR_ROLE) {
+        if (_isDistributing) revert DistributionInProgress();
+        if (_reservedFees == 0) revert NoReservedFees();
+        
+        _isDistributing = true;
+        
+        uint256 amountToDistribute = _reservedFees;
+        uint256 totalDistributed = _distributeDeterministic(amountToDistribute);
+        
+        // Update accounting - reduce reserved fees by exactly what was distributed
+        _reservedFees -= totalDistributed;
+        _isDistributing = false;
+        
+        emit FeesDistributedDeterministically(totalDistributed, _reservedFees);
+    }
 
-        // Count active targets to handle dust
-        for (uint256 i = 0; i < _allocationTargets.length; i++) {
-            if (_allocationTargets[i].active) activeCount++;
-        }
+    // ============ Internal Deterministic Distribution ============
 
-        if (activeCount == 0) return; // No targets — funds accumulate in contract
-
-        uint256 lastActiveIdx = type(uint256).max;
-        for (uint256 i = 0; i < _allocationTargets.length; i++) {
-            if (_allocationTargets[i].active) lastActiveIdx = i;
-        }
-
-        uint256 distributed = 0;
-
+    /**
+     * @notice Distributes fees using fully deterministic rounding rules
+     * @dev Dust (remaining amount after all proportional calculations) is always sent to
+     *      the TREASURY_RESERVE allocation, which is a canonical, fixed identifier. This
+     *      ensures that regardless of the order of allocation targets in storage, the
+     *      dust recipient is always the same, preserving complete determinism.
+     * @param amount The total amount to distribute
+     * @return totalDistributed The total amount actually distributed (should always equal amount)
+     */
+    function _distributeDeterministic(uint256 amount) internal returns (uint256 totalDistributed) {
+        uint256 activeBpsTotal = 0;
+        address treasuryRecipient = address(0);
+        
+        // First pass: calculate total active basis points and find treasury reserve recipient
         for (uint256 i = 0; i < _allocationTargets.length; i++) {
             AllocationTarget storage target = _allocationTargets[i];
-            if (!target.active) continue;
-
-            uint256 share;
-            if (i == lastActiveIdx) {
-                // Last active target receives remaining dust
-                share = remaining - distributed;
-            } else {
-                share = (amount * target.basisPoints) / BASIS_POINTS_DENOMINATOR;
+            if (target.active) {
+                activeBpsTotal += target.basisPoints;
+                if (target.name == ALLOC_TREASURY_RESERVE) {
+                    treasuryRecipient = target.recipient;
+                }
             }
+        }
 
+        if (activeBpsTotal == 0 || treasuryRecipient == address(0)) {
+            // No active targets or treasury reserve not found - return 0, fees stay reserved
+            return 0;
+        }
+
+        uint256 runningTotal = 0;
+
+        // Second pass: distribute proportional shares to all active targets except treasury reserve
+        for (uint256 i = 0; i < _allocationTargets.length; i++) {
+            AllocationTarget storage target = _allocationTargets[i];
+            if (!target.active || target.name == ALLOC_TREASURY_RESERVE) continue;
+
+            // Calculate deterministic share using integer division (rounds down)
+            uint256 share = (amount * target.basisPoints) / BASIS_POINTS_DENOMINATOR;
+            
             if (share == 0) continue;
 
+            // Update accounting
             _totalByAllocation[target.name] += share;
             _totalFeesDistributed += share;
-            distributed += share;
+            runningTotal += share;
 
+            // Transfer tokens
             _feeToken.safeTransfer(target.recipient, share);
-
             emit FeeDistributed(target.name, share);
         }
+
+        // Treasury reserve gets the remaining amount (includes all rounding dust)
+        // This is 100% deterministic because ALLOC_TREASURY_RESERVE is a fixed constant
+        uint256 treasuryShare = amount - runningTotal;
+        if (treasuryShare > 0) {
+            _totalByAllocation[ALLOC_TREASURY_RESERVE] += treasuryShare;
+            _totalFeesDistributed += treasuryShare;
+            
+            _feeToken.safeTransfer(treasuryRecipient, treasuryShare);
+            emit FeeDistributed(ALLOC_TREASURY_RESERVE, treasuryShare);
+            
+            runningTotal += treasuryShare;
+        }
+
+        return runningTotal;
     }
 
     // ============ Governance Controls ============
@@ -429,6 +508,7 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
         feeScheduleVersion[feeType] = newVersion;
 
         emit FeeScheduleUpdated(feeType, previousValue, fixedAmount);
+        emit FeeScheduleConfigUpdated(feeType, fixedAmount, basisPoints, minValue, maxValue, newVersion);
         emit ParameterUpdatedByGovernance(
             keccak256(abi.encode("FEE_SCHEDULE", feeType)),
             previousValue,
@@ -450,13 +530,30 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
         }
 
         uint256 totalBps = 0;
+        bool hasTreasuryReserve = false;
         for (uint256 i = 0; i < targets.length; i++) {
+            // SC-039: a routing-table name may appear at most once. Duplicate
+            // names would split one fee across two recipients under a single
+            // attribution key (`_totalByAllocation`, `FeeDistributed`), which is
+            // duplicate routing with merged, unauditable accounting.
+            for (uint256 j = 0; j < i; j++) {
+                if (targets[j].name == targets[i].name) {
+                    revert DuplicateAllocationName(targets[i].name);
+                }
+            }
             if (targets[i].active) {
                 if (targets[i].recipient == address(0)) {
                     revert AllocationRecipientZero(targets[i].name);
                 }
+                if (targets[i].name == ALLOC_TREASURY_RESERVE) {
+                    hasTreasuryReserve = true;
+                }
                 totalBps += targets[i].basisPoints;
             }
+        }
+
+        if (!hasTreasuryReserve) {
+            revert InvalidBasisPoints(0); // Treasury reserve must always be present
         }
 
         if (totalBps != BASIS_POINTS_DENOMINATOR) {
@@ -491,6 +588,12 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
      */
     function setFeeToken(address newToken) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newToken == address(0)) revert ZeroAddress();
+        // SC-039: reserved fees were collected in the current fee token. Re-pointing
+        // the token while they are outstanding would make distribution pay out the
+        // *new* token for amounts collected in the *old* one — stranding the old
+        // balance and breaking the conservation equation
+        // `totalCollected == totalDistributed + reserved`.
+        if (_reservedFees != 0) revert ReservedFeesOutstanding(_reservedFees);
         address old = address(_feeToken);
         _feeToken = IERC20(newToken);
         emit FeeTokenUpdated(old, newToken);
@@ -601,8 +704,15 @@ contract FeeManager is IFeeManager, ReentrancyGuard, Pausable, GovernanceOwnable
     /**
      * @inheritdoc IFeeManager
      */
-    function getFeeToken() external view override returns (address) {
+    function getFeeToken() external view override returns (address token) {
         return address(_feeToken);
+    }
+
+    /**
+     * @inheritdoc IFeeManager
+     */
+    function getReservedFees() external view override returns (uint256 reserved) {
+        return _reservedFees;
     }
 
     /**

@@ -9,6 +9,7 @@ node_modules
 # TypeChain files
 /typechain
 /typechain-types
+/types
 
 # solidity-coverage files
 /coverage
@@ -27,3 +28,14 @@ lcov.info
 create_issues_contract.sh
 issues_to_created_contract.md
 
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+
+# HH3 typechain output
+/types
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore

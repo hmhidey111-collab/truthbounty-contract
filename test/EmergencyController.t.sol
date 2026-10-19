@@ -23,8 +23,16 @@ contract EmergencyControllerTest is Test {
             daoGovernance,
             timelockController
         );
+        // Resolve the role before pranking: the staticcall would otherwise consume the prank.
+        bytes32 recoveryRole = controller.RECOVERY_EXECUTOR();
         vm.prank(daoGovernance);
-        controller.grantRole(controller.RECOVERY_EXECUTOR(), recoveryExecutor);
+        controller.grantRole(recoveryRole, recoveryExecutor);
+    }
+
+    /// @dev Prank-safe activation: the level view call is resolved before the prank is set.
+    function _activatePauseAs(address who, uint8 level, string memory reason) internal {
+        vm.prank(who);
+        controller.activatePause(level, reason, bytes32(0));
     }
 
     // ─── Initialisation ───────────────────────────────────────────────
@@ -43,72 +51,77 @@ contract EmergencyControllerTest is Test {
     // ─── Pause Activation ─────────────────────────────────────────────
 
     function test_emergencyCouncil_canActivateLevel1() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Security incident", bytes32(0));
-        assertEq(controller.currentPauseLevel(), controller.LEVEL_HIGH_RISK());
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        _activatePauseAs(emergencyCouncil, level, "Security incident");
+        assertEq(controller.currentPauseLevel(), level);
     }
 
     function test_emergencyCouncil_canActivateLevel3() public {
+        uint8 level = controller.LEVEL_SHUTDOWN();
+        _activatePauseAs(emergencyCouncil, level, "Critical exploit");
+        assertEq(controller.currentPauseLevel(), level);
+    }
+
+    function test_activatePauseRejectsReasonAboveByteLimit() public {
+        uint256 maximum = controller.MAX_REASON_BYTES();
+        string memory oversizedReason = new string(maximum + 1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(EmergencyController.ReasonTooLong.selector, maximum + 1, maximum)
+        );
         vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_SHUTDOWN(), "Critical exploit", bytes32(0));
-        assertEq(controller.currentPauseLevel(), controller.LEVEL_SHUTDOWN());
+        controller.activatePause(controller.LEVEL_HIGH_RISK(), oversizedReason, bytes32(0));
+
+        assertEq(controller.currentPauseLevel(), controller.LEVEL_NORMAL());
+        assertEq(controller.getEmergencyHistoryCount(), 0);
     }
 
     function test_daoGovernance_canActivateLevel2() public {
-        vm.prank(daoGovernance);
-        controller.activatePause(controller.LEVEL_FINANCIAL(), "Oracle failure", bytes32(0));
-        assertEq(controller.currentPauseLevel(), controller.LEVEL_FINANCIAL());
+        uint8 level = controller.LEVEL_FINANCIAL();
+        _activatePauseAs(daoGovernance, level, "Oracle failure");
+        assertEq(controller.currentPauseLevel(), level);
     }
 
     function test_timelock_canActivateLevel1() public {
-        vm.prank(timelockController);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Scheduled maintenance", bytes32(0));
-        assertEq(controller.currentPauseLevel(), controller.LEVEL_HIGH_RISK());
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        // The timelock is rate-limited against `lastTimelockActivation` (0 at deploy).
+        vm.warp(block.timestamp + controller.timelockCooldown() + 1);
+        _activatePauseAs(timelockController, level, "Scheduled maintenance");
+        assertEq(controller.currentPauseLevel(), level);
     }
 
     function test_timelock_cannotActivateLevel2() public {
+        uint8 level = controller.LEVEL_FINANCIAL();
         vm.prank(timelockController);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                EmergencyController.NotAuthorizedForLevel.selector,
-                timelockController,
-                controller.LEVEL_FINANCIAL()
-            )
+            abi.encodeWithSelector(EmergencyController.NotAuthorizedForLevel.selector, timelockController, level)
         );
-        controller.activatePause(controller.LEVEL_FINANCIAL(), "Not allowed", bytes32(0));
+        controller.activatePause(level, "Not allowed", bytes32(0));
     }
 
     function test_unauthorised_cannotActivate() public {
+        uint8 level = controller.LEVEL_HIGH_RISK();
         vm.prank(unauthorisedUser);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                EmergencyController.NotAuthorizedForLevel.selector,
-                unauthorisedUser,
-                controller.LEVEL_HIGH_RISK()
-            )
+            abi.encodeWithSelector(EmergencyController.NotAuthorizedForLevel.selector, unauthorisedUser, level)
         );
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Hack attempt", bytes32(0));
+        controller.activatePause(level, "Hack attempt", bytes32(0));
     }
 
     function test_cannotActivateSameOrLowerLevel() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "First", bytes32(0));
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        _activatePauseAs(emergencyCouncil, level, "First");
 
         vm.prank(emergencyCouncil);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                EmergencyController.AlreadyAtLevel.selector,
-                controller.LEVEL_HIGH_RISK()
-            )
-        );
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Duplicate", bytes32(0));
+        vm.expectRevert(abi.encodeWithSelector(EmergencyController.AlreadyAtLevel.selector, level));
+        controller.activatePause(level, "Duplicate", bytes32(0));
     }
 
     function test_cannotActivateLevel0() public {
+        // Level 0 equals the current (normal) level, so activation is rejected before
+        // any level-specific validation: AlreadyAtLevel is raised, not InvalidPauseLevel.
         vm.prank(emergencyCouncil);
-        vm.expectRevert(
-            abi.encodeWithSelector(EmergencyController.InvalidPauseLevel.selector, 0)
-        );
+        vm.expectRevert(abi.encodeWithSelector(EmergencyController.AlreadyAtLevel.selector, 0));
         controller.activatePause(0, "Invalid", bytes32(0));
     }
 
@@ -121,8 +134,10 @@ contract EmergencyControllerTest is Test {
     }
 
     function test_timelockCooldown_enforced() public {
-        vm.prank(timelockController);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "First", bytes32(0));
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        // The timelock is rate-limited against `lastTimelockActivation` (0 at deploy).
+        vm.warp(block.timestamp + controller.timelockCooldown() + 1);
+        _activatePauseAs(timelockController, level, "First");
 
         // Lift via governance
         vm.prank(daoGovernance);
@@ -131,20 +146,18 @@ contract EmergencyControllerTest is Test {
         // Timelock tries again immediately — should fail
         vm.prank(timelockController);
         vm.expectRevert("Timelock cooldown not elapsed");
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Too soon", bytes32(0));
+        controller.activatePause(level, "Too soon", bytes32(0));
 
         // After cooldown
         vm.warp(block.timestamp + controller.timelockCooldown() + 1);
-        vm.prank(timelockController);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "After cooldown", bytes32(0));
-        assertEq(controller.currentPauseLevel(), controller.LEVEL_HIGH_RISK());
+        _activatePauseAs(timelockController, level, "After cooldown");
+        assertEq(controller.currentPauseLevel(), level);
     }
 
     // ─── Pause Lifting ─────────────────────────────────────────────────
 
     function test_daoGovernance_canLiftPause() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test", bytes32(0));
+        _activatePauseAs(emergencyCouncil, controller.LEVEL_HIGH_RISK(), "Test");
 
         vm.prank(daoGovernance);
         controller.liftPause(bytes32(0));
@@ -153,8 +166,7 @@ contract EmergencyControllerTest is Test {
     }
 
     function test_emergencyCouncil_cannotLiftPause() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test", bytes32(0));
+        _activatePauseAs(emergencyCouncil, controller.LEVEL_HIGH_RISK(), "Test");
 
         vm.prank(emergencyCouncil);
         vm.expectRevert("Only DAO governance can lift pause");
@@ -171,8 +183,7 @@ contract EmergencyControllerTest is Test {
 
     function test_recoveryFlow_completes() public {
         // Activate and lift
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test", bytes32(0));
+        _activatePauseAs(emergencyCouncil, controller.LEVEL_HIGH_RISK(), "Test");
         vm.prank(daoGovernance);
         controller.liftPause(bytes32(0));
 
@@ -198,13 +209,13 @@ contract EmergencyControllerTest is Test {
     // ─── Audit Trail ──────────────────────────────────────────────────
 
     function test_auditTrail_recordsActions() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "First incident", bytes32(0));
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        _activatePauseAs(emergencyCouncil, level, "First incident");
 
         assertEq(controller.getEmergencyHistoryCount(), 1);
 
         EmergencyController.EmergencyRecord[] memory history = controller.getEmergencyHistory(0, 10);
-        assertEq(history[0].level, controller.LEVEL_HIGH_RISK());
+        assertEq(history[0].level, level);
         assertEq(history[0].initiator, emergencyCouncil);
         assertEq(history[0].reason, "First incident");
     }
@@ -217,8 +228,7 @@ contract EmergencyControllerTest is Test {
     }
 
     function test_isOperationAllowed_level1_blocksHighRisk() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test", bytes32(0));
+        _activatePauseAs(emergencyCouncil, controller.LEVEL_HIGH_RISK(), "Test");
 
         assertFalse(controller.isOperationAllowed(keccak256("claim_creation")));
         assertFalse(controller.isOperationAllowed(keccak256("staking")));
@@ -226,8 +236,7 @@ contract EmergencyControllerTest is Test {
     }
 
     function test_isOperationAllowed_level3_onlyGovernance() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_SHUTDOWN(), "Critical", bytes32(0));
+        _activatePauseAs(emergencyCouncil, controller.LEVEL_SHUTDOWN(), "Critical");
 
         assertFalse(controller.isOperationAllowed(keccak256("claim_creation")));
         assertFalse(controller.isOperationAllowed(keccak256("reward_distribution")));
@@ -237,28 +246,20 @@ contract EmergencyControllerTest is Test {
     // ─── Events ───────────────────────────────────────────────────────
 
     function test_emitsEmergencyPauseActivated() public {
+        uint8 level = controller.LEVEL_HIGH_RISK();
         vm.prank(emergencyCouncil);
         vm.expectEmit(true, true, true, true);
-        emit EmergencyController.EmergencyPauseActivated(
-            controller.LEVEL_HIGH_RISK(),
-            emergencyCouncil,
-            "Test reason",
-            bytes32(0)
-        );
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test reason", bytes32(0));
+        emit EmergencyController.EmergencyPauseActivated(level, emergencyCouncil, "Test reason", bytes32(0));
+        controller.activatePause(level, "Test reason", bytes32(0));
     }
 
     function test_emitsEmergencyPauseLifted() public {
-        vm.prank(emergencyCouncil);
-        controller.activatePause(controller.LEVEL_HIGH_RISK(), "Test", bytes32(0));
+        uint8 level = controller.LEVEL_HIGH_RISK();
+        _activatePauseAs(emergencyCouncil, level, "Test");
 
         vm.prank(daoGovernance);
         vm.expectEmit(true, true, true, true);
-        emit EmergencyController.EmergencyPauseLifted(
-            controller.LEVEL_HIGH_RISK(),
-            daoGovernance,
-            bytes32(0)
-        );
+        emit EmergencyController.EmergencyPauseLifted(level, daoGovernance, bytes32(0));
         controller.liftPause(bytes32(0));
     }
 }

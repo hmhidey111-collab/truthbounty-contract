@@ -78,6 +78,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier.address,
         percentage,
+        0,
         percentage,
         `fuzz-${percentage}`
       );
@@ -107,6 +108,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
     await slashing.connect(settlement).slashVerifier(
       verifier.address,
       9001,
+      0,
       20,
       "first"
     );
@@ -114,6 +116,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
     await slashing.connect(settlement).slashVerifier(
       verifier.address,
       9002,
+      0,
       25,
       "second"
     );
@@ -139,6 +142,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
         slashing.connect(settlement).slashVerifier(
           verifier.address,
           10000 + percentage,
+          0,
           percentage,
           `invalid-${percentage}`
         )
@@ -157,6 +161,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
       .slashVerifier(
         partial.verifier.address,
         111,
+        0,
         25,
         "gas-partial"
       );
@@ -173,6 +178,7 @@ describe("VerifierSlashing Fuzz and Invariants", function () {
       .slashVerifier(
         full.verifier.address,
         222,
+        0,
         100,
         "gas-full"
       );

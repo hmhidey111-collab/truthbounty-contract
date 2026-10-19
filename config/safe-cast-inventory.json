@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "issue": "V2-SC-161",
+  "policy": "Every explicit integer-narrowing (uintN, N < 256) or signed (intN) conversion in the canonical V2 scope is either proven safe by a prior bound, a compile-time constant, an enum ordinal, or a same-width byte conversion, or is one of the bounded conversions inside V2SafeCast that revert V2Errors.SafeCastOverflow(field, value, max) / SafeCastNegative(field, value). Raw narrowing of block.timestamp, block.chainid, or block.number is forbidden: those sites must call V2SafeCast. See docs/v2/safe-cast-integer-boundaries.md.",
+  "scope": [
+    "contracts/v2",
+    "contracts/governance/v2",
+    "contracts/upgrade",
+    "contracts/verification",
+    "contracts/performance",
+    "contracts/libraries",
+    "contracts/ClaimRegistry.sol"
+  ],
+  "casts": [
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint8(value)",
+      "width": 8,
+      "classification": "guarded",
+      "unit": "caller-defined",
+      "bound": "value <= type(uint8).max (255), else SafeCastOverflow(field, value, 255)",
+      "justification": "toUint8: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint16(value)",
+      "width": 16,
+      "classification": "guarded",
+      "unit": "caller-defined",
+      "bound": "value <= type(uint16).max (65535), else SafeCastOverflow(field, value, 65535)",
+      "justification": "toUint16: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint24(value)",
+      "width": 24,
+      "classification": "guarded",
+      "unit": "caller-defined",
+      "bound": "value <= type(uint24).max (16777215), else SafeCastOverflow(field, value, 16777215)",
+      "justification": "toUint24: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint32(value)",
+      "width": 32,
+      "classification": "guarded",
+      "unit": "caller-defined",
+      "bound": "value <= type(uint32).max, else SafeCastOverflow(field, value, 2^32-1)",
+      "justification": "toUint32: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint48(value)",
+      "width": 48,
+      "classification": "guarded",
+      "unit": "caller-defined (Unix seconds for timestamp48)",
+      "bound": "value <= type(uint48).max, else SafeCastOverflow(field, value, 2^48-1)",
+      "justification": "toUint48 / timestamp48: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint64(value)",
+      "width": 64,
+      "classification": "guarded",
+      "unit": "caller-defined (Unix seconds for timestamp64, EIP-155 id for chain ids)",
+      "bound": "value <= type(uint64).max, else SafeCastOverflow(field, value, 2^64-1)",
+      "justification": "toUint64 / timestamp64: the raw conversion is only reached after the explicit width check, so it is lossless. All canonical V2 timestamp and chain-id fields route through it."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint96(value)",
+      "width": 96,
+      "classification": "guarded",
+      "unit": "caller-defined",
+      "bound": "value <= type(uint96).max, else SafeCastOverflow(field, value, 2^96-1)",
+      "justification": "toUint96: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/libraries/V2SafeCast.sol",
+      "expression": "uint128(value)",
+      "width": 128,
+      "classification": "guarded",
+      "unit": "caller-defined (asset base units for amounts)",
+      "bound": "value <= type(uint128).max, else SafeCastOverflow(field, value, 2^128-1)",
+      "justification": "toUint128: the raw conversion is only reached after the explicit width check, so it is lossless."
+    },
+    {
+      "file": "contracts/v2/Claims.sol",
+      "expression": "uint64(ProtocolExecutionBounds.CLAIM_SPAM_WINDOW_SECONDS)",
+      "width": 64,
+      "classification": "proven-safe",
+      "unit": "seconds",
+      "bound": "compile-time constant 3600 (1 hours) <= type(uint64).max",
+      "justification": "Constructor default for claimSpamWindow. The operand is a library constant; SafeCastBoundaries.t.sol asserts the constant fits uint64 and round-trips."
+    },
+    {
+      "file": "contracts/v2/Claims.sol",
+      "expression": "uint8(terminalStatus)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IV2Types.ClaimStatus)",
+      "bound": "enum ordinal < 7 members <= 255",
+      "justification": "Enum-to-uint8 conversion of a validated terminal status for the event reason; Solidity enums have at most 256 members so the ordinal always fits uint8."
+    },
+    {
+      "file": "contracts/v2/EvidenceRegistry.sol",
+      "expression": "uint8(claim.status)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IClaimRegistry.ClaimStatus)",
+      "bound": "enum ordinal < 6 members <= 255",
+      "justification": "Enum-to-uint8 conversion used only for the ClaimFinalized error payload; the ordinal always fits uint8."
+    },
+    {
+      "file": "contracts/v2/FinalRewardAllocator.sol",
+      "expression": "uint8(allocation.category)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IFinalRewardAllocator.RewardCategory)",
+      "bound": "enum ordinal < 256, and ABI decoding reverts on out-of-range enum values",
+      "justification": "Category bit index for the duplicate-category mask; calldata enums are range-checked by the ABI decoder, so the shift index is always a valid ordinal."
+    },
+    {
+      "file": "contracts/v2/EmergencyGatekeeper.sol",
+      "expression": "uint8(raw)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "protocol pause level",
+      "bound": "raw <= MAX_PROTOCOL_PAUSE_LEVEL (3), checked on the preceding line (else dependency reported unhealthy)",
+      "justification": "_tryProtocolPauseLevel returns (false, 0) for any raw > MAX_PROTOCOL_PAUSE_LEVEL before narrowing, so the cast never drops bits."
+    },
+    {
+      "file": "contracts/v2/libraries/V2AmountUnits.sol",
+      "expression": "uint8(raw)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "asset decimals",
+      "bound": "raw <= MAX_ASSET_DECIMALS (36), checked on the preceding line (else UnsupportedDecimals(asset))",
+      "justification": "decimalsOf rejects decimals above 36 before narrowing, so a token reporting e.g. 256 or 2^255 decimals can never alias to a small value."
+    },
+    {
+      "file": "contracts/libraries/AmountUnits.sol",
+      "expression": "uint8(raw)",
+      "width": 8,
+      "occurrences": 2,
+      "classification": "proven-safe",
+      "unit": "asset decimals",
+      "bound": "error payload: raw <= type(uint8).max in the ternary branch (saturates to 255 otherwise); return: raw <= MAX_DECIMALS (36)",
+      "justification": "tokenDecimals saturates the error payload instead of truncating and only returns after raw <= 36 is proven."
+    },
+    {
+      "file": "contracts/v2/libraries/AntiGriefing.sol",
+      "expression": "uint64(ProtocolExecutionBounds.CLAIM_SPAM_WINDOW_SECONDS)",
+      "width": 64,
+      "classification": "proven-safe",
+      "unit": "seconds",
+      "bound": "compile-time constant 3600 (1 hours) <= type(uint64).max",
+      "justification": "Default spam window when a module passes 0. The operand is a library constant pinned by SafeCastBoundaries.t.sol."
+    },
+    {
+      "file": "contracts/ClaimRegistry.sol",
+      "expression": "uint64(ProtocolExecutionBounds.CLAIM_SPAM_WINDOW_SECONDS)",
+      "width": 64,
+      "classification": "proven-safe",
+      "unit": "seconds",
+      "bound": "compile-time constant 3600 (1 hours) <= type(uint64).max",
+      "justification": "Spam window passed to AntiGriefing.nextClaimWindow. The operand is a library constant pinned by SafeCastBoundaries.t.sol."
+    },
+    {
+      "file": "contracts/v2/libraries/V2Guarantees.sol",
+      "expression": "uint8(MAX_FINALITY_CLASS)",
+      "width": 8,
+      "occurrences": 2,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IConsumerGuarantees.FinalityClass)",
+      "bound": "constant enum ordinal ProtocolFinalized (2) <= 255",
+      "justification": "Compile-time enum constant converted to its ordinal for validation and defaults."
+    },
+    {
+      "file": "contracts/v2/libraries/V2Guarantees.sol",
+      "expression": "uint8(IConsumerGuarantees.FinalityClass.SoftConfirmation)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IConsumerGuarantees.FinalityClass)",
+      "bound": "constant enum ordinal 1 <= 255",
+      "justification": "Compile-time enum member converted to its ordinal."
+    },
+    {
+      "file": "contracts/v2/libraries/V2Guarantees.sol",
+      "expression": "uint8(IConsumerGuarantees.FinalityClass.None)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "enum ordinal (IConsumerGuarantees.FinalityClass)",
+      "bound": "constant enum ordinal 0 <= 255",
+      "justification": "Compile-time enum member converted to its ordinal."
+    },
+    {
+      "file": "contracts/v2/libraries/V2Lifecycle.sol",
+      "expression": "uint24(currentBps)",
+      "width": 24,
+      "classification": "proven-safe",
+      "unit": "basis points",
+      "bound": "currentBps < params.quorumMinBps <= type(uint24).max, established by the enclosing if",
+      "justification": "enforceQuorum only narrows inside `if (currentBps < params.quorumMinBps)`, and quorumMinBps is itself a uint24, so the error payload is exact."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "expression": "uint8(bytes(commit)[i])",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "ASCII byte",
+      "bound": "bytes1 -> uint8 is a same-width (8-bit) conversion",
+      "justification": "Byte-codec conversion of a single string byte for hex validation; no bits are dropped."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "expression": "uint8(b[i])",
+      "width": 8,
+      "occurrences": 3,
+      "classification": "proven-safe",
+      "unit": "ASCII byte",
+      "bound": "bytes1 -> uint8 is a same-width (8-bit) conversion",
+      "justification": "Byte-codec conversion of a single string byte for delimiter search and decimal parsing; no bits are dropped."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "expression": "uint8(delimiter)",
+      "width": 8,
+      "occurrences": 2,
+      "classification": "proven-safe",
+      "unit": "ASCII byte",
+      "bound": "bytes1 -> uint8 is a same-width (8-bit) conversion",
+      "justification": "Byte-codec conversion of the delimiter argument (bytes1); no bits are dropped."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "expression": "uint8(48 + value % 10)",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "ASCII digit",
+      "bound": "48 + (value % 10) is in [48, 57] <= 255",
+      "justification": "Decimal digit encoding in uint2str; the modulo bounds the operand to a single ASCII digit."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "expression": "uint8(data >> (8 * (31 - i)))",
+      "width": 8,
+      "occurrences": 2,
+      "classification": "proven-safe",
+      "unit": "byte of a bytes32 digest",
+      "bound": "intentional low-byte selection of a shifted bytes32 for hex encoding; the result indexes a 16-entry alphabet after >> 4 or & 0x0f",
+      "justification": "Hex codec in bytes32ToHexString: selecting byte i of the digest is the intended semantics, not an amount/timestamp/counter narrowing, and the nibble index is bounded to [0, 15]."
+    },
+    {
+      "file": "contracts/governance/v2/TruthBountyGovernor.sol",
+      "expression": "uint48(proposalSnapshot(proposalId))",
+      "width": 48,
+      "classification": "proven-safe",
+      "unit": "Unix seconds (ERC-6372 timestamp clock)",
+      "bound": "proposalSnapshot returns ProposalCore.voteStart, which OpenZeppelin v5 Governor stores as uint48 via SafeCast.toUint48(clock() + votingDelay())",
+      "justification": "Round-trips a value that is already stored as uint48 (and whose clock() is itself guarded by V2SafeCast.timestamp48 in TruthBountyGovernanceToken), so narrowing back to uint48 is lossless."
+    },
+    {
+      "file": "contracts/upgrade/ProtocolUpgradeManager.sol",
+      "expression": "uint8(48 + uint256(value % 10))",
+      "width": 8,
+      "classification": "proven-safe",
+      "unit": "ASCII digit",
+      "bound": "48 + (value % 10) is in [48, 57] <= 255",
+      "justification": "Decimal digit encoding in _toString for the human-readable version string; the modulo bounds the operand to a single ASCII digit."
+    }
+  ]
+}

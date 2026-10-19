@@ -40,7 +40,7 @@ contract UpgradeIntegrationTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(proposalId);
 
         assertEq(controller.currentImplementation(target), impl2);
@@ -69,7 +69,7 @@ contract UpgradeIntegrationTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(proposalId);
 
         registry.registerVersion(
@@ -110,7 +110,7 @@ contract UpgradeIntegrationTest is Test {
             bytes32(0)
         );
         controller.scheduleUpgrade(p1);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(p1);
 
         address impl3 = address(0x400);
@@ -122,7 +122,7 @@ contract UpgradeIntegrationTest is Test {
             bytes32(0)
         );
         controller.scheduleUpgrade(p2);
-        vm.warp(vm.getBlockTimestamp() + 1 days);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
         controller.executeUpgrade(p2);
 
         assertEq(controller.currentImplementation(target), impl3);
@@ -144,7 +144,7 @@ contract UpgradeIntegrationTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(proposalId);
 
         assertEq(controller.currentImplementation(target), impl2);
@@ -163,7 +163,7 @@ contract UpgradeIntegrationTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
 
         vm.expectRevert(abi.encodeWithSelector(StorageCompatibilityValidator.IncompatibleStorageLayout.selector, "New implementation has fewer storage slots"));
         controller.executeUpgrade(proposalId);
@@ -200,7 +200,7 @@ contract UpgradeIntegrationTest is Test {
             bytes32(0)
         );
         controller.scheduleUpgrade(p1);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(p1);
 
         assertEq(controller.currentImplementation(target), impl2);
@@ -213,7 +213,7 @@ contract UpgradeIntegrationTest is Test {
             bytes32(0)
         );
         controller.scheduleUpgrade(rollbackProposal);
-        vm.warp(vm.getBlockTimestamp() + 1 days);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
         controller.executeUpgrade(rollbackProposal);
 
         assertEq(controller.currentImplementation(target), impl1);

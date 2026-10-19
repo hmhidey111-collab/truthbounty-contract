@@ -1,0 +1,1189 @@
+{
+  "schemaVersion": 1,
+  "schemaVersionMinor": 1,
+  "kind": "truthbounty.interface-compatibility-matrix",
+  "protocol": "TruthBounty",
+  "protocolVersion": {
+    "major": 2,
+    "minor": 0
+  },
+  "amplificationMetrics": {
+    "event": "StressTestCompleted",
+    "field": "maxAmplificationRatioBps",
+    "units": "basis-points",
+    "denominator": 10000,
+    "bounds": {
+      "min": 0,
+      "max": 10000
+    },
+    "overflowBehavior": "revert-before-emission",
+    "authoritativeSource": "contracts/v2/interfaces/IAggregation.sol",
+    "monitoringDecoding": "topic0-and-data-without-heuristics"
+  },
+  "sources": {
+    "modules": "contracts/v2/interfaces",
+    "base": "contracts/v2/interfaces/IV2Module.sol",
+    "aggregate": "contracts/v2/interfaces/ICanonicalV2.sol",
+    "typeRegistry": "contracts/v2/interfaces/IV2Types.sol",
+    "versionFixture": "contracts/v2/interfaces/V2ConformanceFixture.sol",
+    "publishedEventSchema": "schemas/event-schema-v1.json"
+    ,"amplificationEventFixture": "test/fixtures/StressTestCompleted.json"
+  },
+  "modules": [
+    {
+      "name": "IAggregation",
+      "source": "contracts/v2/interfaces/IAggregation.sol",
+      "kind": "module",
+      "interfaceId": "0xf06520f1",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 2,
+      "errorCount": 0,
+      "eventCount": 1,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "finalizeAggregation(uint256)",
+          "hash": "0xaa7469db",
+          "declaredIn": "IAggregation"
+        },
+        {
+          "signature": "outcome(uint256)",
+          "hash": "0x5a11492a",
+          "declaredIn": "IAggregation"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "AggregationFinalized(uint256,bool,uint256,uint256,uint64,uint16)",
+          "hash": "0x53c777f7a532d77f07808bf8a6db1a1cd09834be73c5972cf65b96d0548c833d",
+          "declaredIn": "IAggregation"
+        }
+      ],
+      "digest": "0xf8fe34e93cadea8d249d08da870198b20ac56fa0a17ac7b74f41ec5016635101"
+    },
+    {
+      "name": "ICanonicalV2",
+      "source": "contracts/v2/interfaces/ICanonicalV2.sol",
+      "kind": "aggregate",
+      "interfaceId": "0x00000000",
+      "inherits": [
+        "IConfiguration",
+        "IModuleRegistry",
+        "IClaims",
+        "IEvidence",
+        "IStakeCustody",
+        "IVerification",
+        "IAggregation",
+        "ISettlement",
+        "IDisputes",
+        "IRewards",
+        "ISlashing",
+        "ITreasury",
+        "IReputationRoots",
+        "IGovernanceHooks",
+        "IEmergencyControls"
+      ],
+      "functionCount": 0,
+      "errorCount": 0,
+      "eventCount": 0,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [],
+      "errors": [],
+      "events": [],
+      "digest": "0xf016b4375a498f0894c851bfeff4b8510551da738f1fc0a8bbca85290ea91606"
+    },
+    {
+      "name": "IClaims",
+      "source": "contracts/v2/interfaces/IClaims.sol",
+      "kind": "module",
+      "interfaceId": "0x38a3ec24",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 4,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [
+        "IV2Types.ClaimState"
+      ],
+      "functions": [
+        {
+          "signature": "cancelClaim(uint256)",
+          "hash": "0x9dc5e02f",
+          "declaredIn": "IClaims"
+        },
+        {
+          "signature": "createClaim(bytes32,uint256,bytes)",
+          "hash": "0xec935668",
+          "declaredIn": "IClaims"
+        },
+        {
+          "signature": "getClaim(uint256)",
+          "hash": "0x5aef2447",
+          "declaredIn": "IClaims"
+        },
+        {
+          "signature": "stateOf(uint256)",
+          "hash": "0x131a7e24",
+          "declaredIn": "IClaims"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "ClaimCreated(uint256,address,bytes32,uint256,uint64,uint16)",
+          "hash": "0x5ecddb64d06b2dfcb9e6b8220c3cfcce834d2dcf8f148c9cd4e26fea2d6226a1",
+          "declaredIn": "IClaims"
+        },
+        {
+          "signature": "ClaimStateChanged(uint256,uint8,uint8,address,uint64,bytes32,uint16)",
+          "hash": "0x65c0b037657446466867e2e6a91f1ae63b3e6609b410effc59f0150f973225b4",
+          "declaredIn": "IClaims"
+        }
+      ],
+      "digest": "0xa12498b39e958ef34cc32e72fc94c1d408ac12d3ff347d591cea202752eff523"
+    },
+    {
+      "name": "IConfiguration",
+      "source": "contracts/v2/interfaces/IConfiguration.sol",
+      "kind": "module",
+      "interfaceId": "0x6b73d71f",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 4,
+      "errorCount": 1,
+      "eventCount": 1,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [
+        "ParameterSet"
+      ],
+      "enums": [],
+      "referencedStructs": [
+        "ParameterSet"
+      ],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "getLatestVersion()",
+          "hash": "0x0e6d1de9",
+          "declaredIn": "IConfiguration"
+        },
+        {
+          "signature": "getParameterSet(uint256)",
+          "hash": "0x8f97a101",
+          "declaredIn": "IConfiguration"
+        },
+        {
+          "signature": "getVersionCount()",
+          "hash": "0x946dfcfe",
+          "declaredIn": "IConfiguration"
+        },
+        {
+          "signature": "publish((address[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256[],uint256,uint256,uint256))",
+          "hash": "0x7ee49709",
+          "declaredIn": "IConfiguration"
+        }
+      ],
+      "errors": [
+        {
+          "signature": "InvalidParameterSet(bytes32)",
+          "hash": "0x5619f6dd",
+          "declaredIn": "IConfiguration"
+        }
+      ],
+      "events": [
+        {
+          "signature": "ParameterSetPublished(uint256,address,uint64,uint16)",
+          "hash": "0xf97ff8ed0526203dbb9cfe16b9bce250b58e497f162d48a428cdc0f081b5eda5",
+          "declaredIn": "IConfiguration"
+        }
+      ],
+      "digest": "0xabbfacc51648667e81d94792e0bfe74258f6d0b697aee8915ee2a4a13978ea8c"
+    },
+    {
+      "name": "IDisputes",
+      "source": "contracts/v2/interfaces/IDisputes.sol",
+      "kind": "module",
+      "interfaceId": "0x98581ac8",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [
+        "IV2Types.DisputeStatus"
+      ],
+      "functions": [
+        {
+          "signature": "getDispute(uint256)",
+          "hash": "0xe3a96cbd",
+          "declaredIn": "IDisputes"
+        },
+        {
+          "signature": "openDispute(uint256,bytes32,bytes)",
+          "hash": "0xd9004a81",
+          "declaredIn": "IDisputes"
+        },
+        {
+          "signature": "resolveDispute(uint256,uint8,bytes)",
+          "hash": "0xa2f13cf4",
+          "declaredIn": "IDisputes"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "DisputeOpened(uint256,uint256,address,bytes32,uint64,uint16)",
+          "hash": "0x97efda3a3f0d3b6b513e2210117f648177ae866604275f70505a17715710ffef",
+          "declaredIn": "IDisputes"
+        },
+        {
+          "signature": "DisputeResolved(uint256,uint8,address,uint64,uint16)",
+          "hash": "0x27e3bca19955360a9470a0d7d2355054e62938abf5a327fef4415a99d8688c03",
+          "declaredIn": "IDisputes"
+        }
+      ],
+      "digest": "0xa01f56213173b5fb67723a0e249e24e64179d1ba0544ad6836d8a0f8483c5c49"
+    },
+    {
+      "name": "IEmergencyControls",
+      "source": "contracts/v2/interfaces/IEmergencyControls.sol",
+      "kind": "module",
+      "interfaceId": "0x5c85bbe3",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "pause(bytes32)",
+          "hash": "0xed56531a",
+          "declaredIn": "IEmergencyControls"
+        },
+        {
+          "signature": "paused(bytes32)",
+          "hash": "0x9e9e4666",
+          "declaredIn": "IEmergencyControls"
+        },
+        {
+          "signature": "unpause(bytes32)",
+          "hash": "0x2f4dae9f",
+          "declaredIn": "IEmergencyControls"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "EmergencyPaused(bytes32,address,uint64,uint16)",
+          "hash": "0xa5d5227c399c13c440e92613e204cb523cc579db694fc3092a2cd7af8a12d288",
+          "declaredIn": "IEmergencyControls"
+        },
+        {
+          "signature": "EmergencyUnpaused(bytes32,address,uint64,uint16)",
+          "hash": "0x1b62335ee635eabf64d0bf555b8024d85e57f1424993b40c77ab128cf10b1e8c",
+          "declaredIn": "IEmergencyControls"
+        }
+      ],
+      "digest": "0xfdf9f611a4eaa7c49f29fcf00c5c4cc136ebe57950be8acaae60a06b58e14ec8"
+    },
+    {
+      "name": "IEvidence",
+      "source": "contracts/v2/interfaces/IEvidence.sol",
+      "kind": "module",
+      "interfaceId": "0x549aab2c",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 4,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [
+        "IV2Types.EvidenceStatus"
+      ],
+      "functions": [
+        {
+          "signature": "claimEvidence(uint256,uint256,uint256)",
+          "hash": "0x42994b04",
+          "declaredIn": "IEvidence"
+        },
+        {
+          "signature": "getEvidence(uint256)",
+          "hash": "0xc956f143",
+          "declaredIn": "IEvidence"
+        },
+        {
+          "signature": "setEvidenceStatus(uint256,uint8)",
+          "hash": "0x7c9b5c9b",
+          "declaredIn": "IEvidence"
+        },
+        {
+          "signature": "submitEvidence(uint256,bytes32,bytes)",
+          "hash": "0xa3ce4df0",
+          "declaredIn": "IEvidence"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "EvidenceStatusChanged(uint256,uint8,uint8,address,uint64,uint16)",
+          "hash": "0xfcc556b095c7328e64db13c97b30c4d115aa21fb4045179c5759acd366d5dbfc",
+          "declaredIn": "IEvidence"
+        },
+        {
+          "signature": "EvidenceSubmitted(uint256,uint256,address,bytes32,uint64,uint16)",
+          "hash": "0xdc7046cbc3f181eed7732d2fc2fbeac9baa2ae5d7d92bcded804c4b51e783fb2",
+          "declaredIn": "IEvidence"
+        }
+      ],
+      "digest": "0x45c108ace2e2e75197f1b4a63dee991ee360fd0870d56fa4ca9d5dcde2f2cc09"
+    },
+    {
+      "name": "IFinalRewardAllocator",
+      "source": "contracts/v2/interfaces/IFinalRewardAllocator.sol",
+      "kind": "module",
+      "interfaceId": "0xa3c19fb5",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 8,
+      "errorCount": 0,
+      "eventCount": 4,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [
+        "Allocation"
+      ],
+      "enums": [
+        "FinalOutcome",
+        "RewardCategory"
+      ],
+      "referencedStructs": [
+        "Allocation"
+      ],
+      "referencedEnums": [
+        "FinalOutcome",
+        "RewardCategory"
+      ],
+      "functions": [
+        {
+          "signature": "allocated(address)",
+          "hash": "0x4225e5bb",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "claim(address,uint256)",
+          "hash": "0xaad3ec96",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "claimable(address,address)",
+          "hash": "0xd4570c1c",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "finalized(bytes32)",
+          "hash": "0x0abea268",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "finalizeRewards(bytes32,address,uint8,(uint8,address[],uint256[],uint256,address)[])",
+          "hash": "0x8bbdacdf",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "finalOutcome(bytes32)",
+          "hash": "0xb2810b05",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "fund(address,uint256,bytes32)",
+          "hash": "0xe91b634e",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "funded(address)",
+          "hash": "0x45f9fc78",
+          "declaredIn": "IFinalRewardAllocator"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "RewardAllocated(bytes32,uint8,address,address,uint256)",
+          "hash": "0x3f54fa4bc76f54dd4f08a33c607812a6dcbaf0c1ecf36884f510d94b1269b711",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "RewardClaimed(address,address,uint256)",
+          "hash": "0x0aa4d283470c904c551d18bb894d37e17674920f3261a7f854be501e25f421b7",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "RewardPoolFunded(address,uint256,bytes32)",
+          "hash": "0x6012f11c6fbfdb6078c48dab2d37c2940fcf3e5e92532c7b935c495431dc8533",
+          "declaredIn": "IFinalRewardAllocator"
+        },
+        {
+          "signature": "RewardsFinalized(bytes32,address,uint8,uint256)",
+          "hash": "0x9588a62393e8cb383185fdcb9ebda39f11a87b3c81e991ef8964ea9c1480ee3a",
+          "declaredIn": "IFinalRewardAllocator"
+        }
+      ],
+      "digest": "0xd139b24a85ad12b6404b5442e430749cff2bcc8bebb7b327532ed7cfceaca0e2"
+    },
+    {
+      "name": "IGovernanceHooks",
+      "source": "contracts/v2/interfaces/IGovernanceHooks.sol",
+      "kind": "module",
+      "interfaceId": "0x76228b23",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "authorize(bytes32,address,bytes4,bytes32)",
+          "hash": "0xf28d9890",
+          "declaredIn": "IGovernanceHooks"
+        },
+        {
+          "signature": "consume(bytes32,address,bytes4,bytes32)",
+          "hash": "0x1fedbd7f",
+          "declaredIn": "IGovernanceHooks"
+        },
+        {
+          "signature": "isAuthorized(bytes32,address,bytes4,bytes32)",
+          "hash": "0x9b42aecc",
+          "declaredIn": "IGovernanceHooks"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "GovernanceActionAuthorized(bytes32,address,bytes4,uint64,uint16)",
+          "hash": "0x6829d6374ac775b36979fcecfab5fae9983c300877acc18c7deaf0c60cc8847e",
+          "declaredIn": "IGovernanceHooks"
+        },
+        {
+          "signature": "GovernanceActionConsumed(bytes32,address,bytes4,uint64,uint16)",
+          "hash": "0xb6cfac365fe200478c78759959c45a010b600412276ae34e086359283db9658c",
+          "declaredIn": "IGovernanceHooks"
+        }
+      ],
+      "digest": "0xf99f530c17ddbc14161e774c8f7ef42fff3f05b461948476a7eb9b5f459f7a51"
+    },
+    {
+      "name": "IModuleRegistry",
+      "source": "contracts/v2/interfaces/IModuleRegistry.sol",
+      "kind": "module",
+      "interfaceId": "0x2970b48f",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 4,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "isRegistered(bytes32)",
+          "hash": "0x27258b22",
+          "declaredIn": "IModuleRegistry"
+        },
+        {
+          "signature": "module(bytes32)",
+          "hash": "0xe8cffd1d",
+          "declaredIn": "IModuleRegistry"
+        },
+        {
+          "signature": "registerModule(bytes32,address)",
+          "hash": "0xa78e922b",
+          "declaredIn": "IModuleRegistry"
+        },
+        {
+          "signature": "removeModule(bytes32)",
+          "hash": "0x4114509b",
+          "declaredIn": "IModuleRegistry"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "ModuleRegistered(bytes32,address,uint16,uint16,uint64,uint16)",
+          "hash": "0xb318bd59cd7c9534cf22c9a8397a115401b6d3bbedb2455f701b9b13c9d35016",
+          "declaredIn": "IModuleRegistry"
+        },
+        {
+          "signature": "ModuleRemoved(bytes32,address,uint64,uint16)",
+          "hash": "0xf4f428badd4ee96acc770bdbb0e99768ef36ab8eedf3c05fb5c26682c73d2da0",
+          "declaredIn": "IModuleRegistry"
+        }
+      ],
+      "digest": "0x1563f453e3669425380639feb6aae611cac22793a4e2f28cd84e0c646fe942a2"
+    },
+    {
+      "name": "IReputationRoots",
+      "source": "contracts/v2/interfaces/IReputationRoots.sol",
+      "kind": "module",
+      "interfaceId": "0x7b699d8e",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 4,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "acceptRoot(uint256)",
+          "hash": "0x2dac2d86",
+          "declaredIn": "IReputationRoots"
+        },
+        {
+          "signature": "proposeRoot(uint256,bytes32,string)",
+          "hash": "0xf02c7c9b",
+          "declaredIn": "IReputationRoots"
+        },
+        {
+          "signature": "rootAt(uint256)",
+          "hash": "0xca2869a0",
+          "declaredIn": "IReputationRoots"
+        },
+        {
+          "signature": "verify(uint256,address,uint256,bytes32[])",
+          "hash": "0x6cc1a533",
+          "declaredIn": "IReputationRoots"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "RootAccepted(uint256,bytes32,uint64,uint16)",
+          "hash": "0x91e0fc30dc145bc9d88f17e2398c3c9767bfdca5c064f855334b45d402a3339a",
+          "declaredIn": "IReputationRoots"
+        },
+        {
+          "signature": "RootProposed(uint256,bytes32,address,uint64,uint16)",
+          "hash": "0x7caee1fab15a4b3a824f9298d0d1c61217485830608a1412c6f29882b0d78388",
+          "declaredIn": "IReputationRoots"
+        }
+      ],
+      "digest": "0x389bfa254c077b96524ed66af86e201f773519822df9870292bf6d334dae1c1e"
+    },
+    {
+      "name": "IRewards",
+      "source": "contracts/v2/interfaces/IRewards.sol",
+      "kind": "module",
+      "interfaceId": "0xe0e8be78",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "accrue(uint256,address,uint256)",
+          "hash": "0x4f9d5101",
+          "declaredIn": "IRewards"
+        },
+        {
+          "signature": "claimable(address)",
+          "hash": "0x402914f5",
+          "declaredIn": "IRewards"
+        },
+        {
+          "signature": "claimRewards(address)",
+          "hash": "0xef5cfb8c",
+          "declaredIn": "IRewards"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "RewardAccrued(uint256,address,uint256,uint64,uint16)",
+          "hash": "0x6674a25b77930c93a282ce79a3a46c60d2ff0940e3eb20ec12583fbcd5bc8874",
+          "declaredIn": "IRewards"
+        },
+        {
+          "signature": "RewardClaimed(address,uint256,uint64,uint16)",
+          "hash": "0x70aa5cf7e7a1d9d75bfeec73e1b9c8d21aa251b244b05b2109f03e88a8362dab",
+          "declaredIn": "IRewards"
+        }
+      ],
+      "digest": "0xbc8116f88b3a36ae5fc6714cc80f71f83ab911ffd754d9a4169c4099d4f6c476"
+    },
+    {
+      "name": "ISettlement",
+      "source": "contracts/v2/interfaces/ISettlement.sol",
+      "kind": "module",
+      "interfaceId": "0xd7d9d5f0",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "executeSettlement(uint256)",
+          "hash": "0x83c0b8ac",
+          "declaredIn": "ISettlement"
+        },
+        {
+          "signature": "getSettlement(uint256)",
+          "hash": "0x4c582380",
+          "declaredIn": "ISettlement"
+        },
+        {
+          "signature": "queueSettlement(uint256)",
+          "hash": "0x18414edc",
+          "declaredIn": "ISettlement"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "SettlementExecuted(uint256,address,uint256,uint64,uint16)",
+          "hash": "0x92538e4a74823cc58840d75a188dde52563b3afb84e9d4dac522d170dd72b462",
+          "declaredIn": "ISettlement"
+        },
+        {
+          "signature": "SettlementQueued(uint256,address,uint256,uint256,uint64,uint64,uint16)",
+          "hash": "0x0f1a5ab59b2abd64091ff2fa22f15aff08972133e15328129d9b8c31b5d13b13",
+          "declaredIn": "ISettlement"
+        }
+      ],
+      "digest": "0x5482fd0c85f9f6f8ab9d343fa892f0e62eadd98bebe196834a22983636bb9d98"
+    },
+    {
+      "name": "ISlashing",
+      "source": "contracts/v2/interfaces/ISlashing.sol",
+      "kind": "module",
+      "interfaceId": "0x2bf473dd",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "executeSlash(bytes32)",
+          "hash": "0xb850cdf7",
+          "declaredIn": "ISlashing"
+        },
+        {
+          "signature": "proposeSlash(uint256,address,uint256,bytes32)",
+          "hash": "0x04a3b978",
+          "declaredIn": "ISlashing"
+        },
+        {
+          "signature": "slashAmount(bytes32)",
+          "hash": "0x97070752",
+          "declaredIn": "ISlashing"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "SlashExecuted(bytes32,address,uint256,uint64,uint16)",
+          "hash": "0x3b864d598c8691732302df06b86b0bbb46f14e123c752255e437cba0d470e96f",
+          "declaredIn": "ISlashing"
+        },
+        {
+          "signature": "SlashProposed(bytes32,uint256,address,uint256,bytes32,uint64,uint16)",
+          "hash": "0x19ff2ed5925a4b794b62b77a872595c3a096dfb12fa41d4afc7dd5910590fb3b",
+          "declaredIn": "ISlashing"
+        }
+      ],
+      "digest": "0xa98ac7f9e149863899a74b48222ba14e1efbc6861dfd9306537c337c5ae8e3b6"
+    },
+    {
+      "name": "IStakeCustody",
+      "source": "contracts/v2/interfaces/IStakeCustody.sol",
+      "kind": "module",
+      "interfaceId": "0x3e53b374",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 11,
+      "errorCount": 0,
+      "eventCount": 8,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "carryForwardAppeal(address,address,uint256,uint256,uint256,uint256)",
+          "hash": "0x4c5974b3",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "depositStake(uint256,uint256)",
+          "hash": "0x7ec59eef",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "finalUnlock(address,address,uint256,uint256,uint256)",
+          "hash": "0x59dc6686",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "refundInconclusive(address,address,uint256,uint256,uint256)",
+          "hash": "0xbe84ff2d",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "releaseStake(uint256,address,uint256)",
+          "hash": "0xf85621de",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "rolloverRound(address,address,uint256,uint256,uint256,uint256)",
+          "hash": "0x998fe054",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "settleConclusive(address,address,uint256,uint256,uint256,uint256)",
+          "hash": "0x9f36d959",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "settlementOutcome(uint256,uint256)",
+          "hash": "0x5110cb67",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "slashStake(uint256,address,uint256,bytes32)",
+          "hash": "0x4ebe3bde",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "staked(uint256,address)",
+          "hash": "0x4b1da4c9",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "totalStaked(uint256)",
+          "hash": "0x41cb8c20",
+          "declaredIn": "IStakeCustody"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "StakeDeposited(address,uint256,uint256,uint64,uint16)",
+          "hash": "0x615d742029bd7f0f4bed9d072c9455a8f8d18e2eb4a7e3870fdb98e10fa10490",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "StakeReleased(address,uint256,uint256,uint64,uint16)",
+          "hash": "0x7a64f934d0c7eb9962a2af77033432af0887a4ffb93817280c7e888ff2756683",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "StakeSlashed(address,uint256,uint256,bytes32,uint64,uint16)",
+          "hash": "0xf49eab7373229a134a3fd1f0d370a2f7c4a573ad8a4f265da750ab73776a2c98",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "VaultCarriedForward(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+          "hash": "0x1e68fc7804bd3b849a7d00c688b344681839a49b627e5251604c76ff1de750b3",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "VaultFinalUnlocked(address,address,uint256,uint256,uint256,uint64,uint16)",
+          "hash": "0xa8457407827b8fad644f79471c45f540cf2b3172c93da6015ac1e52ca1c4a1c6",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "VaultRefundedInconclusive(address,address,uint256,uint256,uint256,uint64,uint16)",
+          "hash": "0xa78a72b7824f42d8059b33a31d5cfb83d085d87d947b550516d9f197953314b1",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "VaultRolledOver(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+          "hash": "0x6f5e1b92f346673affd311e6af7a4e7152e96299b77135202075f048993a7d4d",
+          "declaredIn": "IStakeCustody"
+        },
+        {
+          "signature": "VaultSettledConclusive(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+          "hash": "0xf662c9866baadae21fb3a1c11936c16c597ec622112a25ba6fa15776fd1fd3a8",
+          "declaredIn": "IStakeCustody"
+        }
+      ],
+      "digest": "0x21b33d6bb7ca6d5405a3ecc78ff40764b8ef5e02d1b0fbf42dc08c73d33a7213"
+    },
+    {
+      "name": "ITreasury",
+      "source": "contracts/v2/interfaces/ITreasury.sol",
+      "kind": "module",
+      "interfaceId": "0xd766ec85",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 2,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "balanceOf(bytes32)",
+          "hash": "0x6c7f1542",
+          "declaredIn": "ITreasury"
+        },
+        {
+          "signature": "deposit(bytes32,uint256)",
+          "hash": "0x1de26e16",
+          "declaredIn": "ITreasury"
+        },
+        {
+          "signature": "withdraw(bytes32,address,uint256)",
+          "hash": "0xa6fb97d1",
+          "declaredIn": "ITreasury"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "FundsDeposited(address,uint256,bytes32,uint64,uint16)",
+          "hash": "0xe4d75868f97c7d0c6c6007b475d628d4bf18db9724eb367b42322940dcf99ffa",
+          "declaredIn": "ITreasury"
+        },
+        {
+          "signature": "FundsWithdrawn(address,uint256,bytes32,uint64,uint16)",
+          "hash": "0x7dd25a670d754aa620a4df2a576c6ed21dd4aeb0424d65edaef42c041cb78384",
+          "declaredIn": "ITreasury"
+        }
+      ],
+      "digest": "0x0a4a8d57de62d686611f4c9fc1f5b87502cecbe31e54d106d051c8a8971eb5f5"
+    },
+    {
+      "name": "IV2Module",
+      "source": "contracts/v2/interfaces/IV2Module.sol",
+      "kind": "base",
+      "interfaceId": "0x2ae9c600",
+      "inherits": [
+        "IERC165"
+      ],
+      "functionCount": 1,
+      "errorCount": 0,
+      "eventCount": 0,
+      "declaresProtocolVersion": true,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "protocolVersion()",
+          "hash": "0x2ae9c600",
+          "declaredIn": "IV2Module"
+        }
+      ],
+      "errors": [],
+      "events": [],
+      "digest": "0x95d82ebb6b36d4fed305313d8875bf80606613e1fcbe717a5aa6f107d523aedc"
+    },
+    {
+      "name": "IV2Types",
+      "source": "contracts/v2/interfaces/IV2Types.sol",
+      "kind": "types",
+      "interfaceId": "0x00000000",
+      "inherits": [],
+      "functionCount": 0,
+      "errorCount": 0,
+      "eventCount": 0,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [
+        "Claim",
+        "Dispute",
+        "Evidence",
+        "Settlement",
+        "Verification"
+      ],
+      "enums": [
+        "ClaimState",
+        "ClaimStatus",
+        "DisputeStatus",
+        "EvidenceStatus",
+        "LockCategory",
+        "SettlementOutcome",
+        "SettlementStatus"
+      ],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [],
+      "errors": [],
+      "events": [],
+      "digest": "0x4254ece032cfd7c3e9380761accc361d4fb5c3f2a6b07bfa32b955abf56805dc"
+    },
+    {
+      "name": "IVerification",
+      "source": "contracts/v2/interfaces/IVerification.sol",
+      "kind": "module",
+      "interfaceId": "0x3833e81d",
+      "inherits": [
+        "IV2Module"
+      ],
+      "functionCount": 3,
+      "errorCount": 0,
+      "eventCount": 1,
+      "declaresProtocolVersion": false,
+      "declaresSupportsInterface": false,
+      "structs": [],
+      "enums": [],
+      "referencedStructs": [],
+      "referencedEnums": [],
+      "functions": [
+        {
+          "signature": "claimVerifications(uint256,uint256,uint256)",
+          "hash": "0x631c280d",
+          "declaredIn": "IVerification"
+        },
+        {
+          "signature": "getVerification(uint256)",
+          "hash": "0x58937cc8",
+          "declaredIn": "IVerification"
+        },
+        {
+          "signature": "submitVerification(uint256,bool,bytes)",
+          "hash": "0x03bcbcd8",
+          "declaredIn": "IVerification"
+        }
+      ],
+      "errors": [],
+      "events": [
+        {
+          "signature": "VerificationSubmitted(uint256,uint256,address,bool,uint256,uint64,uint16)",
+          "hash": "0x6631771095916266b2b59f5374670f2a096447be18bd5a04a124178f39300c2e",
+          "declaredIn": "IVerification"
+        }
+      ],
+      "digest": "0x358831a6e9fcddd8cf04104f80782568b9d6acaf415dd9458a69a1e75704172f"
+    }
+  ],
+  "aggregateManifest": {
+    "name": "ICanonicalV2",
+    "inherits": [
+      "IConfiguration",
+      "IModuleRegistry",
+      "IClaims",
+      "IEvidence",
+      "IStakeCustody",
+      "IVerification",
+      "IAggregation",
+      "ISettlement",
+      "IDisputes",
+      "IRewards",
+      "ISlashing",
+      "ITreasury",
+      "IReputationRoots",
+      "IGovernanceHooks",
+      "IEmergencyControls"
+    ],
+    "declaredMembers": 0,
+    "notNamed": [
+      "IFinalRewardAllocator"
+    ],
+    "undocumentedOmissions": []
+  },
+  "sharedFunctions": [
+    {
+      "signature": "protocolVersion()",
+      "selector": "0x2ae9c600",
+      "modules": [
+        "IAggregation",
+        "IClaims",
+        "IConfiguration",
+        "IDisputes",
+        "IEmergencyControls",
+        "IEvidence",
+        "IFinalRewardAllocator",
+        "IGovernanceHooks",
+        "IModuleRegistry",
+        "IReputationRoots",
+        "IRewards",
+        "ISettlement",
+        "ISlashing",
+        "IStakeCustody",
+        "ITreasury",
+        "IVerification"
+      ],
+      "intentional": true,
+      "note": "IV2Module base discovery surface; identical meaning in every module"
+    }
+  ],
+  "sharedErrors": [],
+  "eventNameCollisions": [
+    {
+      "name": "RewardClaimed",
+      "signatures": [
+        "RewardClaimed(address,address,uint256)",
+        "RewardClaimed(address,uint256,uint64,uint16)"
+      ],
+      "modules": [
+        "IFinalRewardAllocator",
+        "IRewards"
+      ]
+    }
+  ],
+  "crossArtifacts": {
+    "canonicalEventTopics": 37,
+    "publishedEventTopics": 51,
+    "publishedTopicOverlap": 0,
+    "publishedTopicsNotCanonical": 51,
+    "canonicalTopicsNotPublished": 37,
+    "versionFixtureDeclaration": "2.0",
+    "amplificationMetricSchemaVersion": 1,
+    "documentedDivergences": [
+      "schemas/event-schema-v1.json publishes the legacy V1 event catalogue (51 topics) and shares 0 topic0 with the 37 canonical V2 events; consumers must treat the two catalogues as disjoint and read canonical V2 events from the V2-SC-131 export.",
+      "IFinalRewardAllocator is a canonical module interface that is not named by ICanonicalV2: Published extension surface for the reward allocator; ICanonicalV2 names the 15 ownership modules from docs/v2/interface-ownership.md.",
+      "RewardClaimed is emitted by IFinalRewardAllocator, IRewards with distinct signatures; decode by topic0, not by name."
+    ]
+  },
+  "invariants": [
+    {
+      "id": "unique-interface-ids",
+      "status": "pass",
+      "detail": "Every module advertises a distinct ERC-165 interface id."
+    },
+    {
+      "id": "module-declares-migration-base",
+      "status": "pass",
+      "detail": "Every module inherits IV2Module and therefore exposes protocolVersion()."
+    },
+    {
+      "id": "unique-function-selectors",
+      "status": "pass",
+      "detail": "No selector collision inside any module."
+    },
+    {
+      "id": "declared-shared-functions",
+      "status": "pass",
+      "detail": "Every cross-module selector is documented in INTENTIONAL_SHARED_FUNCTIONS."
+    },
+    {
+      "id": "unique-error-selectors",
+      "status": "pass",
+      "detail": "Error selectors are unique across modules."
+    },
+    {
+      "id": "documented-event-name-collisions",
+      "status": "pass",
+      "detail": "Every duplicated event name is documented as topic0-distinguished."
+    },
+    {
+      "id": "aggregate-is-pure-manifest",
+      "status": "pass",
+      "detail": "ICanonicalV2 declares no members and names every canonical module (documented extensions excepted)."
+    },
+    {
+      "id": "resolved-user-types",
+      "status": "pass",
+      "detail": "Every referenced struct and enum is declared by a canonical module."
+    },
+    {
+      "id": "protocol-version-declaration",
+      "status": "pass",
+      "detail": "Version fixture declares protocolVersion 2.0."
+    },
+    {
+      "id": "amplification-metric-bounds",
+      "status": "pass",
+      "detail": "StressTestCompleted.maxAmplificationRatioBps is expressed in basis points with bounds [0,10000]; impossible values revert before emission."
+    },
+    {
+      "id": "amplification-event-fixture-parity",
+      "status": "pass",
+      "detail": "Event fixture for StressTestCompleted matches runtime topic0 and data layout exactly."
+    }
+  ],
+  "digest": "0x5ff3e943864bca64da6c442cf85dac4133c51cc2e4876dcfe66f49bcbde793c4"
+}

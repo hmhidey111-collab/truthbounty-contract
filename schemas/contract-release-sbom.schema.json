@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://truthbounty.protocol/schemas/contract-release-sbom.schema.json",
+  "title": "TruthBounty Contract Release SBOM and Provenance Attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "protocol",
+    "releaseVersion",
+    "generatedAt",
+    "sourceCommit",
+    "compiler",
+    "dependencies",
+    "artifacts",
+    "workflowIdentity",
+    "attestation",
+    "checksum"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "kind": {
+      "type": "string",
+      "const": "truthbounty.contract-release-sbom+provenance"
+    },
+    "protocol": { "type": "string", "const": "TruthBounty" },
+    "releaseVersion": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "compiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["solidity", "evmVersion", "viaIR", "optimizer"],
+      "properties": {
+        "solidity": { "type": "string" },
+        "evmVersion": { "type": "string" },
+        "viaIR": { "type": "boolean" },
+        "optimizer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "runs"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "runs": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "version", "kind"],
+        "properties": {
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "kind": { "type": "string", "enum": ["npm", "git-submodule"] },
+          "rev": { "type": "string" },
+          "integrity": { "type": "string" }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "bytes"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "workflowIdentity": {
+      "type": "object",
+      "required": ["present"],
+      "properties": {
+        "present": { "type": "boolean" },
+        "repository": { "type": "string" },
+        "workflow": { "type": "string" },
+        "workflowRef": { "type": "string" },
+        "runId": { "type": "string" },
+        "runAttempt": { "type": "string" },
+        "ref": { "type": "string" },
+        "sha": { "type": "string" },
+        "serverUrl": { "type": "string" }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["predicateType", "subjects", "materials"],
+      "properties": {
+        "predicateType": { "type": "string" },
+        "subjects": { "type": "array" },
+        "materials": { "type": "array" }
+      }
+    },
+    "checksum": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

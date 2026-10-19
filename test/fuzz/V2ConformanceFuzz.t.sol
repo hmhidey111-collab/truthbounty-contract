@@ -7,10 +7,12 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 
 import {EvidenceRegistry} from "../../contracts/v2/EvidenceRegistry.sol";
 import {StakeVault} from "../../contracts/v2/StakeVault.sol";
+import {EmergencyControls} from "../../contracts/v2/EmergencyControls.sol";
 
 import {IV2Module} from "../../contracts/v2/interfaces/IV2Module.sol";
 import {IEvidence} from "../../contracts/v2/interfaces/IEvidence.sol";
 import {IStakeCustody} from "../../contracts/v2/interfaces/IStakeCustody.sol";
+import {IEmergencyControls} from "../../contracts/v2/interfaces/IEmergencyControls.sol";
 
 import {MockModuleRegistry} from "../../contracts/mocks/MockModuleRegistry.sol";
 import {MockERC20} from "../../contracts/MockERC20.sol";
@@ -24,6 +26,7 @@ import {MockERC20} from "../../contracts/MockERC20.sol";
 contract V2ConformanceFuzzTest is Test {
     EvidenceRegistry internal evidence;
     StakeVault internal stakeVault;
+    EmergencyControls internal emergencyControls;
 
     function setUp() public {
         address admin = address(this);
@@ -32,6 +35,8 @@ contract V2ConformanceFuzzTest is Test {
         MockModuleRegistry registry = new MockModuleRegistry();
         MockERC20 token = new MockERC20("Stake", "STK");
         stakeVault = new StakeVault(address(registry), address(token), admin);
+
+        emergencyControls = new EmergencyControls(admin, address(0xE1), address(0x60));
     }
 
     /// @dev EvidenceRegistry advertises exactly {IERC165, IAccessControl,
@@ -60,5 +65,19 @@ contract V2ConformanceFuzzTest is Test {
         vm.assume(id != type(IStakeCustody).interfaceId);
 
         assertFalse(stakeVault.supportsInterface(id));
+    }
+
+    /// @dev EmergencyControls advertises exactly {IERC165, IAccessControl,
+    ///      IV2Module, IEmergencyControls}. Every other id (including 0xffffffff) is false.
+    function testFuzz_emergencyControls_rejectsUnadvertisedInterface(bytes4 id)
+        public
+        view
+    {
+        vm.assume(id != type(IERC165).interfaceId);
+        vm.assume(id != type(IAccessControl).interfaceId);
+        vm.assume(id != type(IV2Module).interfaceId);
+        vm.assume(id != type(IEmergencyControls).interfaceId);
+
+        assertFalse(emergencyControls.supportsInterface(id));
     }
 }

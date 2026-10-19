@@ -76,6 +76,12 @@ Enforced at `approveUpgrade`:
 - A **storage-incompatible** upgrade **must** carry a validated **migration** (`migrationHash`
   ≠ 0 and validated). This makes layout-breaking changes explicit and reviewed.
 
+Since V2-SC-121 there is an additional **pre-approval gate**: the compiled storage layout of
+every upgradeable contract is frozen in `storage-layouts/manifest.json` and CI fails on
+unapproved drift (see [storage-layout manifests](./storage-layout-manifests.md). Layout drift
+is therefore reviewed at the pull request that introduces it, long before any upgrade
+proposal references the implementation.
+
 ## Roles
 
 | Role | Capability |
@@ -90,6 +96,16 @@ Enforced at `approveUpgrade`:
 
 Separating `PROPOSER`, `VALIDATOR`, `UPGRADER`, and `EXECUTOR` enforces multi-party control:
 no single actor can propose, validate, approve, and execute an upgrade alone.
+
+### Proxy upgrade authority boundary
+
+For modules inheriting `ProtocolUpgradeable`, the configured upgrade controller must also
+hold `GOVERNANCE_ROLE` to authorize a UUPS upgrade. `DEFAULT_ADMIN_ROLE` alone cannot
+authorize an implementation, change the configured controller, or grant either governance
+or upgrade-controller authority. Governance is the admin of both authority roles; initialize
+the module with the governance-controlled executor as its upgrade controller, and ensure
+that executor holds `GOVERNANCE_ROLE`. Direct implementation initialization remains disabled
+by the implementation constructor.
 
 ## Timelock
 

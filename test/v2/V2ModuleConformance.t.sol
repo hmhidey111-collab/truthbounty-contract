@@ -7,6 +7,7 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 
 import {EvidenceRegistry} from "../../contracts/v2/EvidenceRegistry.sol";
 import {StakeVault} from "../../contracts/v2/StakeVault.sol";
+import {EmergencyControls} from "../../contracts/v2/EmergencyControls.sol";
 import {V2ConformanceFixture} from "../../contracts/v2/interfaces/V2ConformanceFixture.sol";
 
 import {IV2Module} from "../../contracts/v2/interfaces/IV2Module.sol";
@@ -14,6 +15,7 @@ import {IEvidence} from "../../contracts/v2/interfaces/IEvidence.sol";
 import {IStakeCustody} from "../../contracts/v2/interfaces/IStakeCustody.sol";
 import {IClaims} from "../../contracts/v2/interfaces/IClaims.sol";
 import {IAggregation} from "../../contracts/v2/interfaces/IAggregation.sol";
+import {IEmergencyControls} from "../../contracts/v2/interfaces/IEmergencyControls.sol";
 
 import {MockModuleRegistry} from "../../contracts/mocks/MockModuleRegistry.sol";
 import {MockERC20} from "../../contracts/MockERC20.sol";
@@ -35,6 +37,7 @@ contract V2ModuleConformanceTest is Test {
 
     EvidenceRegistry internal evidence;
     StakeVault internal stakeVault;
+    EmergencyControls internal emergencyControls;
     V2ConformanceFixture internal fixture;
 
     function setUp() public {
@@ -47,6 +50,8 @@ contract V2ModuleConformanceTest is Test {
         MockModuleRegistry registry = new MockModuleRegistry();
         MockERC20 token = new MockERC20("Stake", "STK");
         stakeVault = new StakeVault(address(registry), address(token), admin);
+
+        emergencyControls = new EmergencyControls(admin, address(0xE1), address(0x60));
 
         fixture = new V2ConformanceFixture();
     }
@@ -106,6 +111,19 @@ contract V2ModuleConformanceTest is Test {
         assertTrue(
             stakeVault.supportsInterface(type(IAccessControl).interfaceId),
             "StakeVault does not advertise IAccessControl"
+        );
+    }
+
+    function test_emergencyControls_conforms() public view {
+        _assertErc165Baseline(address(emergencyControls));
+        _assertV2ModuleSurface(address(emergencyControls));
+        assertTrue(
+            emergencyControls.supportsInterface(type(IEmergencyControls).interfaceId),
+            "EmergencyControls does not advertise IEmergencyControls"
+        );
+        assertTrue(
+            emergencyControls.supportsInterface(type(IAccessControl).interfaceId),
+            "EmergencyControls does not advertise IAccessControl"
         );
     }
 

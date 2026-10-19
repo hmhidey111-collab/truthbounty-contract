@@ -1,6 +1,10 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ethers } from "ethers";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface EventParam {
   name: string;
@@ -267,7 +271,10 @@ export function generateEventSchema(): CanonicalEventSchema {
   return finalSchema;
 }
 
-if (require.main === module) {
+const invokedDirectly =
+  process.argv[1] !== undefined && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+
+if (invokedDirectly) {
   const schema = generateEventSchema();
   const outDir = path.join(__dirname, "../schemas");
   if (!fs.existsSync(outDir)) {

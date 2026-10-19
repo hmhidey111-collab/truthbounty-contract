@@ -20,71 +20,98 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
+  NODE_VERSION: '22'
+  SOLC_VERSION: '0.8.28'
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.event.inputs.environment }}
+    name: Deploy to $${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment: $${{ github.event.inputs.environment }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        # actions/checkout v7.0.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
 
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          version: latest
+          node-version: $${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.8.3
+
+      - name: Validate toolchain drift
+        run: npm run check:toolchain
+        env:
+          SOLC_VERSION: $${{ env.SOLC_VERSION }}
+          NODE_VERSION: $${{ env.NODE_VERSION }}
 
       - name: Build contracts
         run: forge build
 
+      - name: Validate network alias
+        run: node scripts/validate-network-config.mjs "$${{ github.event.inputs.environment }}"
+
+      - name: Dry-run deployment command
+        run: node scripts/validate-network-config.mjs --dry-run "$${{ github.event.inputs.environment }}"
+
       - name: Deploy contracts
         run: >
           forge script script/deploy/Deploy.s.sol:Deploy
-          --sig "run(string)" "${{ github.event.inputs.environment }}"
-          --rpc-url ${{ vars.RPC_URL }}
-          --private-key ${{ secrets.PRIVATE_KEY }}
+          --sig "run(string)" "$${{ github.event.inputs.environment }}"
+          --rpc-url $$ +{{ vars.RPC_URL }}
+          --private-key $$ +{{ secrets.PRIVATE_KEY }}
           --broadcast
           --verify
         env:
-          DEPLOY_ENV: ${{ github.event.inputs.environment }}
-          DEPLOYER_ADDRESS: ${{ vars.DEPLOYER_ADDRESS }}
-          ADMIN_ADDRESS: ${{ vars.ADMIN_ADDRESS }}
-          GOVERNANCE_CONTROLLER: ${{ vars.GOVERNANCE_CONTROLLER }}
-          RELEASE_VERSION: ${{ github.event.inputs.release_version }}
-          GIT_COMMIT: ${{ github.sha }}
-          VERIFICATION_WINDOW: ${{ vars.VERIFICATION_WINDOW }}
-          MIN_STAKE: ${{ vars.MIN_STAKE }}
-          STAKING_LOCK_DURATION: ${{ vars.STAKING_LOCK_DURATION }}
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          NETWORK: $${{ github.event.inputs.environment }}
+          DEPLOY_ENV: $${{ github.event.inputs.environment }}
+          DEPLOYER_ADDRESS: $${{ vars.DEPLOYER_ADDRESS }}
+          ADMIN_ADDRESS: $${{ vars.ADMIN_ADDRESS }}
+          GOVERNANCE_CONTROLLER: $${{ vars.GOVERNANCE_CONTROLLER }}
+          RELEASE_VERSION: $${{ github.event.inputs.release_version }}
+          GIT_COMMIT: $${{ github.sha }}
+          VERIFICATION_WINDOW: $$ +{{ vars.VERIFICATION_WINDOW }}
+          MIN_STAKE: $${{ vars.MIN_STAKE }}
+          STAKING_LOCK_DURATION: $$ +{{ vars.STAKING_LOCK_DURATION }}
+          ETHERSCAN_API_KEY: $${{ secrets.ETHERSCAN_API_KEY }}
 
       - name: Verify deployment
         run: >
-          forge script script/deploy/Verify.s.sol:Verify
+          forge script script/deploy/Verify.s:Verify
           --sig "verifyDeployment(address,address,address,address,address,address)"
-          --rpc-url ${{ vars.RPC_URL }}
-          --private-key ${{ secrets.PRIVATE_KEY }}
+          --rpc-url $$ +{{ vars.RPC_URL }}
+          --private-key $$ +{{ secrets.PRIVATE_KEY }}
         env:
-          DEPLOY_ENV: ${{ github.event.inputs.environment }}
+          DEPLOY_ENV: $${{ github.event.inputs.environment }}
 
       - name: Upload deployment artifacts
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: deployment-artifacts-${{ github.event.inputs.environment }}
-          path: deployments/${{ github.event.inputs.environment }}/
+          name: deployment-artifacts-$$ +{{ github.event.inputs.environment }}
+          path: deployments/$$ +{{ github.event.inputs.environment }}/
           retention-days: 90
 
       - name: Create release tag
         if: github.event.inputs.environment == 'mainnet'
-        uses: actions/github-script@v9
+        # actions/github-script v9.0.0
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
         with:
           script: |
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/v${{ github.event.inputs.release_version }}',
+              ref: 'refs/tags/v$${{ github.event.inputs.release_version }}',
               sha: context.sha
             });
 
@@ -94,28 +121,42 @@ jobs:
     needs: deploy
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        # actions/checkout v7.0.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: $${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
         with:
-          version: latest
+          version: v1.8.3
 
       - name: Build contracts
         run: forge build
 
+      - name: Verify manifest reproducibility
+        run: npm run check:manifest
+
       - name: Download deployment artifacts
-        uses: actions/download-artifact@v4
+        # actions/download-artifact v8.0.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: deployment-artifacts-${{ github.event.inputs.environment }}
-          path: deployments/${{ github.event.inputs.environment }}/
+          name: deployment-artifacts-$$ +{{ github.event.inputs.environment }}
+          path: deployments/$$ +{{ github.event.inputs.environment }}/
 
       - name: Verify contracts on Etherscan
         run: |
-          jq -r '.contracts | to_entries[] | "\(.key) \(.value)"' deployments/${{ github.event.inputs.environment }}/manifest.json |
+          jq -r '.contracts | to_entries[] | "\((.key) \(.value)"' deployments/$$ +{{ github.event.inputs.environment }}/manifest.json |
           while read name address; do
             forge verify-contract $address \
-              --chain-id ${{ vars.CHAIN_ID }} \
-              --etherscan-api-key ${{ secrets.ETHERSCAN_API_KEY }} \
+              --chain-id $$ +{{ vars.CHAIN_ID }} \
+              --etherscan-api-key $$ +{{ secrets.ETHERSCAN_API_KEY }} \
               --watch
           done

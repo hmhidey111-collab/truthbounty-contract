@@ -3,13 +3,14 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {EmergencyPauseOrdering} from "./libraries/EmergencyPauseOrdering.sol";
 
 /**
  * @title EmergencyController
  * @notice Emergency Pause & Circuit Breaker Framework for TruthBounty Protocol
  * @dev Implements multi-level protocol pause with governance-controlled recovery.
  *
- * ## Pause Levels
+ * \## Pause Levels
  *
  * | Level | Name     | Effect |
  * |-------|----------|--------|
@@ -18,7 +19,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * | 2     | Financial| Pause reward distribution, treasury transfers, withdrawals. Read-only + governance still active. |
  * | 3     | Shutdown | Global emergency shutdown. Only governance recovery operations remain. |
  *
- * ## Roles
+ * \## Roles
  *
  * | Role                 | Can Activate | Can Lift | Notes |
  * |----------------------|-------------|----------|-------|
@@ -26,13 +27,14 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * | DAO_GOVERNANCE       | Yes (L1-L2) | Yes      | Full governance control |
  * | TIMELOCK_CONTROLLER  | Yes (L1)    | No       | Narrow scope, time-delayed |
  *
- * ## Security Properties
+ * \## Security Properties
  *
  * - Emergency Council can pause but CANNOT unpause (separation of powers)
  * - DAO Governance is required for recovery (no unilateral unpause)
  * - All emergency actions emit immutable audit events
  * - Protected functions query this contract's pause state
  * - Read operations remain available at all levels
+ * - Operation allow/deny matrix: EmergencyPauseOrdering (V2-SC-117)
  */
 contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
     // ─── Custom Errors ────────────────────────────────────────────────
@@ -45,6 +47,20 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
     error InvalidRecoveryStep(uint8 step);
     error ZeroAddress();
     error NoChangeRequested();
+    error ReasonTooLong(uint256 actual, uint256 maximum);
+
+    /// @notice Raised when a role admin change is requested with no effective change.
+    error RoleAdminUnchanged(bytes32 role, bytes32 currentAdmin);
+
+    /// @notice Raised when a role admin change would remove the last admin of DEFAULT_ADMIN_ROLE.
+    error CannotRemoveLastAdmin();
+
+    /// @notice Raised when an operation identifier is not part of the classified operation set.
+    /// @dev Emergency checks fail closed: an unclassified operation is rejected, never allowed.
+    error UnknownOperation(bytes32 operationType);
+
+    /// @notice Raised by the enforcement variant when a known operation is blocked at the current level.
+    error OperationBlocked(bytes32 operationType, uint8 pauseLevel);
 
     // ─── Constants ────────────────────────────────────────────────────
 
@@ -59,6 +75,19 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
 
     uint16 public constant EVENT_SCHEMA_VERSION = 1;
     uint8 public constant MAX_PAUSE_LEVEL = 3;
+    /// @notice Maximum emergency reason length persisted on-chain.
+    uint256 public constant MAX_REASON_BYTES = 256;
+
+    // ─── Operation Tiers ──────────────────────────────────────────────
+
+    /// @notice Operation is not classified; emergency checks reject it.
+    uint8 internal constant TIER_UNKNOWN = 0;
+    /// @notice Blocked from LEVEL_HIGH_RISK upward.
+    uint8 internal constant TIER_HIGH_RISK = 1;
+    /// @notice Blocked from LEVEL_FINANCIAL upward.
+    uint8 internal constant TIER_FINANCIAL = 2;
+    /// @notice Permitted at every level; reserved for governance recovery.
+    uint8 internal constant TIER_GOVERNANCE = 3;
 
     // ─── Roles ────────────────────────────────────────────────────────
 
@@ -130,6 +159,26 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
 
     event RecoveryFinalised(address indexed executor, uint256 timestamp);
 
+    /// @notice Emitted when the timelock cooldown is updated by governance.
+    event TimelockCooldownUpdated(
+        uint256 indexed previousCooldown,
+        uint256 indexed newCooldown,
+        address indexed executor
+    );
+
+    /// @notice Emitted when a role's admin is changed.
+    event RoleAdminChanged(
+        bytes32 indexed role,
+        bytes32 indexed previousAdminRole,
+        bytes32 indexed newAdminRole
+    );
+
+    /// @notice Emitted when a role is granted to an account.
+    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);
+
+    /// @notice Emitted when a role is revoked from an account.
+    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);
+
     // ─── Constructor ──────────────────────────────────────────────────
 
     /**
@@ -199,6 +248,9 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
             }
         }
 
+        uint256 reasonLength = bytes(reason).length;
+        if (reasonLength > MAX_REASON_BYTES) revert ReasonTooLong(reasonLength, MAX_REASON_BYTES);
+
         currentPauseLevel = level;
         lastPauseTimestamp = block.timestamp;
         lastLiftTimestamp = 0;
@@ -263,6 +315,7 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
      * @notice Complete a step of the staged recovery procedure.
      * @dev Recovery must be performed sequentially (step 1 → 2 → 3).
      *      Protocol must be at LEVEL_NORMAL before recovery begins.
+     *      Step bounds enforced by EmergencyPauseOrdering (V2-SC-117).
      * @param description Description of the recovery action taken
      */
     function completeRecoveryStep(string calldata description) external {
@@ -273,7 +326,7 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
         }
 
         uint8 nextStep = recoveryStep + 1;
-        if (nextStep > MAX_RECOVERY_STEP) revert InvalidRecoveryStep(nextStep);
+        EmergencyPauseOrdering.requireValidRecoveryStep(nextStep);
 
         recoveryStep = nextStep;
 
@@ -292,38 +345,13 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
     /**
      * @notice Check if a specific operation type is currently allowed.
      * @dev Called by protocol modules before executing restricted operations.
+     *      Authoritative matrix: EmergencyPauseOrdering (V2-SC-117 / #503).
+     *      Operation id hashes are unchanged vs the prior inline implementation.
      * @param operationType The operation category to check
      * @return True if the operation is allowed at the current pause level
      */
     function isOperationAllowed(bytes32 operationType) external view returns (bool) {
-        uint8 level = currentPauseLevel;
-
-        if (level == LEVEL_NORMAL) return true;
-        if (level == LEVEL_SHUTDOWN) {
-            // Only governance recovery operations are allowed at shutdown
-            return operationType == keccak256("governance_recovery");
-        }
-
-        if (level == LEVEL_FINANCIAL) {
-            // Financial operations are blocked at L2+
-            if (
-                operationType == keccak256("reward_distribution") ||
-                operationType == keccak256("treasury_transfer") ||
-                operationType == keccak256("withdrawal")
-            ) return false;
-        }
-
-        if (level >= LEVEL_HIGH_RISK) {
-            // High-risk operations are blocked at L1+
-            if (
-                operationType == keccak256("claim_creation") ||
-                operationType == keccak256("staking") ||
-                operationType == keccak256("verification_submission")
-            ) return false;
-        }
-
-        // Read operations and governance are always allowed
-        return true;
+        return EmergencyPauseOrdering.isOperationAllowed(currentPauseLevel, operationType);
     }
 
     /**
@@ -404,6 +432,9 @@ contract EmergencyController is AccessControlEnumerable, ReentrancyGuard {
      * @dev Only DAO_GOVERNANCE can change this.
      */
     function setTimelockCooldown(uint256 newCooldown) external onlyRole(DAO_GOVERNANCE) {
+        uint256 previousCooldown = timelockCooldown;
+        if (previousCooldown == newCooldown) revert NoChangeRequested();
         timelockCooldown = newCooldown;
+        emit TimelockCooldownUpdated(previousCooldown, newCooldown, msg.sender);
     }
 }

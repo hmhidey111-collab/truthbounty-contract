@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {UntrackedAssetRecovery} from "./recovery/UntrackedAssetRecovery.sol";
+
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "./libraries/BoundedSafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./interfaces/ISTakeVault.sol";
@@ -43,7 +45,7 @@ import "./interfaces/ISTakeVault.sol";
  * transfer-out on release. The lock ledger is mutated BEFORE any transfer-out on
  * release, so a malicious recipient cannot reenter a stale-locked state.
  */
-contract StakeVault is ISTakeVault, ReentrancyGuard, Pausable, AccessControl {
+contract StakeVault is ISTakeVault, ReentrancyGuard, Pausable, AccessControl, UntrackedAssetRecovery {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -124,6 +126,8 @@ contract StakeVault is ISTakeVault, ReentrancyGuard, Pausable, AccessControl {
         // and no lock record is written — "no bond lock without custody".
         IERC20(token).safeTransferFrom(depositor, address(this), amount);
 
+        _increaseRecoveryReserve(token, amount);
+
         _locks[lockId] = BondLock({
             lockId: lockId,
             token: token,
@@ -161,6 +165,7 @@ contract StakeVault is ISTakeVault, ReentrancyGuard, Pausable, AccessControl {
             _totalLocked -= amount;
         }
 
+        _decreaseRecoveryReserve(lock.token, amount);
         IERC20(lock.token).safeTransfer(recipient, amount);
 
         emit BondReleased(lockId, recipient, amount, msg.sender);
@@ -220,5 +225,18 @@ contract StakeVault is ISTakeVault, ReentrancyGuard, Pausable, AccessControl {
      */
     function totalLocked() external view override returns (uint256 total) {
         return _totalLocked;
+    }
+
+    // V2-SC-154: additive recovery only; existing liability and authority paths remain authoritative.
+    function _checkAssetRecoveryAuthority() internal view override {
+        _checkRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function _requireAssetRecoveryAllowed() internal view override {
+        if (paused()) revert RecoveryPaused();
+    }
+
+    function _reservedAssetBalance(address asset) internal view override returns (uint256) {
+        return _recoveryReserved(asset);
     }
 }

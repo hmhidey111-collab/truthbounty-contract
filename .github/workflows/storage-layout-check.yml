@@ -1,0 +1,58 @@
+name: Storage Layout Compatibility (V2-SC-046)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  storage-layout:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Compile contracts
+        run: npx hardhat compile --force
+
+      - name: Validate upgradeable storage layouts against baseline
+        run: npx tsx scripts/validateStorageLayouts.ts
+
+      # V2-SC-159: linear diffs cannot see ERC-7201 namespaces, unstructured slots or the
+      # ERC-1967 reserved slots; this gate fails on duplicate namespaces, overlapping computed
+      # slots, inheritance reorder, reserved-slot reuse and namespace-manifest drift.
+      - name: Detect storage namespace and reserved-slot collisions
+        run: |
+          node scripts/check-storage-namespaces.mjs
+          node --test test/scripts/check-storage-namespaces.test.mjs
+
+      - name: Flag baseline manifest changes
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --name-only origin/"${{ github.base_ref }}"...HEAD | grep -q '^config/storage-layouts.json$'; then
+            echo "⚠️ config/storage-layouts.json changed in this PR."
+            echo "Storage layout changes must be reviewed like contract migrations:"
+            echo "- justify every slot/type change in the PR description"
+            echo "- link the validated migration plan for layout-breaking changes"
+          else
+            echo "No baseline manifest changes."
+          fi
+
+      - name: Run storage layout test suite
+        run: npx hardhat test test/StorageLayoutCompatibility.test.ts

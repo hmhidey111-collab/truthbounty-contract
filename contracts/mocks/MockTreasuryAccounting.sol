@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../treasury/ITreasuryAccounting.sol";
 
 /**
@@ -15,6 +16,9 @@ contract MockTreasuryAccounting is ITreasuryAccounting {
     uint256 public totalStakeRecorded;
     uint256 public totalUnstakeRecorded;
     uint256 public totalSlashRecorded;
+    uint256 public totalRewardRecorded;
+    uint256 public totalFeeRecorded;
+    uint256 public totalDonationRecorded;
 
     function recordStake(address user, uint256 amount) external {
         stakingReserve += amount;
@@ -41,14 +45,32 @@ contract MockTreasuryAccounting is ITreasuryAccounting {
     }
 
 
-    function recordRewardDistribution(address recipient, uint256 amount) external {}
+    function recordRewardDistribution(address recipient, uint256 amount) external {
+        totalRewardRecorded += amount;
+    }
 
     function transferBetweenAccounts(
         TreasuryAccount fromAccount,
         TreasuryAccount toAccount,
         uint256 amount,
         string calldata movementType
-    ) external {}
+    ) external {
+        if (fromAccount == TreasuryAccount.STAKING_RESERVE) {
+            stakingReserve -= amount;
+        } else if (fromAccount == TreasuryAccount.SLASHED_TREASURY) {
+            slashedTreasury -= amount;
+        }
+        if (toAccount == TreasuryAccount.STAKING_RESERVE) {
+            stakingReserve += amount;
+        } else if (toAccount == TreasuryAccount.SLASHED_TREASURY) {
+            slashedTreasury += amount;
+        }
+        if (keccak256(bytes(movementType)) == keccak256(bytes("FEE"))) {
+            totalFeeRecorded += amount;
+        } else if (keccak256(bytes(movementType)) == keccak256(bytes("DONATION"))) {
+            totalDonationRecorded += amount;
+        }
+    }
 
     function getAccountBalance(TreasuryAccount account) external view returns (uint256) {
         if (account == TreasuryAccount.STAKING_RESERVE) return stakingReserve;
@@ -63,5 +85,18 @@ contract MockTreasuryAccounting is ITreasuryAccounting {
 
     function calculateTotalAssets() external view returns (uint256) {
         return stakingReserve + slashedTreasury;
+    }
+
+    function getTrackedCustody() external view returns (uint256) {
+        return stakingReserve + slashedTreasury;
+    }
+
+    function getAccountedComponents() external view returns (uint256) {
+        return totalStakeRecorded + totalRewardRecorded + totalFeeRecorded + totalDonationRecorded
+            - totalUnstakeRecorded - totalSlashRecorded;
+    }
+
+    function reconcile(uint256 observedBalance) external view returns (int256 delta) {
+        delta = int256(observedBalance) - int256(getTrackedCustody());
     }
 }

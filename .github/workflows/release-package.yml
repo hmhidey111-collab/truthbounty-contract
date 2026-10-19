@@ -1,0 +1,94 @@
+name: Release Package (STAB-SC-007)
+
+# Publishes and verifies the canonical Optimism Sepolia release package.
+#
+# The package under deployments/releases/optimism-sepolia/ is the single artifact the API (#586)
+# and the frontend artifact verifier (UX-SC-001) consume. This workflow guarantees it is
+# reproducible from a clean checkout of the pinned toolchain: a change to a source, an ABI, a
+# constructor argument, an immutable slot, a chain id, a role grant or a deployment block fails
+# closed here instead of silently invalidating a published release.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # weekly drift probe against the pinned toolchain
+
+concurrency:
+  group: release-package-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  release-package:
+    name: Release package reproduction and drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.3
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The release identity covers only the canonical suite declared in
+      # config/optimism-sepolia-release.json, so the artifacts are built from exactly that suite with
+      # the pinned compiler (solc 0.8.28 / cancun / viaIR / optimizer 200 / ipfs metadata).
+      #
+      # A whole-tree `forge build` / `npx hardhat compile` is deliberately NOT used here: it would let
+      # unrelated sources influence a release-critical digest, and at the time of writing the tree
+      # does not compile because of pre-existing syntax errors in
+      # contracts/deployment/MigrationManager.sol, contracts/upgrade/IProtocolUpgradeManager.sol and
+      # contracts/upgrade/VersionRegistry.sol — none of which are release sources. Those are tracked
+      # separately and must not block the release gate.
+      - name: Build canonical release artifacts (pinned toolchain)
+        run: npm run build:release-artifacts
+
+      - name: Release artifacts reproduce from a clean build
+        run: npm run check:release-artifacts
+
+      - name: Offline package gate
+        run: node scripts/check-optimism-sepolia-release.mjs
+
+      - name: Rebuild reproduction gate (byte-identical regeneration)
+        run: node scripts/generateOptimismSepoliaReleasePackage.mjs --check --artifacts hardhat
+
+      - name: Artifact identity gate (ABI, bytecode, immutables)
+        run: node scripts/check-optimism-sepolia-release.mjs --with-artifacts --artifacts hardhat
+
+      - name: Release package self-tests
+        run: node --test test/scripts/check-optimism-sepolia-release.test.mjs
+
+      # Read-only on-chain verification. Skipped when the secret is absent so forks still pass;
+      # the offline and reproduction gates above remain fail-closed without it.
+      - name: On-chain code and block check (read-only)
+        if: ${{ secrets.OPTIMISM_SEPOLIA_RPC_URL != '' }}
+        env:
+          OPTIMISM_SEPOLIA_RPC_URL: ${{ secrets.OPTIMISM_SEPOLIA_RPC_URL }}
+        run: node scripts/check-optimism-sepolia-release.mjs --onchain --rpc-url "$OPTIMISM_SEPOLIA_RPC_URL"
+
+      - name: Upload release package
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimism-sepolia-release
+          path: deployments/releases/optimism-sepolia/
+          retention-days: 90
+          if-no-files-found: error

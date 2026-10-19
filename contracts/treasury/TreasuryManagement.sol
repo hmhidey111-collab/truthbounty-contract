@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {UntrackedAssetRecovery} from "../recovery/UntrackedAssetRecovery.sol";
+
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "../libraries/BoundedSafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../governance/GovernanceOwnable.sol";
 import "./ITreasuryManagement.sol";
@@ -35,7 +37,8 @@ contract TreasuryManagement is
     ITreasuryManagement,
     AccessControl,
     ReentrancyGuard,
-    GovernanceOwnable
+    GovernanceOwnable,
+    UntrackedAssetRecovery
 {
     using SafeERC20 for IERC20;
 
@@ -174,11 +177,28 @@ contract TreasuryManagement is
 
         _validateSameBlock(pool);
 
+        // Snapshot balance before inbound transfer to detect fee-on-transfer tokens.
         uint256 balanceBefore = protocolToken.balanceOf(address(this));
+
+        // CEI: EFFECT before INTERACTION — credit the pool first so any callback
+        // through the inbound transferFrom observes already-updated pool state and
+        // cannot re-enter depositToPool to create phantom balance anomalies.
+        // The actualAmount adjustment below corrects for fee-on-transfer tokens after
+        // the transfer has completed, but the initial credit uses the requested amount;
+        // any shortfall is corrected immediately before _validateInvariants().
+        _creditPool(pool, amount);
+
         protocolToken.safeTransferFrom(msg.sender, address(this), amount);
         uint256 actualAmount = protocolToken.balanceOf(address(this)) - balanceBefore;
 
-        _creditPool(pool, actualAmount);
+        // If the received amount differs from requested (fee-on-transfer token),
+        // correct the pool credit to reflect what was actually received.
+        if (actualAmount != amount) {
+            // Undo the over-credit and replace with exact amount.
+            _pools[uint256(pool)].currentBalance -= amount;
+            _pools[uint256(pool)].totalDeposited -= amount;
+            _creditPool(pool, actualAmount);
+        }
 
         bytes32 recordId = _createRecord(
             msg.sender,
@@ -351,7 +371,7 @@ contract TreasuryManagement is
     }
 
     /// @inheritdoc ITreasuryManagement
-    function recordRewardWithdrawal(address recipient, uint256 amount) external onlyRole(REWARD_MODULE_ROLE) {
+    function recordRewardWithdrawal(address recipient, uint256 amount) external nonReentrant onlyRole(REWARD_MODULE_ROLE) {
         if (amount == 0) revert ZeroAmount();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -391,6 +411,7 @@ contract TreasuryManagement is
     /// @inheritdoc ITreasuryManagement
     function recordSettlementWithdrawal(address recipient, uint256 amount)
         external
+        nonReentrant
         onlyRole(SETTLEMENT_MODULE_ROLE)
     {
         if (amount == 0) revert ZeroAmount();
@@ -914,5 +935,18 @@ contract TreasuryManagement is
         // Nothing single-pool covers it; return total as available so caller sees InsufficientPoolBalance
         uint256 totalPoolBalance = getTotalAssets();
         return (bestPool, totalPoolBalance);
+    }
+
+    // V2-SC-154: additive recovery only; existing liability and authority paths remain authoritative.
+    function _checkAssetRecoveryAuthority() internal view override {
+        if (!hasRole(GOVERNANCE_ROLE, msg.sender) || !governanceEnabled) revert RecoveryAuthorityUnavailable();
+    }
+
+    function _requireAssetRecoveryAllowed() internal view override {
+        if (paused()) revert RecoveryPaused();
+    }
+
+    function _reservedAssetBalance(address asset) internal view override returns (uint256) {
+        return asset == address(protocolToken) ? getTotalAssets() : 0;
     }
 }

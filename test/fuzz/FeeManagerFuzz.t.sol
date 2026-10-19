@@ -167,8 +167,11 @@ contract FeeManagerFuzz is Test {
         uint256 cBefore = feeToken.balanceOf(contributors);
         uint256 emBefore = feeToken.balanceOf(emergency);
 
-        vm.prank(collector);
+        vm.startPrank(collector);
         feeManager.collectFee(CLAIM_SUBMISSION_FEE, payer, amount);
+        // Fees are reserved on collection; COLLECTOR_ROLE routes them in one batch.
+        feeManager.distributeReservedFees();
+        vm.stopPrank();
 
         uint256 received =
             (feeToken.balanceOf(treasury)     - tBefore)  +
@@ -177,9 +180,9 @@ contract FeeManagerFuzz is Test {
             (feeToken.balanceOf(contributors) - cBefore)  +
             (feeToken.balanceOf(emergency)    - emBefore);
 
-        // Due to integer division dust the sum may be <= amount (never greater)
-        assertLe(received, amount,       "Over-distributed: arithmetic error");
-        assertGe(received, amount - 4,   "Under-distributed: too much dust");
+        // The canonical TREASURY_RESERVE allocation absorbs integer-division dust,
+        // so the routed sum is exactly the collected amount — never more, never less.
+        assertEq(received, amount, "Conservation violated: sum of shares != collected");
     }
 
     /**

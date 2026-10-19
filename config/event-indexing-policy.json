@@ -1,0 +1,2730 @@
+{
+  "schemaVersion": 1,
+  "protocol": "TruthBounty",
+  "releaseVersion": "2.0.0",
+  "policyVersion": "2.0.0-indexing-1",
+  "issue": "PREWAVE-SC-089 (#765)",
+  "rules": {
+    "maxIndexedTopics": 3,
+    "anonymousEvents": "forbidden",
+    "claimKeyFields": [
+      "claimId"
+    ],
+    "highCardinalityPattern": "hash|commitment|digest|root|salt|nonce|amount|timestamp|deadline",
+    "protected": {
+      "neverEmitPattern": "salt|secret|preimage|plaintext|privatekey|mnemonic|^rationale$|^rawrationale$",
+      "revealOnlyPattern": "^(decision|rationalehash|supportsclaim|vote|choice|verdict)$"
+    },
+    "revealPhaseEvents": [
+      "VoteRevealed"
+    ],
+    "phaseBySource": {
+      "contracts/v2/interfaces/IV2CommitReveal.sol": "commit"
+    }
+  },
+  "events": [
+    {
+      "signature": "AggregationFinalized(uint256,bool,uint256,uint256,uint64,uint16)",
+      "topic0": "0x53c777f7a532d77f07808bf8a6db1a1cd09834be73c5972cf65b96d0548c833d",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2405,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "accepted",
+          "type": "bool",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 2,
+          "name": "supportingWeight",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "opposingWeight",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "AssetRecoveryCancelledV2(bytes32,address)",
+      "topic0": "0xc44427ec98ca2f70002f5aea6f87e6c269ed11bcd9bd1e3f1788249d3a48b4b8",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "operationId"
+      ],
+      "logGasBudget": 1500,
+      "fields": [
+        {
+          "index": 0,
+          "name": "operationId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "authority",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        }
+      ]
+    },
+    {
+      "signature": "AssetRecoveryExecutedV2(bytes32,address,address,uint256,address,uint256)",
+      "topic0": "0x32dc4a3883da013e37799d6566663ea92c758c36398c81076f6cf9b30da662e0",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "operationId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "operationId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 2,
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 4,
+          "name": "authority",
+          "type": "address",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "availableBalance",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "AssetRecoveryQueuedV2(bytes32,address,address,uint256,address,uint256,uint256)",
+      "topic0": "0xab14064c3dc956cc3fcc31928a6c108274e1bd1e5d9eb2a6e25d17d01d43eeab",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "operationId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "operationId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 2,
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 4,
+          "name": "authority",
+          "type": "address",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "executableAt",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 6,
+          "name": "availableBalance",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "ClaimCreated(uint256,address,bytes32,uint256,uint64,uint16)",
+      "topic0": "0x5ecddb64d06b2dfcb9e6b8220c3cfcce834d2dcf8f148c9cd4e26fea2d6226a1",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "claimant",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "subject",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: claim subject lookup"
+        },
+        {
+          "index": 3,
+          "name": "reward",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "ClaimStateChanged(uint256,uint8,uint8,address,uint64,bytes32,uint16)",
+      "topic0": "0x65c0b037657446466867e2e6a91f1ae63b3e6609b410effc59f0150f973225b4",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2780,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "previousState",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 2,
+          "name": "newState",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "actor",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "reasonCode",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: state-change reason code carried in data; state transitions filter on claimId/actor"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "CommitReplaced(uint256,uint256,address,bytes32,bytes32,uint16,uint64)",
+      "topic0": "0xe910c77067662dccfaf35f8c69a0c2b2157d73408f8b62ba0095d5fad43ec3fc",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "commit",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "oldCommitmentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per commit, high cardinality; looked up through claimId/roundId/voter"
+        },
+        {
+          "index": 4,
+          "name": "newCommitmentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per commit, high cardinality; looked up through claimId/roundId/voter"
+        },
+        {
+          "index": 5,
+          "name": "replacementCount",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 6,
+          "name": "replacedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "CommitSubmitted(uint256,uint256,address,bytes32,uint64,uint64,uint256,uint64)",
+      "topic0": "0x649f69a56ae99bff7c8824cc4b028daad6690cf922b5eff440eda68486ae0f1b",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "commit",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 3155,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "commitmentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per commit, high cardinality; looked up through claimId/roundId/voter, not by value"
+        },
+        {
+          "index": 4,
+          "name": "commitDeadline",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "revealDeadline",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 6,
+          "name": "stakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure, high cardinality, not a filter key"
+        },
+        {
+          "index": 7,
+          "name": "committedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "DisputeOpened(uint256,uint256,address,bytes32,uint64,uint16)",
+      "topic0": "0x97efda3a3f0d3b6b513e2210117f648177ae866604275f70505a17715710ffef",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "disputeId",
+        "claimId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "opener",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "reasonHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per dispute reason, high cardinality; resolved through disputeId"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "DisputeResolved(uint256,uint8,address,uint64,uint16)",
+      "topic0": "0x27e3bca19955360a9470a0d7d2355054e62938abf5a327fef4415a99d8688c03",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "disputeId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "status",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 2,
+          "name": "resolver",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "EmergencyPaused(bytes32,address,uint64,uint16)",
+      "topic0": "0xa5d5227c399c13c440e92613e204cb523cc579db694fc3092a2cd7af8a12d288",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "scope"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "scope",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: emergency scope; pause state is replayed per scope"
+        },
+        {
+          "index": 1,
+          "name": "actor",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "EmergencyUnpaused(bytes32,address,uint64,uint16)",
+      "topic0": "0x1b62335ee635eabf64d0bf555b8024d85e57f1424993b40c77ab128cf10b1e8c",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "scope"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "scope",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: emergency scope; pause state is replayed per scope"
+        },
+        {
+          "index": 1,
+          "name": "actor",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "EvidenceStatusChanged(uint256,uint8,uint8,address,uint64,uint16)",
+      "topic0": "0xfcc556b095c7328e64db13c97b30c4d115aa21fb4045179c5759acd366d5dbfc",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "evidenceId"
+      ],
+      "logGasBudget": 2524,
+      "fields": [
+        {
+          "index": 0,
+          "name": "evidenceId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "previousStatus",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 2,
+          "name": "newStatus",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "actor",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "EvidenceSubmitted(uint256,uint256,address,bytes32,uint64,uint16)",
+      "topic0": "0xdc7046cbc3f181eed7732d2fc2fbeac9baa2ae5d7d92bcded804c4b51e783fb2",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "evidenceId",
+        "claimId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "evidenceId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "submitter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "contentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per evidence item, high cardinality; resolved through evidenceId"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "FundsDeposited(address,uint256,bytes32,uint64,uint16)",
+      "topic0": "0xe4d75868f97c7d0c6c6007b475d628d4bf18db9724eb367b42322940dcf99ffa",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "bucket"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 1,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 2,
+          "name": "bucket",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: treasury bucket is the accounting cell the projection replays"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "FundsWithdrawn(address,uint256,bytes32,uint64,uint16)",
+      "topic0": "0x7dd25a670d754aa620a4df2a576c6ed21dd4aeb0424d65edaef42c041cb78384",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "bucket"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 1,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 2,
+          "name": "bucket",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: treasury bucket is the accounting cell the projection replays"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "GovernanceActionAuthorized(bytes32,address,bytes4,uint64,uint16)",
+      "topic0": "0x6829d6374ac775b36979fcecfab5fae9983c300877acc18c7deaf0c60cc8847e",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "actionId"
+      ],
+      "logGasBudget": 2387,
+      "fields": [
+        {
+          "index": 0,
+          "name": "actionId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "target",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "selector",
+          "type": "bytes4",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: governed function selector (bytes4, bounded set)"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "GovernanceActionConsumed(bytes32,address,bytes4,uint64,uint16)",
+      "topic0": "0xb6cfac365fe200478c78759959c45a010b600412276ae34e086359283db9658c",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "actionId"
+      ],
+      "logGasBudget": 2387,
+      "fields": [
+        {
+          "index": 0,
+          "name": "actionId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "target",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "selector",
+          "type": "bytes4",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: governed function selector (bytes4, bounded set)"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "MissedRevealRecorded(uint256,uint256,address,bytes32,uint256,uint64)",
+      "topic0": "0xda51690c41791aad45268735d1896602e927b9b183ff82500ab035b2e99203ca",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "commit",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "commitmentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per commit, high cardinality; looked up through claimId/roundId/voter, not by value"
+        },
+        {
+          "index": 4,
+          "name": "stakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure, high cardinality, not a filter key"
+        },
+        {
+          "index": 5,
+          "name": "recordedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "ModuleRegistered(bytes32,address,uint16,uint16,uint64,uint16)",
+      "topic0": "0xb318bd59cd7c9534cf22c9a8397a115401b6d3bbedb2455f701b9b13c9d35016",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "moduleId"
+      ],
+      "logGasBudget": 2524,
+      "fields": [
+        {
+          "index": 0,
+          "name": "moduleId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "major",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "minor",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "ModuleRemoved(bytes32,address,uint64,uint16)",
+      "topic0": "0xf4f428badd4ee96acc770bdbb0e99768ef36ab8eedf3c05fb5c26682c73d2da0",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "moduleId"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "moduleId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "implementation",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "ParameterSetPublished(uint256,address,uint64,uint16)",
+      "topic0": "0xf97ff8ed0526203dbb9cfe16b9bce250b58e497f162d48a428cdc0f081b5eda5",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "versionId"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "versionId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "actor",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "RewardAccrued(uint256,address,uint256,uint64,uint16)",
+      "topic0": "0x6674a25b77930c93a282ce79a3a46c60d2ff0940e3eb20ec12583fbcd5bc8874",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "RewardAllocated(bytes32,uint8,address,address,uint256)",
+      "topic0": "0x3f54fa4bc76f54dd4f08a33c607812a6dcbaf0c1ecf36884f510d94b1269b711",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "settlementId"
+      ],
+      "logGasBudget": 2387,
+      "fields": [
+        {
+          "index": 0,
+          "name": "settlementId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "category",
+          "type": "uint8",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: reward category; frozen in the released layout (see exception)"
+        },
+        {
+          "index": 2,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 3,
+          "name": "account",
+          "type": "address",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        }
+      ],
+      "exceptions": [
+        {
+          "rule": "low-cardinality-indexed",
+          "field": "category",
+          "reason": "Released V2 layout is frozen; moving this topic needs a new versioned event (RewardAllocatedV2) in a future release."
+        }
+      ]
+    },
+    {
+      "signature": "RewardClaimed(address,address,uint256)",
+      "topic0": "0x0aa4d283470c904c551d18bb894d37e17674920f3261a7f854be501e25f421b7",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "asset",
+        "account"
+      ],
+      "logGasBudget": 1756,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: claimed-reward cell is keyed by account and asset"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: claimed-reward cell is keyed by account and asset"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        }
+      ]
+    },
+    {
+      "signature": "RewardClaimed(address,uint256,uint64,uint16)",
+      "topic0": "0x70aa5cf7e7a1d9d75bfeec73e1b9c8d21aa251b244b05b2109f03e88a8362dab",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "account"
+      ],
+      "logGasBudget": 1893,
+      "fields": [
+        {
+          "index": 0,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: claimed-reward cell is keyed by account"
+        },
+        {
+          "index": 1,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "RewardPoolFunded(address,uint256,bytes32)",
+      "topic0": "0x6012f11c6fbfdb6078c48dab2d37c2940fcf3e5e92532c7b935c495431dc8533",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "settlementId"
+      ],
+      "logGasBudget": 1756,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 2,
+          "name": "settlementId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        }
+      ]
+    },
+    {
+      "signature": "RewardsFinalized(bytes32,address,uint8,uint256)",
+      "topic0": "0x9588a62393e8cb383185fdcb9ebda39f11a87b3c81e991ef8964ea9c1480ee3a",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "settlementId"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "settlementId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 2,
+          "name": "outcome",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "totalAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "RootAccepted(uint256,bytes32,uint64,uint16)",
+      "topic0": "0x91e0fc30dc145bc9d88f17e2398c3c9767bfdca5c064f855334b45d402a3339a",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "epoch",
+        "root"
+      ],
+      "logGasBudget": 2012,
+      "fields": [
+        {
+          "index": 0,
+          "name": "epoch",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: reputation epoch the root belongs to"
+        },
+        {
+          "index": 1,
+          "name": "root",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: roots are looked up by value to match proofs and acceptance"
+        },
+        {
+          "index": 2,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 3,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ],
+      "exceptions": [
+        {
+          "rule": "high-cardinality-indexed",
+          "field": "root",
+          "reason": "Consumers look roots up by value to match proofs and acceptance; the value is the query key."
+        }
+      ]
+    },
+    {
+      "signature": "RootProposed(uint256,bytes32,address,uint64,uint16)",
+      "topic0": "0x7caee1fab15a4b3a824f9298d0d1c61217485830608a1412c6f29882b0d78388",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "epoch",
+        "root"
+      ],
+      "logGasBudget": 2387,
+      "fields": [
+        {
+          "index": 0,
+          "name": "epoch",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: reputation epoch the root belongs to"
+        },
+        {
+          "index": 1,
+          "name": "root",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: roots are looked up by value to match proofs and acceptance"
+        },
+        {
+          "index": 2,
+          "name": "proposer",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ],
+      "exceptions": [
+        {
+          "rule": "high-cardinality-indexed",
+          "field": "root",
+          "reason": "Consumers look roots up by value to match proofs and proposals; the value is the query key."
+        }
+      ]
+    },
+    {
+      "signature": "RoundRegistered(uint256,uint256,uint64,uint64,uint64,uint8)",
+      "topic0": "0xa6a61af3914e0039ca3e3b3ad85ec999ced99a9c6ccf315ae870407f4a5af9b9",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "commit",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 2524,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "startedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "commitDeadline",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "revealDeadline",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "replacementPolicy",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "SettlementExecuted(uint256,address,uint256,uint64,uint16)",
+      "topic0": "0x92538e4a74823cc58840d75a188dde52563b3afb84e9d4dac522d170dd72b462",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "netAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "SettlementQueued(uint256,address,uint256,uint256,uint64,uint64,uint16)",
+      "topic0": "0x0f1a5ab59b2abd64091ff2fa22f15aff08972133e15328129d9b8c31b5d13b13",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2780,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "grossAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 3,
+          "name": "fee",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "executableAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "SlashExecuted(bytes32,address,uint256,uint64,uint16)",
+      "topic0": "0x3b864d598c8691732302df06b86b0bbb46f14e123c752255e437cba0d470e96f",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "proposalId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "proposalId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "verifier",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "SlashProposed(bytes32,uint256,address,uint256,bytes32,uint64,uint16)",
+      "topic0": "0x19ff2ed5925a4b794b62b77a872595c3a096dfb12fa41d4afc7dd5910590fb3b",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "proposalId",
+        "claimId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "proposalId",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "verifier",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 4,
+          "name": "reason",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "StakeDeposited(address,uint256,uint256,uint64,uint16)",
+      "topic0": "0x615d742029bd7f0f4bed9d072c9455a8f8d18e2eb4a7e3870fdb98e10fa10490",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "StakeReleased(address,uint256,uint256,uint64,uint16)",
+      "topic0": "0x7a64f934d0c7eb9962a2af77033432af0887a4ffb93817280c7e888ff2756683",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2268,
+      "fields": [
+        {
+          "index": 0,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 3,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 4,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "StakeSlashed(address,uint256,uint256,bytes32,uint64,uint16)",
+      "topic0": "0xf49eab7373229a134a3fd1f0d370a2f7c4a573ad8a4f265da750ab73776a2c98",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2643,
+      "fields": [
+        {
+          "index": 0,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 3,
+          "name": "reason",
+          "type": "bytes32",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: bounded reason-code set, slashes are filtered by reason"
+        },
+        {
+          "index": 4,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 5,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VaultCarriedForward(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "topic0": "0x1e68fc7804bd3b849a7d00c688b344681839a49b627e5251604c76ff1de750b3",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 3155,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 3,
+          "name": "fromRound",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "toRound",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 6,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 7,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VaultFinalUnlocked(address,address,uint256,uint256,uint256,uint64,uint16)",
+      "topic0": "0xa8457407827b8fad644f79471c45f540cf2b3172c93da6015ac1e52ca1c4a1c6",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 3,
+          "name": "round",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 5,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VaultRefundedInconclusive(address,address,uint256,uint256,uint256,uint64,uint16)",
+      "topic0": "0xa78a72b7824f42d8059b33a31d5cfb83d085d87d947b550516d9f197953314b1",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 3,
+          "name": "round",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 5,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VaultRolledOver(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "topic0": "0x6f5e1b92f346673affd311e6af7a4e7152e96299b77135202075f048993a7d4d",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 3155,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 3,
+          "name": "fromRound",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "toRound",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure summed by consumers, high cardinality, not a filter key"
+        },
+        {
+          "index": 6,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 7,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VaultSettledConclusive(address,address,uint256,uint256,uint256,uint256,uint64,uint16)",
+      "topic0": "0xf662c9866baadae21fb3a1c11936c16c597ec622112a25ba6fa15776fd1fd3a8",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "claimId"
+      ],
+      "logGasBudget": 3155,
+      "fields": [
+        {
+          "index": 0,
+          "name": "asset",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: token address, per-asset accounting"
+        },
+        {
+          "index": 1,
+          "name": "account",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 2,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 3,
+          "name": "round",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "principalAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "rewardAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 6,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 7,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ]
+    },
+    {
+      "signature": "VerificationSubmitted(uint256,uint256,address,bool,uint256,uint64,uint16)",
+      "topic0": "0x6631771095916266b2b59f5374670f2a096447be18bd5a04a124178f39300c2e",
+      "anonymous": false,
+      "source": "released-layout",
+      "phase": "public",
+      "projectionKeys": [
+        "verificationId",
+        "claimId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "verificationId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: entity id the projection replays and joins on"
+        },
+        {
+          "index": 1,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 2,
+          "name": "verifier",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "supportsClaim",
+          "type": "bool",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: verdict of the direct (non-commit-reveal) verification path; public by design, never indexed"
+        },
+        {
+          "index": 4,
+          "name": "stake",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "timestamp",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: block time is derivable from the log's block; unique per event, never a filter key"
+        },
+        {
+          "index": 6,
+          "name": "version",
+          "type": "uint16",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: constant schema version, no filtering value; indexing would burn a topic"
+        }
+      ],
+      "exceptions": [
+        {
+          "rule": "protected-emitted",
+          "field": "supportsClaim",
+          "reason": "Direct verification path has no commit phase: the verdict is public at submission and never indexed."
+        }
+      ]
+    },
+    {
+      "signature": "VoteRevealed(uint256,uint256,address,uint8,bytes32,uint256,uint64)",
+      "topic0": "0x5f147afd99ad89bf8650d2dac5f98d7e607927fcfbf96ff8968400221d58ba24",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "reveal",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "decision",
+          "type": "uint8",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: protected until reveal; emitted only by the reveal event and never indexed"
+        },
+        {
+          "index": 4,
+          "name": "rationaleHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: protected until reveal; emitted only by the reveal event and never indexed"
+        },
+        {
+          "index": 5,
+          "name": "stakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: numeric measure, high cardinality, not a filter key"
+        },
+        {
+          "index": 6,
+          "name": "revealedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    },
+    {
+      "signature": "VoterSlashed(uint256,uint256,address,uint256,uint256,bytes32,uint64)",
+      "topic0": "0x45b82757fc14bf84ce09165622d5c7a8782b40f2061f5e66d1d6d646c25252fe",
+      "anonymous": false,
+      "source": "contracts/v2/interfaces/IV2CommitReveal.sol",
+      "phase": "commit",
+      "projectionKeys": [
+        "claimId",
+        "roundId"
+      ],
+      "logGasBudget": 2899,
+      "fields": [
+        {
+          "index": 0,
+          "name": "claimId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: per-claim replay; every claim-scoped consumer filters on it"
+        },
+        {
+          "index": 1,
+          "name": "roundId",
+          "type": "uint256",
+          "indexed": true,
+          "class": "projection-key",
+          "reason": "projection-key: verification round id, joined with claimId for round replay"
+        },
+        {
+          "index": 2,
+          "name": "voter",
+          "type": "address",
+          "indexed": true,
+          "class": "filter-key",
+          "reason": "filter-key: address consumers filter by (actor/account history)"
+        },
+        {
+          "index": 3,
+          "name": "slashAmount",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 4,
+          "name": "remainingStake",
+          "type": "uint256",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        },
+        {
+          "index": 5,
+          "name": "commitmentHash",
+          "type": "bytes32",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: unique per commit, high cardinality; looked up through claimId/roundId/voter, not by value"
+        },
+        {
+          "index": 6,
+          "name": "slashedAt",
+          "type": "uint64",
+          "indexed": false,
+          "class": "payload",
+          "reason": "payload: decoded from log data; no consumer filters on it, and a topic costs 119 more gas than a data word"
+        }
+      ]
+    }
+  ]
+}

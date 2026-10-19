@@ -19,8 +19,14 @@ contract GasBudgetRegistry is ICriticalPathGasBudgets, AccessControl {
     event GasBudgetUpdated(Operation indexed operation, uint256 maxGasAtMaxConfig, string boundDescription);
 
     error UnknownOperation(Operation operation);
+    error ZeroAdmin();
+    /// @notice Thrown when a budget of zero gas is configured for an operation.
+    error ZeroGasBudget(Operation operation);
+    error EmptyBudgetDescription();
+    error GasBudgetExceedsTransactionCeiling(uint256 budget, uint256 ceiling);
 
     constructor(address admin) {
+        if (admin == address(0)) revert ZeroAdmin();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(BUDGET_ADMIN_ROLE, admin);
         _seedDefaults();
@@ -72,10 +78,29 @@ contract GasBudgetRegistry is ICriticalPathGasBudgets, AccessControl {
             120_000,
             "PullSettlementLedger.withdraw pull payout"
         );
+        _set(
+            Operation.REWARD_CLAIM,
+            450_000,
+            "RewardEngine.claimReward with ERC20 payout"
+        );
+        _set(
+            Operation.GOVERNANCE_CONFIGURATION,
+            120_000,
+            "GasBudgetRegistry.updateBudget role-gated configuration"
+        );
+        _set(
+            Operation.EMERGENCY_PAUSE,
+            180_000,
+            "EmergencyController.activatePause with audit record"
+        );
     }
 
     function _set(Operation operation, uint256 maxGas, string memory description) internal {
-        require(maxGas <= ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING, "Budget exceeds tx ceiling");
+        if (maxGas == 0) revert ZeroGasBudget(operation);
+        if (maxGas >ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING) {
+            revert GasBudgetExceedsTransactionCeiling(maxGas, ProtocolExecutionBounds.RECOMMENDED_TX_GAS_CEILING);
+        }
+        if (bytes(description).length == 0) revert EmptyBudgetDescription();
         _budgets[operation] = GasBudget({operation: operation, maxGasAtMaxConfig: maxGas, boundDescription: description});
         emit GasBudgetUpdated(operation, maxGas, description);
     }
@@ -93,9 +118,17 @@ contract GasBudgetRegistry is ICriticalPathGasBudgets, AccessControl {
 
     /// @inheritdoc ICriticalPathGasBudgets
     function budgetCount() external pure returns (uint256) {
-        return 9;
+        return 12;
     }
 
+    /**
+     * @notice Updates the ceiling and maximum-configuration description for a critical path.
+     * @param operation The operation whose enforced budget is being updated.
+     * @param maxGasAtMaxConfig Maximum permitted gas under the documented maximum configuration.
+     * @param boundDescription Description of the configuration used for the benchmark.
+     * @dev Only the budget administrator may change a budget. Zero or over-ceiling budgets and
+     *      blank descriptions revert so CI cannot silently accept an incomplete configuration.
+     */
     function updateBudget(
         Operation operation,
         uint256 maxGasAtMaxConfig,

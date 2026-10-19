@@ -1,0 +1,36 @@
+name: Governed Asset Recovery
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  asset-recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.3
+      - name: Compile affected contracts and verify recovery safety, invariants, ABI and size budgets
+        run: npm run test:asset-recovery
+      - name: Verify recovery gas snapshot
+        run: bash scripts/test-asset-recovery.sh snapshot --match-path "test/recovery/*.t.sol" --check "$PWD/.gas-snapshot.recovery"
+      - name: Verify additive artifact and storage policy gates
+        run: |
+          node scripts/canonical-abi-gates.mjs
+          node scripts/check-native-value-policy.mjs
+          node scripts/check-storage-namespaces.mjs
+          node --test test/scripts/canonical-abi-gates.test.mjs test/scripts/check-native-value-policy.test.mjs test/scripts/check-storage-namespaces.test.mjs

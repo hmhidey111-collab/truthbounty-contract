@@ -629,8 +629,9 @@ describe("Reentrancy Protection Tests", function () {
         const contractBalanceBefore = await token.balanceOf(await claims.getAddress());
         const beneficiaryBalanceBefore = await token.balanceOf(beneficiary1.address);
 
-        // Settle claim
-        await claims.connect(owner).settleClaim(beneficiary1.address, amount);
+        // V2-SC-062: settleClaim now requires a unique settlementId
+        const sid1 = ethers.keccak256(ethers.toUtf8Bytes("reentrant-single-1"));
+        await claims.connect(owner).settleClaim(beneficiary1.address, amount, sid1);
 
         // Verify transfer
         const contractBalanceAfter = await token.balanceOf(await claims.getAddress());
@@ -653,10 +654,12 @@ describe("Reentrancy Protection Tests", function () {
         const ben1BalanceBefore = await token.balanceOf(beneficiary1.address);
         const ben2BalanceBefore = await token.balanceOf(beneficiary2.address);
 
-        // Batch settle
+        // V2-SC-062: settleClaimsBatch now requires a unique settlementId
+        const sid2 = ethers.keccak256(ethers.toUtf8Bytes("reentrant-batch-1"));
         await claims.connect(owner).settleClaimsBatch(
           [beneficiary1.address, beneficiary2.address],
-          [amount1, amount2]
+          [amount1, amount2],
+          sid2
         );
 
         // Verify transfers
@@ -682,8 +685,9 @@ describe("Reentrancy Protection Tests", function () {
           amounts.push(ethers.parseEther("1"));
         }
 
-        // Should succeed with max batch size
-        await expect(claims.connect(owner).settleClaimsBatch(beneficiaries, amounts))
+        // V2-SC-062: unique settlementId per batch call
+        const sid3 = ethers.keccak256(ethers.toUtf8Bytes("reentrant-max-batch"));
+        await expect(claims.connect(owner).settleClaimsBatch(beneficiaries, amounts, sid3))
           .to.not.be.reverted;
       });
     });

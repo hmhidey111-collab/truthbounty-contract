@@ -104,6 +104,20 @@ describe("EvidenceRegistry", function () {
       .to.be.revertedWithCustomError(evidence, "ZeroDigest");
   });
 
+  it("bounds raw metadata before hashing it", async function () {
+    const { evidence, contributor } = await loadFixture(deployFixture);
+    const maximum = Number(await evidence.MAX_METADATA_BYTES());
+
+    await evidence.connect(contributor).submitEvidence(CLAIM_ID, CONTENT_DIGEST, "a".repeat(maximum));
+
+    await expect(
+      evidence.connect(contributor).submitEvidence(CLAIM_ID, CONTENT_DIGEST_2, "a".repeat(maximum + 1)),
+    )
+      .to.be.revertedWithCustomError(evidence, "MetadataTooLarge")
+      .withArgs(maximum + 1, maximum);
+    expect(await evidence.nextContributorNonce(contributor.address)).to.equal(1n);
+  });
+
   it("rejects invalid claims", async function () {
     const { evidence, contributor } = await loadFixture(deployFixture);
 
@@ -159,6 +173,32 @@ describe("EvidenceRegistry", function () {
     const secondPage = await evidence.claimEvidence(CLAIM_ID, 2, 2);
     expect(secondPage.evidenceIds).to.deep.equal(ids.slice(2));
     expect(secondPage.nextCursor).to.equal(3n);
+  });
+
+  it("bounds per-claim evidence storage", async function () {
+    const { evidence, contributor } = await loadFixture(deployFixture);
+    const maxEvidence = Number(await evidence.MAX_EVIDENCE_PER_CLAIM());
+
+    for (let i = 0; i < maxEvidence; i++) {
+      await evidence.connect(contributor).commitEvidence(
+        CLAIM_ID,
+        ethers.id(`bounded-content-${i}`),
+        ethers.id(`bounded-metadata-${i}`),
+        i,
+      );
+    }
+
+    expect(await evidence.evidenceCount(CLAIM_ID)).to.equal(BigInt(maxEvidence));
+    await expect(
+      evidence.connect(contributor).commitEvidence(
+        CLAIM_ID,
+        ethers.id("bounded-content-over-limit"),
+        ethers.id("bounded-metadata-over-limit"),
+        maxEvidence,
+      ),
+    )
+      .to.be.revertedWithCustomError(evidence, "EvidenceLimitReached")
+      .withArgs(CLAIM_ID, maxEvidence);
   });
 
   it("submitEvidence hashes metadata bytes and advances the contributor nonce", async function () {

@@ -1,0 +1,608 @@
+{
+  "schemaVersion": 1,
+  "issue": "PREWAVE-SC-062",
+  "generatedAt": "2026-10-16T07:10:28.972Z",
+  "gitSha": "b048097",
+  "passed": true,
+  "hardFailures": [],
+  "warnings": [
+    "[PREWAVE-SC-062] Missing artifact for ClaimRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TruthBountyWeighted — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TruthBountyClaims — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for VerifierSlashing — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for WeightedStaking — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EvidenceManager — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ReputationEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ReputationUpdateEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ReputationSnapshotEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for GovernanceController — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EmergencyController — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TreasuryManagement — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TreasuryAccounting — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TreasuryInsolvencyModel — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for FeeManager — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for InsuranceFund — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for RewardEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ProtocolUpgradeManager — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for UpgradeController — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ModuleRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EvidenceRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for StakeVault — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EmergencyGatekeeper — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for FinalRewardAllocator — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TruthBountyGovernor — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for AppealVerificationRound — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for VerificationRoundManager — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for VerificationAggregator — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for DisputeResolution — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for BootstrapController — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ChainConfigRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for DeploymentConfigValidator — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EIP712Verifier — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TokenomicsEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ProvisionalSettlementEngine — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ParameterVersionRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for GovernanceOwnable — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for EconomicSimulation — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for TimelockOwnedProxyAdmin — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for VersionRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for StorageCompatibilityValidator — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for Create2AddressPlanner — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for PostDeploymentRoleCheck — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for DeploymentAttestationRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for MigrationManager — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for GasBudgetRegistry — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2EventCompleteness — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2Lifecycle — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2Errors — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2TimeBounds — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for PauseMatrix — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ProtocolModel — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2Precision — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for V2SafeCast — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for AmountUnits — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for BoundedSafeERC20 — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ReleaseReproducibility — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for CanonicalEventLibrary — run 'npm run compile' first.",
+    "[PREWAVE-SC-062] Missing artifact for ModuleRegistryLib — run 'npm run compile' first."
+  ],
+  "previousMeasurements": {},
+  "contracts": [
+    {
+      "contractName": "ClaimRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TruthBountyWeighted",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TruthBountyClaims",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "VerifierSlashing",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "WeightedStaking",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EvidenceManager",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ReputationEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ReputationUpdateEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ReputationSnapshotEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "GovernanceController",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EmergencyController",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TreasuryManagement",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TreasuryAccounting",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TreasuryInsolvencyModel",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "FeeManager",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "InsuranceFund",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "RewardEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ProtocolUpgradeManager",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "UpgradeController",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ModuleRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EvidenceRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "StakeVault",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EmergencyGatekeeper",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "FinalRewardAllocator",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TruthBountyGovernor",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "AppealVerificationRound",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "VerificationRoundManager",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "VerificationAggregator",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "DisputeResolution",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "BootstrapController",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ChainConfigRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "DeploymentConfigValidator",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EIP712Verifier",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "TokenomicsEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ProvisionalSettlementEngine",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ParameterVersionRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "GovernanceOwnable",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "implementation",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "EconomicSimulation",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "simulation",
+      "note": "Simulation-only contract; not deployed to mainnet, but still budget-gated for test-env sanity."
+    },
+    {
+      "contractName": "TimelockOwnedProxyAdmin",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 5000,
+      "hardLimitBytes": 7000,
+      "networkLimitBytes": 24576,
+      "category": "proxy-admin",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "VersionRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "registry",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "StorageCompatibilityValidator",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "registry",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "Create2AddressPlanner",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "deployment",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "PostDeploymentRoleCheck",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "deployment",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "DeploymentAttestationRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "deployment",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "MigrationManager",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "deployment",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "GasBudgetRegistry",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "performance",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2EventCompleteness",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2Lifecycle",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2Errors",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2TimeBounds",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "PauseMatrix",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ProtocolModel",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2Precision",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "V2SafeCast",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "AmountUnits",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "BoundedSafeERC20",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ReleaseReproducibility",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "CanonicalEventLibrary",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    },
+    {
+      "contractName": "ModuleRegistryLib",
+      "status": "missing_artifact",
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "networkLimitBytes": 24576,
+      "category": "library",
+      "note": "Artifact not found — contract may be abstract, interface-only, or not yet compiled."
+    }
+  ],
+  "optimizerProfile": {
+    "runs": 200,
+    "viaIR": true,
+    "checked": false
+  }
+}

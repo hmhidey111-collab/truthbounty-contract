@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {BoundedSafeERC20 as SafeERC20} from "../libraries/BoundedSafeERC20.sol";
 import "../governance/GovernanceOwnable.sol";
 import "../governance/GovernanceHooks.sol";
 import "../treasury/ITreasuryAccounting.sol";
@@ -368,11 +368,7 @@ contract TokenomicsEngine is
     }
 
     function _allocateToTreasury(ITreasuryAccounting.TreasuryAccount account, uint256 amount) internal {
-        uint256 currentAllowance = protocolToken.allowance(address(this), address(treasuryAccounting));
-        if (currentAllowance > 0) {
-            SafeERC20.safeDecreaseAllowance(protocolToken, address(treasuryAccounting), currentAllowance);
-        }
-        SafeERC20.safeIncreaseAllowance(protocolToken, address(treasuryAccounting), amount);
+        SafeERC20.safeForceApprove(protocolToken, address(treasuryAccounting), amount);
         treasuryAccounting.depositToAccount(account, amount);
     }
 

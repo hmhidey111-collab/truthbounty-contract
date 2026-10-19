@@ -104,6 +104,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
         address _emergencyAdmin
     ) internal {
         require(_admin != address(0), ZeroAddress());
+        require(_emergencyAdmin != address(0), ZeroAddress());
         
         governanceController = _governanceController;
         emergencyAdmin = _emergencyAdmin;
@@ -153,6 +154,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
         address newAddress
     ) external onlyGovernanceOrAdmin returns (bytes32 proposalId) {
         if (governanceController == address(0)) revert ZeroAddress();
+        if (newAddress == address(0)) revert ZeroAddress();
         
         proposalId = GovernanceHooks(governanceController).requestAddressParameterUpdate(
             paramType,
@@ -187,6 +189,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
     function setGovernanceController(address _newController) 
         external onlyRole(DEFAULT_ADMIN_ROLE) 
     {
+        if (_newController == address(0)) revert ZeroAddress();
         address oldController = governanceController;
         
         // Revoke old governance role
@@ -197,9 +200,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
         governanceController = _newController;
         
         // Grant governance role to new controller
-        if (_newController != address(0)) {
-            _grantRole(GOVERNANCE_ROLE, _newController);
-        }
+        _grantRole(GOVERNANCE_ROLE, _newController);
         
         emit GovernanceControllerUpdated(oldController, _newController);
     }
@@ -218,8 +219,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
      * @param _newEmergencyAdmin New emergency admin address
      */
     function setEmergencyAdmin(address _newEmergencyAdmin) 
-        external onlyRole(DEFAULT_ADMIN_ROLE) 
-    {
+        external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_newEmergencyAdmin != address(0), ZeroAddress());
         
         address oldAdmin = emergencyAdmin;
@@ -260,7 +260,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
         if (!hasRole(RECOVERY_ROLE, msg.sender)) {
             revert UnauthorizedGovernance();
         }
-        require(account != address(0), "Invalid recovery recipient");
+        require(account != address(0), ZeroAddress());
         _grantRole(role, account);
         emit RoleRecovered(role, account, msg.sender);
     }
@@ -274,6 +274,7 @@ abstract contract GovernanceOwnable is AccessControl, Pausable {
         if (!hasRole(RECOVERY_ROLE, msg.sender)) {
             revert UnauthorizedGovernance();
         }
+        require(account != address(0), ZeroAddress());
         _revokeRole(role, account);
         emit RoleRevokedByRecovery(role, account, msg.sender);
     }

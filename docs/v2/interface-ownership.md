@@ -5,7 +5,7 @@ This document is the review map for `contracts/v2/interfaces`. Interfaces define
 | Interface | Responsibility | State-changing callers | Read-only surface | Coordination boundary | Specification mapping |
 |---|---|---|---|---|---|
 | `IConfiguration` | Protocol parameters and dependency addresses | Governance only | `getUint`, `getAddress` | No claim outcome authority | §§3–5 |
-| `IModuleRegistry` | Canonical module discovery | Governance/deployment authority | `module`, `isRegistered` | Registry does not settle funds | §§3–5, 26 |
+| `IModuleRegistry` | Canonical module discovery + versioned, timelocked registration | Governance (replace/deprecate/forbid) and deployment (register/activate); guardian excluded | `module`, `isRegistered`, `getModule`, `canonicalModuleIds`, `canonicalDependencies`, preflight views | Registry does not settle funds | §§3–5, 26 |
 | `IClaims` | Claim lifecycle | Claimant for creation/cancel; authorized modules for transitions | Claim/status reads | No API/guardian outcome decision | §§17–20 |
 | `IEvidence` | Evidence commitment lifecycle | Claim participants and authorized verifier module | Bounded paginated reads | Hash commitments only | §§17–20 |
 | `IStakeCustody` | Escrowed verifier stake | Verifier deposit; authorized settlement/slashing hooks | Stake balances | No arbitrary treasury withdrawal | §§17–20 |
@@ -21,3 +21,9 @@ This document is the review map for `contracts/v2/interfaces`. Interfaces define
 | `IEmergencyControls` | Scoped pause/unpause | Emergency role only | Pause status | Pause is not adjudication | §§3–5, 26 |
 
 Each module MUST implement ERC-165 and advertise both `type(IV2Module).interfaceId` and its own interface ID. Canonical V2 deliberately omits legacy aliases and unbounded batch payout methods.
+
+The canonical module registry (`IModuleRegistry`/`ModuleRegistry`, see
+[`module-registry.md`](./module-registry.md) for the V2-SC-005 review map) is the single stable-key
+discovery point for the suite: 14 canonical keys, versioned registrations, a two-day timelocked
+governance replacement path, preflight views, reusable dependency validation, and rejection of
+EOA/self/duplicate-proxy/forbidden registrations.

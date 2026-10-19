@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -8,6 +9,24 @@ pragma solidity ^0.8.20;
 ///      represented by the literal value `1` in each event's `version` field.
 ///      Every event includes a block timestamp and schema version identifier.
 interface ITruthBountyEvents {
+    // -------------------------------------------------------------------------
+    // 0. Stress-Test Amplification Metrics
+    // -------------------------------------------------------------------------
+    /// @notice Emitted when a stress-test run completes.
+    /// @dev `maxAmplificationRatioBps` is expressed in basis points (1 bps = 0.01%),
+    ///      bounded by `MAX_AMPLIFICATION_RATIO_BPS`. Values above the bound MUST
+    ///      revert before emission. Zero is a valid, non-amplifying result.
+    event StressTestCompleted(
+        uint256 indexed runId,
+        uint256 maxAmplificationRatioBps,
+        uint64 timestamp,
+        uint16 version
+    );
+
+    /// @notice Upper bound for `StressTestCompleted.maxAmplificationRatioBps`.
+    /// @dev 100_000 bps == 1000x amplification. Chosen to fit uint256 with no overflow.
+    uint256 constant MAX_AMPLIFICATION_RATIO_BPS = 100_000;
+
     // -------------------------------------------------------------------------
     // 1. Claims
     // -------------------------------------------------------------------------

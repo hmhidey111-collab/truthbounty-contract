@@ -207,6 +207,25 @@ describe("TruthBountyWeighted", function () {
       await truthBounty.connect(verifier3).stake(ethers.parseEther("1000"));
     });
 
+    it("keeps the vote cutoff fixed across recovery and settles once at the confirmation boundary", async function () {
+      const claim = await truthBounty.getClaim(claimId);
+      const deadline = Number(claim.verificationWindowEnd);
+      const stakeAmount = ethers.parseEther("100");
+
+      await time.setNextBlockTimestamp(deadline - 1);
+      await truthBounty.connect(verifier1).vote(claimId, true, stakeAmount);
+
+      await time.setNextBlockTimestamp(deadline);
+      await expect(truthBounty.connect(verifier2).vote(claimId, false, stakeAmount))
+        .to.be.revertedWith("Verification window closed");
+
+      await time.setNextBlockTimestamp(deadline + CONFIRMATION_DELAY);
+      await truthBounty.settleClaim(claimId);
+
+      expect((await truthBounty.settlementResults(claimId)).passed).to.equal(true);
+      await expect(truthBounty.settleClaim(claimId)).to.be.revertedWith("Claim already settled");
+    });
+
     it("Should determine outcome based on weighted votes", async function () {
       // Setup: High reputation votes FOR, low reputation votes AGAINST
       // Move past the reputation update grace period so the updated scores apply

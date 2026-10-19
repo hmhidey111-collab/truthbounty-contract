@@ -68,6 +68,7 @@ interface IUpgradeController {
 
     event EmergencyDelayUpdated(uint256 oldDelay, uint256 newDelay);
     event ExecutionWindowUpdated(uint256 oldWindow, uint256 newWindow);
+    event StandardDelayUpdated(uint256 oldDelay, uint256 newDelay);
 
     function proposeUpgrade(
         address targetContract,
@@ -87,6 +88,7 @@ interface IUpgradeController {
 
     function setEmergencyDelay(uint256 newDelay) external;
     function setExecutionWindow(uint256 newWindow) external;
+    function setStandardDelay(uint256 newDelay) external;
 
     function getProposal(bytes32 proposalId) external view returns (UpgradeProposal memory);
     function isUpgradeScheduled(bytes32 proposalId) external view returns (bool);

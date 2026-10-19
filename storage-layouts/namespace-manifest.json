@@ -1,0 +1,831 @@
+{
+  "schemaVersion": 1,
+  "issue": "V2-SC-159",
+  "generator": "scripts/check-storage-namespaces.mjs",
+  "derivations": {
+    "erc7201": "keccak256(abi.encode(uint256(keccak256(bytes(id))) - 1)) & ~bytes32(uint256(0xff))",
+    "eip1967": "bytes32(uint256(keccak256(bytes(id))) - 1)"
+  },
+  "reservedSlots": [
+    {
+      "name": "IMPLEMENTATION_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.implementation",
+      "slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+    },
+    {
+      "name": "ADMIN_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.admin",
+      "slot": "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
+    },
+    {
+      "name": "BEACON_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.beacon",
+      "slot": "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"
+    }
+  ],
+  "namespaces": [
+    {
+      "id": "openzeppelin.storage.Initializable",
+      "slot": "0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00",
+      "definedBy": "Initializable",
+      "modules": [
+        "ProtocolUpgradeable",
+        "TruthBountyToken"
+      ]
+    },
+    {
+      "id": "openzeppelin.storage.ReentrancyGuard",
+      "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+      "definedBy": "ReentrancyGuard",
+      "modules": [
+        "DisputeResolution",
+        "FeeManager",
+        "ReputationEngine",
+        "StakeVault",
+        "TokenomicsEngine",
+        "TreasuryManagement",
+        "TruthBounty",
+        "VerificationRoundManager"
+      ]
+    },
+    {
+      "id": "truthbounty.storage.UntrackedAssetRecovery",
+      "slot": "0x8abeb0ad347321658a4d7cc2487ac49bf93a4796020f063a988a3b2e73a14900",
+      "definedBy": "UntrackedAssetRecovery",
+      "modules": [
+        "StakeVault",
+        "TreasuryManagement"
+      ]
+    }
+  ],
+  "modules": {
+    "ClaimLifecycle": {
+      "sourcePath": "contracts/ClaimLifecycle.sol",
+      "linearization": [
+        "ClaimLifecycle"
+      ],
+      "storageOrder": [
+        {
+          "contract": "ClaimLifecycle",
+          "variables": [
+            "_status",
+            "_verificationWindowEnd",
+            "_disputeDeadline",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x5ce5c6d003531cb0cd06984abba6776f0cd81951106e2ccaa7427750fc1af51f"
+    },
+    "DisputeResolution": {
+      "sourcePath": "contracts/DisputeResolution.sol",
+      "linearization": [
+        "DisputeResolution",
+        "AccessControl",
+        "ERC165",
+        "Pausable",
+        "Context",
+        "ReentrancyGuard"
+      ],
+      "storageOrder": [
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "DisputeResolution",
+          "variables": [
+            "vault",
+            "feeManager",
+            "bondToken",
+            "bondAmount",
+            "challengeWindowDuration",
+            "_nextDisputeId",
+            "_disputes",
+            "_disputesByClaim",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x608ceedc6f0cfb4891f5fa9e505288ddc98132d01ab5019265c2cea8fe783fe2"
+    },
+    "FeeManager": {
+      "sourcePath": "contracts/fees/FeeManager.sol",
+      "linearization": [
+        "FeeManager",
+        "GovernanceOwnable",
+        "Pausable",
+        "AccessControl",
+        "ERC165",
+        "Context",
+        "ReentrancyGuard"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "FeeManager",
+          "variables": [
+            "_feeSchedules",
+            "_feeScheduleHistory",
+            "feeScheduleVersion",
+            "_totalFeesCollected",
+            "_feesByType",
+            "_reservedFees",
+            "_totalByAllocation",
+            "_totalFeesDistributed",
+            "_feeRecords",
+            "_recordExists",
+            "_allocationTargets",
+            "_feeToken",
+            "globalGovVersion",
+            "_isDistributing",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x5cd9668e788805e84b44166cef3a473b1931597f454af43abb0530e3499fe8f8"
+    },
+    "GovernanceOwnable": {
+      "sourcePath": "contracts/governance/GovernanceOwnable.sol",
+      "linearization": [
+        "GovernanceOwnable",
+        "Pausable",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0xb90fb67bfe9a83f7c3a7ad6b5fd58438c0a4f45f9dd1b9dd1dedbb1266d06b99"
+    },
+    "ProtocolUpgradeable": {
+      "sourcePath": "contracts/upgrade/ProtocolUpgradeable.sol",
+      "linearization": [
+        "ProtocolUpgradeable",
+        "GovernanceOwnable",
+        "Pausable",
+        "AccessControl",
+        "ERC165",
+        "Context",
+        "UUPSUpgradeable",
+        "Initializable"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "ProtocolUpgradeable",
+          "variables": [
+            "upgradeController",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.Initializable",
+          "slot": "0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00",
+          "definedBy": "Initializable"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x1bfd773d58533bdc20011b6da52a1733bc4dfeae773cfe12d20bc0aaa76671b5"
+    },
+    "ReputationDecay": {
+      "sourcePath": "contracts/ReputationDecay.sol",
+      "linearization": [
+        "ReputationDecay",
+        "GovernanceOwnable",
+        "Pausable",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "ReputationDecay",
+          "variables": [
+            "baseReputation",
+            "lastActivityTimestamp",
+            "inactivityTracking",
+            "decayConfig",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x87a9b678a50fb25f0fe33cb31ff348279e736101eb1380eca90bd6609c0d132c"
+    },
+    "ReputationEngine": {
+      "sourcePath": "contracts/reputation/ReputationEngine.sol",
+      "linearization": [
+        "ReputationEngine",
+        "GovernanceOwnable",
+        "Pausable",
+        "ReentrancyGuard",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "ReputationEngine",
+          "variables": [
+            "__gap",
+            "reputations",
+            "protocolStats",
+            "defaultInitialScore",
+            "minReputationScore",
+            "maxReputationScore",
+            "restrictedInitialization"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x423bbb596e840f45d25901512c3d043e3cc2beee9b997642399dbe1680748852"
+    },
+    "StakeVault": {
+      "sourcePath": "contracts/StakeVault.sol",
+      "linearization": [
+        "StakeVault",
+        "UntrackedAssetRecovery",
+        "AccessControl",
+        "ERC165",
+        "Pausable",
+        "Context",
+        "ReentrancyGuard"
+      ],
+      "storageOrder": [
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "StakeVault",
+          "variables": [
+            "_bondToken",
+            "_locks",
+            "_totalLocked",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        },
+        {
+          "id": "truthbounty.storage.UntrackedAssetRecovery",
+          "slot": "0x8abeb0ad347321658a4d7cc2487ac49bf93a4796020f063a988a3b2e73a14900",
+          "definedBy": "UntrackedAssetRecovery"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0xac46e8b6005dc0607b0466c652c4cc8c41bf8d9f6e927b0a7a21beae3284ef3c"
+    },
+    "TimelockOwnedProxyAdmin": {
+      "sourcePath": "contracts/upgrade/TimelockOwnedProxyAdmin.sol",
+      "linearization": [
+        "TimelockOwnedProxyAdmin",
+        "ProxyAdmin",
+        "Ownable",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "Ownable",
+          "variables": [
+            "_owner"
+          ]
+        },
+        {
+          "contract": "TimelockOwnedProxyAdmin",
+          "variables": [
+            "pendingUpgrades",
+            "storageValidator",
+            "usedImplementations",
+            "_operationNonce",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x1d64a9abedebde638145d4c2ddfe095a1df821c88c607f28319c24a366f1088c"
+    },
+    "TokenomicsEngine": {
+      "sourcePath": "contracts/tokenomics/TokenomicsEngine.sol",
+      "linearization": [
+        "TokenomicsEngine",
+        "GovernanceOwnable",
+        "Pausable",
+        "ReentrancyGuard",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "TokenomicsEngine",
+          "variables": [
+            "sourceAllocations",
+            "distributionHistory",
+            "distributionIds",
+            "processedDistributions",
+            "totalDistributed",
+            "totalBySource",
+            "emissionLimit",
+            "rewardMultiplier",
+            "treasuryReserveTargetBPS",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x93c003b4329355977cff2e383361d5e01820c7977b4b68508ab05f60d770b404"
+    },
+    "TreasuryManagement": {
+      "sourcePath": "contracts/treasury/TreasuryManagement.sol",
+      "linearization": [
+        "TreasuryManagement",
+        "UntrackedAssetRecovery",
+        "GovernanceOwnable",
+        "Pausable",
+        "ReentrancyGuard",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "TreasuryManagement",
+          "variables": [
+            "_pools",
+            "_authorisedModules",
+            "_config",
+            "_recordCount",
+            "_records",
+            "_recordIds",
+            "_lastOperationBlock",
+            "_recordExists",
+            "_snapshots",
+            "_withdrawalLimitPerBlock",
+            "_withdrawnCurrentBlock",
+            "_withdrawalBlockSnapshot",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        },
+        {
+          "id": "truthbounty.storage.UntrackedAssetRecovery",
+          "slot": "0x8abeb0ad347321658a4d7cc2487ac49bf93a4796020f063a988a3b2e73a14900",
+          "definedBy": "UntrackedAssetRecovery"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0xae372100cb6638cc7ff1d1bbebff1485dc5dbba73213d8657a90ae5cd1abfddd"
+    },
+    "TruthBounty": {
+      "sourcePath": "contracts/TruthBounty.sol",
+      "linearization": [
+        "TruthBounty",
+        "GovernanceOwnable",
+        "Pausable",
+        "ReentrancyGuard",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "GovernanceOwnable",
+          "variables": [
+            "governanceController",
+            "governanceEnabled",
+            "emergencyAdmin",
+            "__gap"
+          ]
+        },
+        {
+          "contract": "TruthBounty",
+          "variables": [
+            "claims",
+            "settlementResults",
+            "votes",
+            "verifierStakes",
+            "verifierRewards",
+            "verificationWindowDuration",
+            "minStakeAmount",
+            "settlementThresholdPercent",
+            "rewardPercent",
+            "slashPercent",
+            "claimCounter",
+            "totalSlashed",
+            "totalRewarded"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x9517be960f665a4e6dc00e864bed3210e0c20f1f4b5fad2f770c8bdc21fb9a00"
+    },
+    "TruthBountyToken": {
+      "sourcePath": "contracts/TruthBounty.sol",
+      "linearization": [
+        "TruthBountyToken",
+        "UUPSUpgradeable",
+        "Initializable",
+        "ResolverRoleTimelock",
+        "AccessControl",
+        "ERC165",
+        "ERC20",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "ERC20",
+          "variables": [
+            "_balances",
+            "_allowances",
+            "_totalSupply",
+            "_name",
+            "_symbol"
+          ]
+        },
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "ResolverRoleTimelock",
+          "variables": [
+            "pendingRoleChanges",
+            "_resolverRoleChangeId",
+            "resolverRoleChangeReadyAt",
+            "_operationNonce"
+          ]
+        },
+        {
+          "contract": "TruthBountyToken",
+          "variables": [
+            "settlementContract",
+            "slashPercentage",
+            "verifierStake",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.Initializable",
+          "slot": "0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00",
+          "definedBy": "Initializable"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0x81f5e3d4a839187ef3b11ba5377c5fea12be1d8c6b10f2dcd02ad636497bb209"
+    },
+    "VerificationRoundManager": {
+      "sourcePath": "contracts/VerificationRoundManager.sol",
+      "linearization": [
+        "VerificationRoundManager",
+        "ReentrancyGuard",
+        "Pausable",
+        "AccessControl",
+        "ERC165",
+        "Context"
+      ],
+      "storageOrder": [
+        {
+          "contract": "AccessControl",
+          "variables": [
+            "_roles"
+          ]
+        },
+        {
+          "contract": "Pausable",
+          "variables": [
+            "_paused"
+          ]
+        },
+        {
+          "contract": "VerificationRoundManager",
+          "variables": [
+            "_nextRoundId",
+            "_rounds",
+            "_participants",
+            "_participated",
+            "_activeRound",
+            "_firstRoundClosed",
+            "__gap"
+          ]
+        }
+      ],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00",
+          "definedBy": "ReentrancyGuard"
+        }
+      ],
+      "unstructuredSlots": [],
+      "reservedSlots": [
+        "IMPLEMENTATION_SLOT",
+        "ADMIN_SLOT",
+        "BEACON_SLOT"
+      ],
+      "digest": "0xf079d509079b1d6ee247c6ce94b72b9b50caed8471e404acca223a397710c0bf"
+    }
+  }
+}

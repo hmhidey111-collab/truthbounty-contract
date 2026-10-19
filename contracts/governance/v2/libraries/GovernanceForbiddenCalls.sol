@@ -17,11 +17,14 @@ library GovernanceForbiddenCalls {
     /// @dev ExampleSettlement / legacy settleClaim variants with extra params
     bytes4 internal constant SETTLE_CLAIM_WITH_PROOF = bytes4(keccak256("settleClaim(uint256,bytes32)"));
 
+    /// @notice Governance attempted to invoke a prohibited claim-outcome selector.
+    /// @param selector Four-byte selector rejected by policy.
     error ForbiddenGovernanceCall(bytes4 selector);
 
     /**
      * @dev Reverts when `calldata_` encodes a prohibited claim-outcome operation.
      * @param calldata_ Encoded call data for a single governance operation.
+     * @dev Selector matching is a static policy check; calls shorter than four bytes are not claim-outcome calls.
      */
     function enforceAllowed(bytes memory calldata_) internal pure {
         if (calldata_.length < 4) {

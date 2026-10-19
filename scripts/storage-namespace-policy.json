@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "issue": "V2-SC-159",
+  "policy": "Every upgradeable canonical module frozen by V2-SC-121 (storage-layouts/manifest.json) has a deterministic slot/namespace manifest (storage-layouts/namespace-manifest.json). ERC-7201 namespaces are unique to exactly one defining contract, no two computed slots of a composed module overlap, no module storage reuses an ERC-1967 proxy reserved slot, and the linear storage contributor order is append-only across upgrades.",
+  "reservedSlots": [
+    {
+      "name": "IMPLEMENTATION_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.implementation",
+      "derivation": "eip1967",
+      "slot": "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+    },
+    {
+      "name": "ADMIN_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.admin",
+      "derivation": "eip1967",
+      "slot": "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
+    },
+    {
+      "name": "BEACON_SLOT",
+      "standard": "ERC-1967",
+      "id": "eip1967.proxy.beacon",
+      "derivation": "eip1967",
+      "slot": "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50"
+    }
+  ],
+  "externalContracts": {
+    "AccessControl": {
+      "source": "@openzeppelin/contracts/access/AccessControl.sol",
+      "bases": ["Context", "ERC165"],
+      "linearStorage": ["_roles"],
+      "namespaces": []
+    },
+    "Context": {
+      "source": "@openzeppelin/contracts/utils/Context.sol",
+      "bases": [],
+      "linearStorage": [],
+      "namespaces": []
+    },
+    "ERC165": {
+      "source": "@openzeppelin/contracts/utils/introspection/ERC165.sol",
+      "bases": [],
+      "linearStorage": [],
+      "namespaces": []
+    },
+    "ERC20": {
+      "source": "@openzeppelin/contracts/token/ERC20/ERC20.sol",
+      "bases": ["Context"],
+      "linearStorage": ["_balances", "_allowances", "_totalSupply", "_name", "_symbol"],
+      "namespaces": []
+    },
+    "Initializable": {
+      "source": "@openzeppelin/contracts/proxy/utils/Initializable.sol",
+      "bases": [],
+      "linearStorage": [],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.Initializable",
+          "slot": "0xf0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00"
+        }
+      ]
+    },
+    "Ownable": {
+      "source": "@openzeppelin/contracts/access/Ownable.sol",
+      "bases": ["Context"],
+      "linearStorage": ["_owner"],
+      "namespaces": []
+    },
+    "Pausable": {
+      "source": "@openzeppelin/contracts/utils/Pausable.sol",
+      "bases": ["Context"],
+      "linearStorage": ["_paused"],
+      "namespaces": []
+    },
+    "ProxyAdmin": {
+      "source": "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol",
+      "bases": ["Ownable"],
+      "linearStorage": [],
+      "namespaces": []
+    },
+    "ReentrancyGuard": {
+      "source": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+      "bases": [],
+      "linearStorage": [],
+      "namespaces": [
+        {
+          "id": "openzeppelin.storage.ReentrancyGuard",
+          "slot": "0x9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00"
+        }
+      ]
+    },
+    "UUPSUpgradeable": {
+      "source": "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol",
+      "bases": [],
+      "linearStorage": [],
+      "namespaces": []
+    }
+  },
+  "acknowledgedLayoutDiscrepancies": [
+    {
+      "module": "FeeManager",
+      "rationale": "The V2-SC-121 frozen manifest predates the merge of the deterministic fee-accounting change (developed in parallel), which declared `_reservedFees` between `_feesByType` and `_totalByAllocation` and `_isDistributing` after `globalGovVersion`. The insertion shifts every later FeeManager slot relative to the frozen layout, so the V2-SC-121 re-freeze must be reviewed as a layout-breaking change before any FeeManager proxy upgrade; this entry keeps the discrepancy visible instead of silently passing."
+    },
+    {
+      "module": "TimelockOwnedProxyAdmin",
+      "rationale": "The V2-SC-121 frozen manifest predates the merge of the timelock-queue change that declared `_operationNonce` before `__gap` (branches were developed in parallel). The source-derived order is [_owner, pendingUpgrades, storageValidator, usedImplementations, _operationNonce, __gap]; the frozen manifest omits `_operationNonce`. The V2-SC-121 re-freeze (`npm run test:layouts:update`) must be reviewed by a maintainer; this entry keeps the discrepancy visible instead of silently passing."
+    },
+    {
+      "module": "TruthBountyToken",
+      "rationale": "The V2-SC-121 frozen manifest records only `resolverRoleChangeReadyAt` for ResolverRoleTimelock, while the source declares `pendingRoleChanges`, `_resolverRoleChangeId`, `resolverRoleChangeReadyAt` and `_operationNonce`. Because ResolverRoleTimelock is an inherited base, the extra variables shift every TruthBountyToken-owned slot relative to the frozen layout; this is an inherited-layout change that the V2-SC-121 re-freeze and an upgrade migration review must address before any TruthBountyToken proxy upgrade."
+    }
+  ]
+}

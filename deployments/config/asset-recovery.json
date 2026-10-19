@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "issue": 633,
+  "extension": "IUntrackedAssetRecovery",
+  "source": "contracts/interfaces/IUntrackedAssetRecovery.sol",
+  "implementation": "contracts/recovery/UntrackedAssetRecovery.sol",
+  "nativeAsset": "0x0000000000000000000000000000000000000000",
+  "mandatoryDelaySeconds": "172800",
+  "governance": "Existing roles only. Every request and execution must be authorized. Bootstrap administrators cannot shorten or bypass the local delay. There is no emergency bypass, new authority role or arbitrary calldata.",
+  "balanceRule": "max(on-chain balance minus every asset-specific protocol reserve, zero). Native balance is forced currency only and creates no liability. Queries never depend on pause state.",
+  "executionRule": "Exact queued asset, recipient and amount. Recheck current authority, pause, timelock and reserves, mark executed before transfer, reject reentrancy and any sender/recipient transfer delta mismatch. Reverting, false-returning, fee-on-transfer and rebasing transfers fail atomically; no-return exact transfers are supported.",
+  "operationId": "keccak256(abi.encode(address(this), block.chainid, asset, recipient, amount, salt)); cancelled and executed IDs cannot be reused",
+  "storage": {
+    "namespace": "truthbounty.storage.UntrackedAssetRecovery",
+    "slot": "0x8abeb0ad347321658a4d7cc2487ac49bf93a4796020f063a988a3b2e73a14900",
+    "linearLayout": "unchanged"
+  },
+  "deploymentBoundary": "New constructor deployments only. This does not authorize an in-place upgrade of existing custody contracts: supplemental reserve aggregates require full historical reconciliation before any separately reviewed migration. No deployment or activation is performed by this change.",
+  "consumerHandoff": {
+    "abi": "exports/abi/v2/2.0.0-2.0/manifest.json extensions[IUntrackedAssetRecovery]",
+    "existingInterfaces": "Ownership interface selectors and ERC-165 IDs remain unchanged; recovery is an additive ABI extension, not a new module.",
+    "replay": "Reduce AssetRecoveryQueuedV2 by operationId into QUEUED plus executableAt; AssetRecoveryExecutedV2 and AssetRecoveryCancelledV2 close that operation exactly once. Execution event authority is the actual current governance caller. Execution availableBalance is the post-transfer recoverable balance.",
+    "untrackedQueries": "Call recoverableBalance(asset) before queueing and again before execution; queueing does not reserve or freeze funds. Competing requests can exceed aggregate availability, but each execution independently checks live reserves and remaining balance."
+  },
+  "hosts": [
+    {
+      "source": "contracts/v2/StakeVault.sol",
+      "authority": "ADMIN_ROLE",
+      "reservedBalance": "max(total custody, protocol allocation + all locks + claimable withdrawals)",
+      "pause": "GOVERNANCE and TREASURY scopes, configured registry pause authority, and no shutdown"
+    },
+    {
+      "source": "contracts/StakeVault.sol",
+      "authority": "DEFAULT_ADMIN_ROLE",
+      "reservedBalance": "sum of unreleased bonds per token, independent of current bondToken",
+      "pause": "local pause"
+    },
+    {
+      "source": "contracts/v2/Claims.sol",
+      "authority": "DEFAULT_ADMIN_ROLE",
+      "reservedBalance": "all received bounties less actual cancellation refunds; terminal status alone releases nothing",
+      "pause": "GOVERNANCE and TREASURY scopes, configured pause authority, and no shutdown"
+    },
+    {
+      "source": "contracts/v2/FinalRewardAllocator.sol",
+      "authority": "module registry GOVERNANCE_ROLE",
+      "reservedBalance": "all funded reward pools less actual claims; allocations are a subset and are not counted twice",
+      "pause": "GOVERNANCE and TREASURY scopes, configured registry pause authority, and no shutdown"
+    },
+    {
+      "source": "contracts/performance/PullSettlementLedger.sol",
+      "authority": "DEFAULT_ADMIN_ROLE",
+      "reservedBalance": "sum of single and batch credits less both aggregate and per-reference withdrawals",
+      "pause": "GOVERNANCE and TREASURY scopes, configured pause authority, and no shutdown"
+    },
+    {
+      "source": "contracts/treasury/TreasuryManagement.sol",
+      "authority": "GOVERNANCE_ROLE with governance enabled",
+      "reservedBalance": "sum of every one of the seven treasury pools",
+      "pause": "local pause"
+    },
+    {
+      "source": "contracts/treasury/TreasuryAccounting.sol",
+      "authority": "GOVERNANCE_ROLE with governance enabled",
+      "reservedBalance": "sum of every one of the six accounting reserves",
+      "pause": "local pause"
+    },
+    {
+      "source": "contracts/insurance/InsuranceFund.sol",
+      "authority": "GOVERNANCE_ROLE with governance enabled",
+      "reservedBalance": "entire reserveToken balance is the balance-backed insurance reserve",
+      "pause": "local pause"
+    },
+    {
+      "source": "contracts/reward/RewardEngine.sol",
+      "authority": "GOVERNANCE_ROLE with governance enabled",
+      "reservedBalance": "entire balance of every current or historical configured reward token, including unallocated funding and deferred claims",
+      "pause": "local pause"
+    },
+    {
+      "source": "contracts/reward/RewardDeferralQueue.sol",
+      "authority": "attached engine GOVERNANCE_ROLE with governance enabled",
+      "reservedBalance": "zero local token liabilities; deferred entitlements remain protected at the engine",
+      "pause": "attached engine pause"
+    }
+  ]
+}

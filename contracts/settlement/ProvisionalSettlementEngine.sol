@@ -52,6 +52,8 @@ contract ProvisionalSettlementEngine is
     error ClaimNotEligibleForSettlement(uint256 claimId, IClaimRegistry.ClaimStatus status);
     error VerificationWindowStillOpen(uint256 claimId, uint256 currentTimestamp, uint256 deadline);
     error AlreadyProvisionallySettled(uint256 claimId);
+    error SettlementAlreadyFinalized(uint256 claimId);
+    error InvalidTerminalOutcome(uint256 claimId, Outcome outcome);
 
     // =========================================================================
     // State Variables
@@ -71,6 +73,15 @@ contract ProvisionalSettlementEngine is
 
     /// @notice Mapping from claimId to stored provisional outcome.
     mapping(uint256 => ProvisionalOutcome) private _provisionalOutcomes;
+
+    /// @notice Mapping from claimId to terminal settlement marker.
+    mapping(uint256 => bool) private _terminalSettled;
+
+    /// @notice Mapping from claimId to terminal outcome.
+    mapping(uint256 => Outcome) private _terminalOutcome;
+
+    /// @notice Mapping from claimId to terminal settlement timestamp.
+    mapping(uint256 => uint256) private _terminalSettledAt;
 
     // =========================================================================
     // Constructor
@@ -179,6 +190,11 @@ contract ProvisionalSettlementEngine is
 
         _provisionalOutcomes[claimId] = outcome;
 
+        // Terminal marker precedes any unsafe external calls.
+        _terminalSettled[claimId] = true;
+        _terminalOutcome[claimId] = mappedOutcome;
+        _terminalSettledAt[claimId] = block.timestamp;
+
         emit RoundAggregated(
             claimId,
             mappedOutcome,
@@ -230,6 +246,27 @@ contract ProvisionalSettlementEngine is
         ProvisionalOutcome storage p = _provisionalOutcomes[claimId];
         if (!p.settled) return false;
         return block.timestamp < p.challengeDeadline;
+    }
+
+    /**
+     * @notice Returns whether a claim has reached a terminal settlement state.
+     */
+    function isTerminalSettled(uint256 claimId) external view returns (bool) {
+        return _terminalSettled[claimId];
+    }
+
+    /**
+     * @notice Returns the terminal outcome for a claim, if settled.
+     */
+    function getTerminalOutcome(uint256 claimId) external view returns (Outcome) {
+        return _terminalOutcome[claimId];
+    }
+
+    /**
+     * @notice Returns the terminal settlement timestamp for a claim.
+     */
+    function getTerminalSettledAt(uint256 claimId) external view returns (uint256) {
+        return _terminalSettledAt[claimId];
     }
 
     // =========================================================================

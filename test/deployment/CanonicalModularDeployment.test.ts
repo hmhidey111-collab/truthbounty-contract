@@ -1,15 +1,16 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { deployCanonicalV2, CanonicalV2Suite } from "../../scripts/deployCanonicalV2";
+import { network } from "hardhat";
+import { deployCanonicalV2, CanonicalV2Suite, DeploymentSigner } from "../../scripts/deployCanonicalV2.js";
 
 describe("Canonical Modular Deployment Composition (SC-031)", () => {
-  let deployer: SignerWithAddress;
-  let user1: SignerWithAddress;
-  let user2: SignerWithAddress;
+  let deployer: DeploymentSigner;
+  let user1: DeploymentSigner;
+  let user2: DeploymentSigner;
   let suite: CanonicalV2Suite;
+  let ethers: any;
 
   beforeEach(async () => {
+    ({ ethers } = await network.connect());
     [deployer, user1, user2] = await ethers.getSigners();
     suite = await deployCanonicalV2(deployer);
   });
@@ -24,6 +25,24 @@ describe("Canonical Modular Deployment Composition (SC-031)", () => {
       expect(await suite.aggregator.getAddress()).to.not.equal(ethers.ZeroAddress);
       expect(await suite.provisionalSettlementEngine.getAddress()).to.not.equal(ethers.ZeroAddress);
       expect(await suite.appealVerificationRound.getAddress()).to.not.equal(ethers.ZeroAddress);
+      expect(await suite.bondVault.getAddress()).to.not.equal(ethers.ZeroAddress);
+      expect(suite.deployment.plan.steps).to.have.length(12);
+      expect(suite.deployment.checkpoint.transactions).to.have.length(12);
+      for (const record of suite.deployment.checkpoint.transactions) {
+        const receipt = await ethers.provider.getTransactionReceipt(record.hash!);
+        expect(record.receipt!.blockHash).to.equal(receipt!.blockHash);
+      }
+    });
+
+    it("wires the V2-SC-059 bond vault and grants the appeal module OPERATOR_ROLE", async () => {
+      expect(await suite.appealVerificationRound.vault()).to.equal(
+        await suite.bondVault.getAddress()
+      );
+
+      const OPERATOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("OPERATOR_ROLE"));
+      expect(
+        await suite.bondVault.hasRole(OPERATOR_ROLE, await suite.appealVerificationRound.getAddress())
+      ).to.be.true;
     });
 
     it("correctly wires cross-module references", async () => {

@@ -172,7 +172,7 @@ contract UpgradeControllerTest is Test {
 
         controller.scheduleUpgrade(proposalId);
 
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
 
         controller.executeUpgrade(proposalId);
 
@@ -208,7 +208,8 @@ contract UpgradeControllerTest is Test {
 
         controller.scheduleUpgrade(proposalId);
 
-        vm.warp(block.timestamp + 1 days + 7 days + 1);
+        // Cross the 7-day standard delay plus the 7-day execution window.
+        vm.warp(block.timestamp + 7 days + 7 days + 1);
 
         vm.expectRevert();
         controller.executeUpgrade(proposalId);
@@ -255,7 +256,7 @@ contract UpgradeControllerTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(proposalId);
 
         bytes32 rollbackId = controller.proposeUpgrade(
@@ -267,7 +268,7 @@ contract UpgradeControllerTest is Test {
         );
 
         controller.scheduleUpgrade(rollbackId);
-        vm.warp(vm.getBlockTimestamp() + 1 days);
+        vm.warp(vm.getBlockTimestamp() + 7 days);
         controller.executeUpgrade(rollbackId);
 
         assertEq(controller.currentImplementation(target), currentImpl);
@@ -321,7 +322,7 @@ contract UpgradeControllerTest is Test {
         );
 
         controller.scheduleUpgrade(proposalId);
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 7 days);
         controller.executeUpgrade(proposalId);
 
         bytes32[] memory history = controller.getUpgradeHistory(target);

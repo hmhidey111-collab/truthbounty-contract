@@ -1,0 +1,113 @@
+{
+  "manifestVersion": 1,
+  "issue": "PREWAVE-SC-042",
+  "specification": "TruthBounty Chain Reorganization Consumer Guarantees (docs/reorg-consumer-guarantees.md)",
+  "chainId": 11155420,
+  "environment": "testnet",
+  "consumerGuarantees": {
+    "confirmationDepth": 1800,
+    "maxFinalityClass": 2,
+    "maxReorgDepth": 12,
+    "eventsAreReplayable": true,
+    "eventKeysAreUnique": true,
+    "eventsAreTerminalOnEmission": true
+  },
+  "finalityClassVocabulary": {
+    "None": 0,
+    "SoftConfirmation": 1,
+    "ProtocolFinalized": 2
+  },
+  "appealDepth": {
+    "maxAppealRounds": 3,
+    "bondEscalationFormula": "bond_n = min(baseBond * escalationFactor^n, maxBond)",
+    "baseBond": "1000000000000000000",
+    "escalationFactor": 2,
+    "maxBond": "100000000000000000000",
+    "appealDeadlineSeconds": 7200,
+    "terminalFallback": "refundBondToAppellantAndFinalizePreviousRoundOutcome",
+    "counterResetProtection": "appealCounterMonotonicallyIncreasesOnly",
+    "overflowProtection": "useSafeMathMulDivisionAndCappedAddition",
+    "dustProtection": "rejectBondsBelowMinimumBond"
+  },
+  "canonicalEventIdentity": {
+    "keyFormula": "keccak256(abi.encode(chainId, contractAddress, blockNumber, blockHash, transactionHash, logIndex))",
+    "ordering": ["blockNumber", "transactionIndex", "logIndex"],
+    "removalRule": "a removal is lawful only when the removed key equals the key recomputed from the canonical coordinates of the orphaned log",
+    "replayRule": "re-running ingestion from genesis over canonical logs must reproduce the identical key set"
+  },
+  "evidencePagination": {
+    "ordering": ["blockNumber", "transactionIndex", "logIndex", "evidenceId"],
+    "orderDirection": "ascending",
+    "cursorSemantics": {
+      "format": "opaque-base64url",
+      "binds": ["claimId", "releaseId", "orderKey"],
+      "composition": "cursor encodes the last returned order key and the claim/release scope it was issued under",
+      "validation": "a cursor is rejected with CursorScopeMismatch if its claimId or releaseId differs from the request scope",
+      "immutability": "cursors are not invalidated by concurrent appends; new evidence greater than the cursor order key is returned on subsequent pages"
+    },
+    "pageLimits": {
+      "minLimit": 1,
+      "maxLimit": 500,
+      "defaultLimit": 100,
+      "invalidLimitError": "InvalidPageLimit(uint256 requested, uint256 min, uint256 max)"
+    },
+    "duplicatePrevention": {
+      "rule": "each evidence item is identified by CID and must appear at most once in a full traversal",
+      "duplicateCidError": "DuplicateEvidenceCID("xyz)",
+      "idempotentAppend": "appending an already-present CID is a canonical no-op and does not alter order or cursors"
+    },
+    "finalizedClaimBehavior": {
+      "rule": "once a claim is finalized, its historical evidence pages are immutable and must remain readable with the same order and cursors",
+      "appendAfterFinalizationError": "ClaimAlreadyFinalized(uint256 claimId)",
+      "historicalReadsUnaffected": true
+    },
+    "concurrentAppendSafety": {
+      "offsetDriftAvoided": true,
+      "mechanism": "keyset cursor pagination over the canonical order key; no numeric offsets are used",
+      "appendBetweenPages": "newly appended evidence with an order key greater than the cursor key is included in later pages; evidence at or before the cursor key is never repeated"
+    },
+    "errors": {
+      "invalidLimit": "InvalidPageLimit",
+      "invalidCursor": "InvalidCursor",
+      "cursorScopeMismatch": "CursorScopeMismatch",
+      "duplicateCID": "DuplicateEvidenceCID",
+      "claimAlreadyFinalized": "ClaimAlreadyFinalized",
+      "reorgDetected": "ReorgDetected"
+    }
+  },
+  "anchor": {
+    "artifact": "ConsumerGuaranteesAnchor",
+    "source": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+    "deployTimePublicationEvent": "ConsumerGuaranteesPublished",
+    "authority": "read-only; no settlement, treasury, or outcome authority is exposed or granted"
+  },
+  "consumerResponsibilities": [
+    "ingest only after confirmationDepth ancestor blocks are observed",
+    "treat ProtocolFinalized windows as the only irreversible trigger",
+    "absorb reorgs up to maxReorgDepth via lawful removals; resynchronize from genesis beyond it",
+    "replay from genesis and compare the key set against the stored projection",
+    "record chainId and anchor address at ingestion; never reuse guarantees across deployments",
+    "enforce maxAppealRounds and bond escalation on all appeal interactions",
+    "reject appeals that exceed maxAppealRounds or attempt to reset the appeal counter",
+    "apply terminal fallback on missed deadline to conserve funds",
+    "paginate evidence using keyset cursors bound to claimId, releaseId, and order key; never use numeric offsets",
+    "validate page limits against minLimit and maxLimit and surface canonical errors",
+    "treat finalized claims as append-frozen while preserving historical reads"
+  ],
+  "requiredTests": [
+    "append between pages returns each evidence item exactly once",
+    "duplicate CID append is idempotent and surfaces DuplicateEvidenceCID on conflict",
+    "invalid limit below minLimit or above maxLimit returns InvalidPageLimit",
+    "finalized claim cannot be appended to and historical pages remain identical",
+    "reorg fixture preserves cursor binding and lawful removal semantics",
+    "full traversal returns each evidence item exactly once across concurrent appends"
+  ],
+  "dependencies": [
+    "#676",
+    "#691"
+  ],
+  "nonGoals": [
+    "unrelated refactors or mainnet deployment",
+    "applying Stellar Wave before maintainer activation"
+  ]
+}

@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 // CO-177: removed OZ EIP712 import — we build the domain separator ourselves
 //         so it always reflects the live block.chainid, never a stale cache.
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ContractSignerValidation} from "./libraries/ContractSignerValidation.sol";
 
 /**
  * @title EIP712Verifier
@@ -27,6 +28,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 // CO-177: removed "is EIP712" — no longer inheriting the base contract
 contract EIP712Verifier {
     using ECDSA for bytes32;
+    using ContractSignerValidation for address;
 
     // ============ EIP-712 Domain ============
 
@@ -39,6 +41,9 @@ contract EIP712Verifier {
     bytes32 private immutable _HASHED_VERSION;
 
     // ============ Type Hashes ============
+
+    uint256 internal constant MAX_SIGNATURE_BYTES = 65;
+    uint256 internal constant MAX_REASON_BYTES = 256;
 
     bytes32 public constant CLAIM_SUBMISSION_TYPEHASH = keccak256(
         "ClaimSubmission(address claimant,uint256 bountyId,bytes32 contentHash,uint256 nonce,uint256 deadline)"
@@ -78,6 +83,7 @@ contract EIP712Verifier {
     error SignatureExpired();
     error SignatureAlreadyUsed();
     error InvalidNonce();
+    error ReasonTooLong(uint256 actual, uint256 maximum);
 
     // ============ Constructor ============
 
@@ -120,6 +126,7 @@ contract EIP712Verifier {
 
     /**
      * @notice Verifies a claim submission signature
+        * @dev Accepts an ECDSA signature from an EOA or a bounded ERC-1271 response from a contract claimant.
      * @param claimant The address making the claim
      * @param bountyId The ID of the bounty being claimed
      * @param contentHash Hash of the claim content
@@ -135,6 +142,7 @@ contract EIP712Verifier {
         bytes calldata signature
     ) external returns (bool) {
         if (block.timestamp > deadline) revert SignatureExpired();
+        if (signature.length > MAX_SIGNATURE_BYTES) revert InvalidSignature();
 
         uint256 currentNonce = nonces[claimant];
 
@@ -151,8 +159,11 @@ contract EIP712Verifier {
 
         if (usedSignatures[digest]) revert SignatureAlreadyUsed();
 
-        address signer = digest.recover(signature);
-        if (signer != claimant) revert InvalidSignature();
+        if (claimant.code.length == 0) {
+            if (digest.recover(signature) != claimant) revert InvalidSignature();
+        } else if (!claimant.isValidContractSignature(digest, signature)) {
+            revert InvalidSignature();
+        }
 
         usedSignatures[digest] = true;
         nonces[claimant] = currentNonce + 1;
@@ -164,6 +175,7 @@ contract EIP712Verifier {
 
     /**
      * @notice Verifies a verification intent signature
+        * @dev Accepts an ECDSA signature from an EOA or a bounded ERC-1271 response from a contract verifier.
      * @param verifier The address of the verifier
      * @param bountyId The ID of the bounty being verified
      * @param approve Whether the verifier approves the claim
@@ -181,6 +193,8 @@ contract EIP712Verifier {
         bytes calldata signature
     ) external returns (bool) {
         if (block.timestamp > deadline) revert SignatureExpired();
+        _requireReasonBound(reason);
+        if (signature.length > MAX_SIGNATURE_BYTES) revert InvalidSignature();
 
         uint256 currentNonce = nonces[verifier];
 
@@ -198,8 +212,11 @@ contract EIP712Verifier {
 
         if (usedSignatures[digest]) revert SignatureAlreadyUsed();
 
-        address signer = digest.recover(signature);
-        if (signer != verifier) revert InvalidSignature();
+        if (verifier.code.length == 0) {
+            if (digest.recover(signature) != verifier) revert InvalidSignature();
+        } else if (!verifier.isValidContractSignature(digest, signature)) {
+            revert InvalidSignature();
+        }
 
         usedSignatures[digest] = true;
         nonces[verifier] = currentNonce + 1;
@@ -257,6 +274,11 @@ contract EIP712Verifier {
             deadline
         ));
         return _hashTypedDataV4(structHash);
+    }
+
+    function _requireReasonBound(string calldata reason) private pure {
+        uint256 actual = bytes(reason).length;
+        if (actual > MAX_REASON_BYTES) revert ReasonTooLong(actual, MAX_REASON_BYTES);
     }
 
     /**

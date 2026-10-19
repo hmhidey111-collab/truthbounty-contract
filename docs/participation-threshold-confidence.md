@@ -20,8 +20,13 @@ the weighted aggregation outputs from V2-SC-013. Thresholds are read from each r
 For conclusive outcomes only:
 
 ```
-confidenceBps = winningWeight * 10_000 / totalWeight   // floor division
+confidenceBps = floor(winningWeight * 10_000 / totalWeight)
 ```
+
+`winningWeight` must be no greater than `totalWeight`; the V2 aggregator rejects an
+inconsistent pair. The multiplication uses full-precision `mulDiv`, so the intermediate
+product does not overflow when the final quotient is representable. A zero total returns
+zero. For valid weights the result is bounded to `[0, 10_000]`, and division rounds down.
 
 Inconclusive outcomes always expose `confidenceBps = 0`.
 
@@ -52,6 +57,6 @@ minimum is not scaled.
 ## Security Notes
 
 - Basis-point bounds validated at freeze time (`minConfidenceBps <= 10_000`).
-- Multiplication order: `winningWeight * 10_000` before division by `totalWeight`.
-- Rounding direction documented: floor for confidence, ceiling for scaled minimums.
+- Full-precision `mulDiv` prevents intermediate multiplication overflow; invalid `winningWeight > totalWeight` inputs are rejected.
+- Rounding direction: floor for confidence, ceiling for scaled minimums.
 - Frozen configs cannot be overwritten once a round is open.

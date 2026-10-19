@@ -1,0 +1,63 @@
+﻿{
+  "schemaVersion": 1,
+  "protocolVersion": "2.0",
+  "description": "Deterministic invariant seeds. Every entry records the exact toolchain, commit, campaign configuration and one-command reproduction for an investigated invariant call sequence, so the outcome of the investigation is reproducible rather than folklore. Replay with: node scripts/repro-invariant-seed.mjs <seed-id>",
+  "toolchain": {
+    "name": "forge",
+    "version": "1.6.0-nightly",
+    "note": "forge version used to record the sequences. scripts/repro-invariant-seed.mjs pins runs, depth, invariant seed and fuzz seed from the entry itself, so a replay does not depend on ambient foundry.toml values."
+  },
+  "seeds": [
+    {
+      "id": "v2-stakevault-release-exceeds-lock",
+      "invariantContract": "V2SecurityAuditInvariantTest",
+      "invariant": "invariant_obligationsNeverExceedCustody",
+      "summary": "Deposit a verifier principal, then release the same lock cell twice for the full original amount, so the second release tries to credit claimable balance out of an already-drained lock. The invariant must hold at every prefix of the sequence, not only at the end.",
+      "origin": "authored-minimal-regression",
+      "state": "rejected",
+      "sequenceFile": "v2-stakevault-release-exceeds-lock/sequence.json",
+      "campaign": {
+        "runs": 500,
+        "depth": 20,
+        "seed": "0x5eed0001"
+      },
+      "commit": "461902c1c4a2091b863ee198f1aa7486345a783b",
+      "rejectedBecause": "The over-release reverts in StakeVault._unlock before any accounting changes, so the lock cell and claimable balance are untouched and obligations never exceed custody. Retained permanently because that check ordering is the only thing preventing the break, and the property is otherwise only observed at the end of a run.",
+      "repro": "forge test --invariant-contract V2SecurityAuditInvariantTest --match-test \"^invariant_obligationsNeverExceedCustody$\" --invariant-runs 500 --invariant-depth 20 --invariant-seed 0x5eed0001 --fuzz-seed 0x5eed0001 --corpus-dir v2-stakevault-release-exceeds-lock"
+    },
+    {
+      "id": "v2-stakevault-settle-then-withdraw",
+      "invariantContract": "V2SecurityAuditInvariantTest",
+      "invariant": "invariant_obligationsEqualCustody",
+      "summary": "Interleave settleConclusive, slashStake and withdraw on one claim id, so a settlement credits a reward from the same principal that a later withdrawal is about to leave the vault, exercising custody conservation under a non-trivial interleaving.",
+      "origin": "authored-minimal-regression",
+      "state": "rejected",
+      "sequenceFile": "v2-stakevault-settle-then-withdraw/sequence.json",
+      "campaign": {
+        "runs": 500,
+        "depth": 20,
+        "seed": "0x5eed0002"
+      },
+      "commit": "461902c1c4a2091b863ee198f1aa7486345a783b",
+      "rejectedBecause": "Settlement moves value between the lock cell, claimable balance and protocol allocation without minting, and the vault asserts reconciliation on every mutating path, so total custody still equals the ERC20 balance and obligations equal custody at each step. Retained because the interleaving is the cheapest guard against a future settlement path that skips the reconciliation assert.",
+      "repro": "forge test --invariant-contract V2SecurityAuditInvariantTest --match-test \"^invariant_obligationsEqualCustody$\" --invariant-runs 500 --invariant-depth 20 --invariant-seed 0x5eed0002 --fuzz-seed 0x5eed0002 --corpus-dir v2-stakevault-settle-then-withdraw"
+    },
+    {
+      "id": "v2-upgrade-version-never-decreases",
+      "invariantContract": "UpgradeInitializerInvariantTest",
+      "invariant": "invariant_VersionNeverDecreases",
+      "summary": "Drive reinitializer versions strictly downwards from a high value, interleaving attacker-sourced initialize attempts, so a version gate that accepted a lower version would be caught by the monotonicity check rather than by the accept-twice check.",
+      "origin": "authored-minimal-regression",
+      "state": "rejected",
+      "sequenceFile": "v2-upgrade-version-never-decreases/sequence.json",
+      "campaign": {
+        "runs": 500,
+        "depth": 20,
+        "seed": "0x5eed0003"
+      },
+      "commit": "461902c1c4a2091b863ee198f1aa7486345a783b",
+      "rejectedBecause": "ReinitializerHarness.reinitializeAt accepts exactly strictly increasing versions and reverts otherwise, so the observed version never decreases and initialize cannot run a second time on the proxy. Retained because a single gate on the accept path is what makes both the monotonicity and write-once properties hold.",
+      "repro": "forge test --invariant-contract UpgradeInitializerInvariantTest --match-test \"^invariant_VersionNeverDecreases$\" --invariant-runs 500 --invariant-depth 20 --invariant-seed 0x5eed0003 --fuzz-seed 0x5eed0003 --corpus-dir v2-upgrade-version-never-decreases"
+    }
+  ]
+}

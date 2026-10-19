@@ -86,7 +86,8 @@ Fee schedules are fully versioned. Every governance update archives the current 
 
 ## Fee Routing
 
-Collected fees are distributed immediately via basis-point splits:
+Collected fees are reserved on collection and routed in an explicit, role-gated
+`distributeReservedFees()` batch via basis-point splits:
 
 ```
 Protocol Fee
@@ -98,7 +99,12 @@ Protocol Fee
       └─ 10% → Emergency Reserve     (ALLOC_EMERGENCY_RESERVE)
 ```
 
-Routing is deterministic. The last active allocation target absorbs integer-division dust to ensure 100% of collected fees are distributed.
+Routing is deterministic. Active allocation targets must sum to exactly 10 000 bps and
+each routing-table name may appear at most once (`DuplicateAllocationName`). The canonical
+`ALLOC_TREASURY_RESERVE` target absorbs integer-division dust — regardless of the order of
+targets in the table — so 100% of collected fees are always distributed and dust ownership
+is explicit. See `docs/v2/fee-routing-bps-accounting-v2-sc-039.md` for the full fee-routing
+inventory enforced by `test/v2/V2SC039FeeRoutingAccounting.t.sol`.
 
 ---
 
@@ -108,10 +114,10 @@ All fee parameters are adjustable by addresses holding `GOVERNANCE_ROLE` or `DEF
 
 | Function | Effect |
 |----------|--------|
-| `updateFeeSchedule(feeType, fixed, bps, min, max)` | Update fee schedule; emits `FeeScheduleUpdated` |
-| `setAllocationTargets(targets[])` | Replace routing table; all active targets must sum to 10 000 bps |
+| `updateFeeSchedule(feeType, fixed, bps, min, max)` | Update fee schedule; emits `FeeScheduleUpdated` + `FeeScheduleConfigUpdated` (exact integers for every parameter) |
+| `setAllocationTargets(targets[])` | Replace routing table; all active targets must sum to 10 000 bps; duplicate names rejected |
 | `setFeeActive(feeType, active)` | Activate or deactivate a fee type |
-| `setFeeToken(newToken)` | Update the ERC20 fee token (admin only) |
+| `setFeeToken(newToken)` | Update the ERC20 fee token (admin only; rejected while fees are reserved — `ReservedFeesOutstanding`) |
 
 Every schedule update bumps `globalGovVersion` and archives the previous schedule.
 
@@ -127,14 +133,17 @@ Every schedule update bumps `globalGovVersion` and archives the previous schedul
    ├── Validates amount against min/max bounds
    ├── Pulls tokens from payer via SafeERC20.safeTransferFrom
    ├── Generates unique record ID (prevents duplicate processing)
-   ├── Updates totalFeesCollected and feesByType[feeType]
+   ├── Updates totalFeesCollected, feesByType[feeType] and reservedFees
    ├── Appends FeeRecord to history
    ├── Emits FeeCollected(feeType, payer, amount)
-   └── Calls _distribute(amount)
-        ├── Splits amount by allocationTargets basisPoints
-        ├── Transfers each share via SafeERC20.safeTransfer
-        ├── Updates totalByAllocation[name] and totalFeesDistributed
-        └── Emits FeeDistributed(allocation, share) per target
+   └── Emits ReservedFeesAdded(amount, newTotalReserved)
+4. COLLECTOR_ROLE calls distributeReservedFees()
+   ├── Splits the reserved gross by allocationTargets basisPoints (rounds down)
+   ├── Routes the canonical TREASURY_RESERVE remainder (including dust)
+   ├── Transfers each share via SafeERC20.safeTransfer (no deduction — no fee-on-fee)
+   ├── Updates totalByAllocation[name] and totalFeesDistributed
+   ├── Emits FeeDistributed(allocation, share) per target — exact integers
+   └── Emits FeesDistributedDeterministically(totalDistributed, remainingReserved)
 ```
 
 ---
@@ -150,6 +159,22 @@ event FeeDistributed(bytes32 indexed allocation, uint256 amount);
 
 // Emitted on every fee schedule governance update
 event FeeScheduleUpdated(bytes32 indexed feeType, uint256 previousValue, uint256 newValue);
+
+// SC-039: exact integer attribution for the complete new schedule
+event FeeScheduleConfigUpdated(
+    bytes32 indexed feeType,
+    uint256 fixedAmount,
+    uint256 basisPoints,
+    uint256 minValue,
+    uint256 maxValue,
+    uint256 govVersion
+);
+
+// Emitted on collection alongside FeeCollected
+event ReservedFeesAdded(uint256 amount, uint256 newTotalReserved);
+
+// Emitted when a distribution batch completes
+event FeesDistributedDeterministically(uint256 totalDistributed, uint256 remainingReserved);
 
 // Emitted when allocation routing table is replaced
 event AllocationTargetsUpdated(address indexed updater, uint256 targetCount);

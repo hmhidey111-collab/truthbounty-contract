@@ -1,0 +1,72 @@
+{
+  "fixtureVersion": 1,
+  "eventSchemaVersion": 1,
+  "eventOrder": [
+    "ClaimCreatedV1",
+    "EvidenceSubmittedV1",
+    "ClaimStatusTransitionedV1",
+    "StakeDepositedV1",
+    "StakeLockedV1",
+    "VerificationSubmittedV1",
+    "OutcomeAggregatedV1",
+    "DisputeRaisedV1",
+    "DisputeOpenedV1",
+    "DisputeResolvedV1",
+    "ClaimResolvedV1",
+    "SlashExecutedV1",
+    "RewardEscrowedV1",
+    "RewardClaimedV1",
+    "StakeUnlockedV1",
+    "TreasuryDepositV1",
+    "ClaimFinalizedV1",
+    "ParameterUpdatedV1",
+    "RoleGrantedV1",
+    "GovernanceProposalCreatedV1",
+    "GovernanceProposalExecutedV1",
+    "EmergencyPauseActivatedV1",
+    "EmergencyPauseRecoveredV1",
+    "UpgradeProposedV1",
+    "UpgradeApprovedV1",
+    "UpgradeExecutedV1",
+    "UpgradeRolledBackV1"
+  ],
+  "journeys": {
+    "claimToSettlement": [
+      "ClaimCreatedV1",
+      "EvidenceSubmittedV1",
+      "ClaimStatusTransitionedV1",
+      "StakeDepositedV1",
+      "StakeLockedV1",
+      "VerificationSubmittedV1",
+      "OutcomeAggregatedV1",
+      "ClaimResolvedV1",
+      "SlashExecutedV1",
+      "RewardEscrowedV1",
+      "RewardClaimedV1",
+      "StakeUnlockedV1",
+      "TreasuryDepositV1",
+      "ClaimFinalizedV1"
+    ],
+    "disputeAndAppeal": [
+      "DisputeRaisedV1",
+      "DisputeOpenedV1",
+      "DisputeResolvedV1"
+    ],
+    "governance": [
+      "ParameterUpdatedV1",
+      "RoleGrantedV1",
+      "GovernanceProposalCreatedV1",
+      "GovernanceProposalExecutedV1"
+    ],
+    "pauseAndRecovery": [
+      "EmergencyPauseActivatedV1",
+      "EmergencyPauseRecoveredV1"
+    ],
+    "upgrade": [
+      "UpgradeProposedV1",
+      "UpgradeApprovedV1",
+      "UpgradeExecutedV1",
+      "UpgradeRolledBackV1"
+    ]
+  }
+}

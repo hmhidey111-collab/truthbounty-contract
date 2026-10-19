@@ -41,7 +41,7 @@ interface IVerificationRoundEvents {
         uint256          weightCap,
         uint16           passingThreshold,
         uint32           paramVersion
-    );
+    , uint64 timestamp, uint16 version);
 
     /**
      * @notice Emitted when a verification round is closed (permissionlessly after
@@ -56,5 +56,5 @@ interface IVerificationRoundEvents {
         uint256 indexed roundId,
         uint64           closedAt,
         uint256          totalVotes
-    );
+    , uint64 timestamp, uint16 version);
 }

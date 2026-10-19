@@ -456,10 +456,14 @@ contract ReputationEngineFuzzTest is Test {
         bool exists = reputationEngine.reputationExists(checkAddress);
         bool shouldExist = false;
         
-        for (uint256 i = 0; i < verifiers.length; i++) {
-            if (verifiers[i] == checkAddress) {
-                shouldExist = true;
-                break;
+        // address(0) can never be initialized (skipped above), so presence in the input
+        // array must not imply existence for the zero address.
+        if (checkAddress != address(0)) {
+            for (uint256 i = 0; i < verifiers.length; i++) {
+                if (verifiers[i] == checkAddress) {
+                    shouldExist = true;
+                    break;
+                }
             }
         }
         

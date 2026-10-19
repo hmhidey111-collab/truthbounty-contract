@@ -26,6 +26,44 @@ describe("EIP712Verifier", function () {
       const domainSeparator = await verifier.getDomainSeparator();
       expect(domainSeparator).to.not.equal(ethers.ZeroHash);
     });
+
+    it("bounds verification reason hashing and rejects oversized signatures", async function () {
+      const deadline = BigInt(await time.latest() + 3600);
+      const maximumReason = "r".repeat(256);
+
+      const digest = await verifier.getVerificationIntentHash(
+        verifierSigner.address,
+        1,
+        true,
+        maximumReason,
+        0,
+        deadline,
+      );
+      expect(digest).to.not.equal(ethers.ZeroHash);
+
+      await expect(
+        verifier.getVerificationIntentHash(
+          verifierSigner.address,
+          1,
+          true,
+          "r".repeat(257),
+          0,
+          deadline,
+        ),
+      )
+        .to.be.revertedWithCustomError(verifier, "ReasonTooLong")
+        .withArgs(257, 256);
+
+      await expect(
+        verifier.verifyClaimSubmission(
+          claimant.address,
+          1,
+          ethers.ZeroHash,
+          deadline,
+          `0x${"11".repeat(66)}`,
+        ),
+      ).to.be.revertedWithCustomError(verifier, "InvalidSignature");
+    });
   });
 
   describe("Claim Submission Signing", function () {

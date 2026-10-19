@@ -39,8 +39,8 @@ contract StakingFuzzTest is Test {
         staking.setSlashingContract(slashingContract);
         
         // Advance past the resolver role timelock and apply the grant
-        vm.warp(block.timestamp + staking.RESOLVER_ROLE_CHANGE_DELAY());
-        staking.executeResolverRoleGrant(slashingContract);
+        vm.warp(block.timestamp + staking.MIN_RESOLVER_ROLE_CHANGE_DELAY());
+        staking.executeResolverRoleGrant(staking.resolverRoleChangeId(slashingContract, true), slashingContract);
         
         // Mint tokens to test users
         stakingToken.mint(user1, 1000000e18);
@@ -370,7 +370,7 @@ contract MockERC20 is ERC20 {
         _mint(to, amount);
     }
     
-    function decimals() public view virtual override returns (uint8) {
+    function decimals() public view override returns (uint8) {
         return 18;
     }
 }

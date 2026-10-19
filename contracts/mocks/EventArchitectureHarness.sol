@@ -3,11 +3,41 @@ pragma solidity ^0.8.20;
 
 import "../interfaces/ITruthBountyEvents.sol";
 import "../libraries/CanonicalEventLibrary.sol";
+import "../interfaces/IVerificationRoundEvents.sol";
+import "../interfaces/IStressTestEvents.sol";
 
 /// @title EventArchitectureHarness
 /// @notice Test harness exposing explicit emitters for all 16 canonical event families.
-contract EventArchitectureHarness is ITruthBountyEvents {
+/// @dev Canonical event ordering within a transaction is defined by the
+///      `CanonicalEventLibrary.EventDomain` enum. When a single call emits
+///      multiple events, they MUST be emitted in ascending domain order:
+///      Lifecycle < Custody < Configuration < Role < Pause < Upgrade < Settlement.
+///      Within a domain, events are emitted in the order defined by the
+///      corresponding emitter function. Indexers can replay logs without
+///      state reads because every event carries its schema version and
+///      timestamp. Reverted calls emit no durable logs (EVM guarantee).
+contract EventArchitectureHarness is ITruthBountyEvents, IVerificationRoundEvents, IStressTestEvents {
     uint16 public constant EVENT_SCHEMA_VERSION = 1;
+
+    /// @notice Maximum representable amplification ratio in basis points.
+    /// @dev 1x amplification = 10_000 bps. Bounded to uint32 to prevent overflow
+    ///      in downstream monitoring aggregations while allowing up to ~429_496x.
+    uint32 public constant MAX_AMPLIFICATION_RATIO_BPS = type(uint32).max;
+
+    /// @notice Emits a StressTestCompleted event with validated amplification metrics.
+    /// @param testId Identifier of the stress test run.
+    /// @param amplificationRatioBps Amplification ratio in basis points (1x = 10_000).
+    /// @param sampleCount Number of samples observed during the test.
+    /// @param passed Whether the stress test satisfied its acceptance criteria.
+    function emitStressTestCompletedV1(
+        bytes32 testId,
+        uint32 amplificationRatioBps,
+        uint32 sampleCount,
+        bool passed
+    ) external {
+        require(amplificationRatioBps <= MAX_AMPLIFICATION_RATIO_BPS, "amplification out of bounds");
+        emit StressTestCompleted(testId, amplificationRatioBps, sampleCount, passed, uint64(block.timestamp), EVENT_SCHEMA_VERSION);
+    }
 
     // 1. Claims
     function emitClaimCreatedV1(
@@ -132,6 +162,31 @@ contract EventArchitectureHarness is ITruthBountyEvents {
     }
 
     // 5. Rounds
+
+    function emitRoundOpenedV1(
+        uint256 claimId,
+        uint256 roundId,
+        uint8 roundType,
+        uint64 startedAt,
+        uint64 deadline,
+        uint256 minStake,
+        uint256 maxStake,
+        uint256 weightCap,
+        uint16 passingThreshold,
+        uint32 paramVersion
+    ) external {
+        emit RoundOpened(claimId, roundId, roundType, startedAt, deadline, minStake, maxStake, weightCap, passingThreshold, paramVersion);
+    }
+
+    function emitRoundClosedV1(
+        uint256 claimId,
+        uint256 roundId,
+        uint64 closedAt,
+        uint256 totalVotes
+    ) external {
+        emit RoundClosed(claimId, roundId, closedAt, totalVotes);
+    }
+
     function emitRoundStartedV1(
         uint256 claimId,
         uint256 round,

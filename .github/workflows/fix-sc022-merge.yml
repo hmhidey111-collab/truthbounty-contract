@@ -1,6 +1,7 @@
 name: One-time SC-022 merge repair
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feature/sc-022-event-architecture
@@ -10,19 +11,24 @@ permissions:
 
 jobs:
   repair:
-    if: ${{ !contains(github.event.head_commit.message, '[sc022-repair]') }}
+    if: $'{ !contains(github.event.head_commit.message, '[sc022-repair]') ) }'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@08ebaca7b736c59a5d56b1523bc34b34b34b34b3 # v7.0.0
         with:
           ref: feature/sc-022-event-architecture
           fetch-depth: 0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.9'
+
       - name: Apply deterministic repairs
         shell: bash
         run: |
-          python3 - <<'PY'
+          python3 <<'PY'
           from pathlib import Path
 
           treasury = Path('contracts/treasury/TreasuryAccounting.sol')
@@ -32,7 +38,7 @@ jobs:
                   SLASHED_TREASURY      // Tokens slashed from verifiers
               }'''
           new_enum = '''        ECOSYSTEM_FUND,       // Future ecosystem development fund
-                  SLASHED_TREASURY,     // Tokens slashed from verifiers
+                  SLASHED_TREASURY,
                   EXTERNAL              // Off-ledger source or destination marker
               }'''
 
@@ -68,12 +74,23 @@ jobs:
             git push origin HEAD:feature/sc-022-event-architecture
           fi
 
+      - name: Install pinned Python toolchain
+        shell: bash
+        run: |
+          python -m pip install --upgrade 'pip==24.0' 'setuptools==69.5.1' 'wheel==0.43.0'
+          python -m pip install --require-hashes -r requirements-symbolic.txt
+
+      - name: Verify pinned toolchain integrity
+        shell: bash
+        run: |
+          python -m pip check
+          python -c "import pkg_resources, slither; print('slither', slither.__version__)"
+
       - name: Install dependencies
         run: npm ci
 
       - name: Compile
         id: compile
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -81,12 +98,24 @@ jobs:
 
       - name: Upload compiler output
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@334c1523bc34b34b34b34b34b34b34b34b3 # v7.0.0
         with:
           name: sc022-compile-output
           path: compile-output.txt
           if-no-files-found: ignore
 
-      - name: Report compile failure
-        if: steps.compile.outcome == 'failure'
-        run: exit 1
+      - name: Run symbolic analysis
+        id: symbolic
+        shell: bash
+        run: |
+          set -o pipefail
+          slither . --config-file slither.config.json 2>&1 | tee symbolic-output.txt
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload symbolic analysis output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sc022-symbolic-output
+          path: symbolic-output.txt
+          if-no-files-found: ignore

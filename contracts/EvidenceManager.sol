@@ -10,11 +10,28 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  *
  * @dev Evidence files are stored off-chain using IPFS (or compatible decentralized storage).
  *      This contract stores only the cryptographic Content Identifier (CID) — a hash-derived
- *      reference that binds the on-chain record to the exact off-chain content.
+ *      reference that binds the on-chain record to the exact off-chain content — together with
+ *      a content digest that the CID is bound to.
+ *
+ *      CID readiness boundary (POST-WAVE-9 audit):
+ *      - Accepted CID versions: CIDv0 ("Qm" prefix, base58btc SHA2-256) and CIDv1
+ *        multibase prefixes (case-insensitive): base32 (b/B), base58btc (z/Z), base16 (f/F),
+ *        base36 (k/K), base64url (u/U), base64 (m/M), base32hexpad (t/T).
+ *      - Byte/string normalization: CIDv1 multibase prefix characters are normalized to
+ *        lowercase canonical form before hashing or storage, so equivalent CIDs (e.g. "Z…"
+ *        vs "z…") resolve to the same canonical identifier.
+ *      - Digest binding: each CID is bound to a caller-supplied content digest. A CID may
+ *        only be registered with one content digest per claim, and a content digest may only
+ *        be bound to one CID per claim. Digest/CID mismatches revert.
+ *      - Size policy: CID strings must be between MIN_CID_LENGTH (2) and MAX_CID_LENGTH (512)
+ *        bytes inclusive. Empty or zero digests are rejected.
+ *      - Duplicate behavior: duplicates are detected on the canonical (normalized) CID string
+ *        per claim. The same CID on a different claim is permitted.
  *
  *      Design principles:
- *      - Immutability: once submitted, a CID can never be changed or removed.
- *      - Integrity:    the keccak256 hash of the CID is stored for efficient duplicate detection.
+ *      - Immutability: once submitted, a CID and its bound digest can never be changed or removed.
+ *      - Integrity:    the keccak256 hash of the canonical CID is stored for efficient duplicate
+ *                      detection; the bound content digest is stored alongside for integrity.
  *      - Extensibility: the storage layout supports future providers (Arweave, Filecoin, Ceramic).
  *      - No external calls: this contract holds no token balances and makes no outbound calls.
  *
@@ -51,6 +68,16 @@ contract EvidenceManager is AccessControl, Pausable {
     /// @notice Minimum byte-length: a real CID is at least 2 chars (e.g. "Qm…").
     uint256 public constant MIN_CID_LENGTH = 2;
 
+    /// @notice Accepted CIDv0 prefix: base58btc-encoded SHA2-256 multihash ("Qm").
+    string public constant CID_PREFIX_V0 = "Qm";
+
+    /// @notice Accepted CIDv1 multibase prefix characters (lowercase canonical form).
+    ///         Uppercase variants (B, Z, F, K, U, M, T) are accepted on input and
+    ///         normalized to their lowercase canonical form before hashing or storage.
+    ///         The full set: b (base32), z (base58btc), f (base16), k (base36),
+    ///         u (base64url), m (base64), t (base32hexpad).
+    string public constant CID_PREFIX_V1_LOWERCASE = "bzfkumt";
+
     // =========================================================================
     // Data model
     // =========================================================================
@@ -59,12 +86,13 @@ contract EvidenceManager is AccessControl, Pausable {
      * @notice Canonical evidence record stored per claim.
      *
      * Field packing:
-     *   - id          : uint256 (slot 0)
-     *   - claimId     : uint256 (slot 1)
-     *   - uploader    : address (slot 2, 20 bytes)
-     *   - uploadedAt  : uint64  (slot 2, 8 bytes — shares with uploader via packing)
-     *   - cidHash     : bytes32 (slot 3)
-     *   - cid         : string  (slot 4+, dynamic)
+     *   - id            : uint256 (slot 0)
+     *   - claimId       : uint256 (slot 1)
+     *   - uploader      : address (slot 2, 20 bytes)
+     *   - uploadedAt    : uint64  (slot 2, 8 bytes — shares with uploader via packing)
+     *   - cidHash       : bytes32 (slot 3) — keccak256 of the canonical (normalized) CID string
+     *   - contentDigest : bytes32 (slot 4) — content digest bound to the CID
+     *   - cid           : string  (slot 5+, dynamic) — canonical (normalized) CID string
      *
      * The struct is ordered to minimise storage slots.
      */
@@ -74,6 +102,7 @@ contract EvidenceManager is AccessControl, Pausable {
         address uploader;
         uint64 uploadedAt;
         bytes32 cidHash;
+        bytes32 contentDigest;
         string cid;
     }
 
@@ -94,6 +123,14 @@ contract EvidenceManager is AccessControl, Pausable {
     ///      Used for O(1) duplicate detection without iterating the array.
     mapping(uint256 => mapping(bytes32 => bool)) private _cidRegistered;
 
+    /// @dev claimId => cidHash => contentDigest bound to that CID.
+    ///      Enforces one digest per CID per claim (digest/CID consistency).
+    mapping(uint256 => mapping(bytes32 => bytes32)) private _cidToDigest;
+
+    /// @dev claimId => contentDigest => cidHash bound to that digest.
+    ///      Enforces one CID per digest per claim (digest/CID consistency).
+    mapping(uint256 => mapping(bytes32 => bytes32)) private _digestToCid;
+
     /// @dev claimId => true when the claim has been closed and no longer accepts evidence.
     mapping(uint256 => bool) private _claimClosed;
 
@@ -109,6 +146,13 @@ contract EvidenceManager is AccessControl, Pausable {
 
     /// @notice Submitted CID begins with an unrecognised version prefix.
     error UnsupportedCIDVersion();
+
+    /// @notice Content digest is zero (not permitted).
+    error ZeroDigest();
+
+    /// @notice A CID is already bound to a different content digest (or vice versa)
+    ///         within the same claim — digest/CID mismatch.
+    error ContentDigestMismatch();
 
     /// @notice Identical CID already attached to this claim.
     error DuplicateEvidence();
@@ -135,16 +179,20 @@ contract EvidenceManager is AccessControl, Pausable {
     /**
      * @notice Emitted when evidence is successfully attached to a claim.
      *
-     * @param claimId    The claim this evidence belongs to.
-     * @param evidenceId The global evidence ID assigned to this record.
-     * @param uploader   The address that submitted the evidence.
-     * @param cid        The content identifier (CID) of the off-chain file.
+     * @param claimId     The claim this evidence belongs to.
+     * @param evidenceId  The global evidence ID assigned to this record.
+     * @param uploader    The address that submitted the evidence.
+     * @param cid         The canonical (normalized) content identifier (CID) of the off-chain file.
+     * @param cidHash     keccak256 of the canonical CID — the canonical on-chain identifier.
+     * @param contentDigest The content digest bound to the CID.
      */
     event EvidenceAdded(
         uint256 indexed claimId,
         uint256 indexed evidenceId,
         address indexed uploader,
-        string cid
+        string cid,
+        bytes32 indexed cidHash,
+        bytes32 contentDigest
     );
 
     /**
@@ -195,31 +243,31 @@ contract EvidenceManager is AccessControl, Pausable {
     // =========================================================================
 
     /**
-     * @notice Attach evidence to a claim by submitting an IPFS CID.
+     * @notice Attach evidence to a claim by submitting an IPFS CID bound to a content digest.
      *
      * @dev Validation sequence (fail-fast order):
      *   1. Contract not paused.
      *   2. CID is non-empty and within length bounds.
      *   3. CID begins with a supported version prefix ("Qm" for CIDv0,
-     *      "b", "B", "z", "Z", "F", "f", "k", "K" for CIDv1 multibase).
-     *   4. The claim exists (evidenced by not having been explicitly marked
-     *      non-existent — the registry can call `notifyClaimCreated` or the
-     *      contract trusts any claimId; see note below).
-     *   5. The claim is not closed.
-     *   6. The CID has not already been attached to this claim.
+     *      "b", "B", "z", "Z", "F", "f", "k", "K", "u", "U", "m", "M", "t", "T" for CIDv1).
+     *   4. CID characters are printable ASCII (0x21–0x7E).
+     *   5. CIDv1 multibase prefix is normalized to lowercase canonical form.
+     *   6. Content digest is non-zero.
+     *   7. The claim is not closed.
+     *   8. The claim has not reached MAX_EVIDENCE_PER_CLAIM.
+     *   9. Digest/CID consistency: the CID is not already bound to a different digest,
+     *      and the digest is not already bound to a different CID (same claim).
+     *   10. Duplicate detection: the canonical (normalized) CID has not already been
+     *       attached to this claim.
      *
-     * Note on claim existence: EvidenceManager is intentionally decoupled from
-     * the Claim Registry contract to avoid circular dependencies and keep the
-     * modules independently upgradeable. The registry SHOULD call
-     * `closeClaimForEvidence` to signal lifecycle transitions. A future
-     * integration point may add an `IClaimRegistry` interface check.
-     *
-     * @param claimId The claim to attach evidence to.
-     * @param cid     An IPFS (or compatible) Content Identifier string.
+     * @param claimId      The claim to attach evidence to.
+     * @param cid          An IPFS (or compatible) Content Identifier string.
+     * @param contentDigest Content digest (e.g. multihash digest) bound to the CID.
      */
     function addEvidence(
         uint256 claimId,
-        string calldata cid
+        string calldata cid,
+        bytes32 contentDigest
     ) external whenNotPaused {
         // ── 1. CID length validation ────────────────────────────────────────
         uint256 cidLen = bytes(cid).length;
@@ -228,26 +276,41 @@ contract EvidenceManager is AccessControl, Pausable {
         if (cidLen > MAX_CID_LENGTH) revert CIDTooLarge();
 
         // ── 2. CID version / multibase prefix validation ─────────────────────
-        // CIDv0 always starts with "Qm" (base58btc-encoded SHA2-256 multihash).
-        // CIDv1 starts with a multibase prefix character:
-        //   b / B = base32, z / Z = base58btc, f / F = base16, k / K = base36.
-        // Additional future prefixes will be handled via protocol upgrade.
         _validateCIDPrefix(cid);
 
-        // ── 3. Printable ASCII check (guard against malformed Unicode payloads) ─
+        // ── 3. Printable ASCII check ─────────────────────────────────────────
         _validateCIDChars(cid);
 
-        // ── 4. Claim state checks ────────────────────────────────────────────
+        // ── 4. Normalize CID to canonical form (lowercase CIDv1 multibase prefix) ─
+        string memory canonicalCid = _normalizeCID(cid);
+
+        // ── 5. Content digest must be non-zero ───────────────────────────────
+        if (contentDigest == bytes32(0)) revert ZeroDigest();
+
+        // ── 6. Claim state checks ────────────────────────────────────────────
         if (_claimClosed[claimId]) revert ClaimClosed();
         if (_claimEvidence[claimId].length >= MAX_EVIDENCE_PER_CLAIM) {
             revert EvidenceCapacityExceeded(claimId, MAX_EVIDENCE_PER_CLAIM);
         }
 
-        // ── 5. Duplicate detection ───────────────────────────────────────────
-        bytes32 cidHash = keccak256(bytes(cid));
+        // ── 7. Canonical CID hash ────────────────────────────────────────────
+        bytes32 cidHash = keccak256(bytes(canonicalCid));
+
+        // ── 8. Digest/CID consistency (one digest per CID, one CID per digest) ─
+        bytes32 existingDigest = _cidToDigest[claimId][cidHash];
+        if (existingDigest != bytes32(0) && existingDigest != contentDigest) {
+            revert ContentDigestMismatch();
+        }
+
+        bytes32 existingCidHash = _digestToCid[claimId][contentDigest];
+        if (existingCidHash != bytes32(0) && existingCidHash != cidHash) {
+            revert ContentDigestMismatch();
+        }
+
+        // ── 9. Duplicate detection ───────────────────────────────────────────
         if (_cidRegistered[claimId][cidHash]) revert DuplicateEvidence();
 
-        // ── 6. Store ─────────────────────────────────────────────────────────
+        // ── 10. Store ────────────────────────────────────────────────────────
         uint256 evidenceId = _evidenceCounter;
         unchecked { _evidenceCounter++; }
 
@@ -257,14 +320,17 @@ contract EvidenceManager is AccessControl, Pausable {
             uploader: msg.sender,
             uploadedAt: uint64(block.timestamp),
             cidHash: cidHash,
-            cid: cid
+            contentDigest: contentDigest,
+            cid: canonicalCid
         });
 
         _claimEvidence[claimId].push(ev);
         _evidenceById[evidenceId] = ev;
         _cidRegistered[claimId][cidHash] = true;
+        _cidToDigest[claimId][cidHash] = contentDigest;
+        _digestToCid[claimId][contentDigest] = cidHash;
 
-        emit EvidenceAdded(claimId, evidenceId, msg.sender, cid);
+        emit EvidenceAdded(claimId, evidenceId, msg.sender, canonicalCid, cidHash, contentDigest);
     }
 
     // =========================================================================
@@ -355,13 +421,33 @@ contract EvidenceManager is AccessControl, Pausable {
     /**
      * @notice Check whether a specific CID has already been attached to a claim.
      *
+     * @dev The supplied CID is normalized (CIDv1 multibase prefix lowercased)
+     *      before lookup so that equivalent CIDs (e.g. "Z…" vs "z…") match.
+     *
      * @param claimId The claim ID.
      * @param cid     The CID string to check.
      * @return        True if the CID is already registered for the claim.
      */
     function isCIDRegistered(uint256 claimId, string calldata cid) external view returns (bool) {
-        bytes32 cidHash = keccak256(bytes(cid));
+        string memory canonicalCid = _normalizeCID(cid);
+        bytes32 cidHash = keccak256(bytes(canonicalCid));
         return _cidRegistered[claimId][cidHash];
+    }
+
+    /**
+     * @notice Return the content digest bound to a CID for a given claim.
+     *
+     * @param claimId The claim ID.
+     * @param cid     The CID string (normalized before lookup).
+     * @return        The content digest bound to the CID, or bytes32(0) if unset.
+     */
+    function getContentDigest(
+        uint256 claimId,
+        string calldata cid
+    ) external view returns (bytes32) {
+        string memory canonicalCid = _normalizeCID(cid);
+        bytes32 cidHash = keccak256(bytes(canonicalCid));
+        return _cidToDigest[claimId][cidHash];
     }
 
     /**
@@ -455,5 +541,48 @@ contract EvidenceManager is AccessControl, Pausable {
             if (c < 0x21 || c > 0x7E) revert InvalidCID();
             unchecked { i++; }
         }
+    }
+
+    /**
+     * @dev Normalize a CID string to its canonical form.
+     *
+     * - CIDv0 ("Qm…") is returned unchanged.
+     * - CIDv1 multibase prefix characters are lowercased to their canonical form
+     *   (e.g. "Z…" → "z…", "B…" → "b…") so that equivalent CIDs produced by
+     *   different multibase encodings of the same content resolve to one string.
+     *
+     *   Accepted uppercase prefix pairs: B/b, Z/z, F/f, K/k, U/u, M/m, T/t.
+     *
+     * @param cid CID string to normalize (must already pass prefix validation).
+     * @return    Canonical (lowercase-prefix) CID string.
+     */
+    function _normalizeCID(string calldata cid) internal pure returns (string memory) {
+        bytes memory b = bytes(cid);
+        bytes1 prefix = b[0];
+
+        // CIDv0 ("Qm") is already canonical — no normalization needed.
+        if (prefix == "Q") {
+            return string(cid);
+        }
+
+        // CIDv1: lowercase the first byte if it is an accepted uppercase prefix.
+        bytes1 lower;
+        if (prefix == "B") lower = "b";
+        else if (prefix == "Z") lower = "z";
+        else if (prefix == "F") lower = "f";
+        else if (prefix == "K") lower = "k";
+        else if (prefix == "U") lower = "u";
+        else if (prefix == "M") lower = "m";
+        else if (prefix == "T") lower = "t";
+        else lower = prefix; // already lowercase or non-CIDv1 (rejected by _validateCIDPrefix)
+
+        // Reconstruct: lowercased first byte + the rest of the string unchanged.
+        bytes memory normalized = new bytes(b.length);
+        normalized[0] = lower;
+        for (uint256 i = 1; i < b.length; ) {
+            normalized[i] = b[i];
+            unchecked { i++; }
+        }
+        return string(normalized);
     }
 }

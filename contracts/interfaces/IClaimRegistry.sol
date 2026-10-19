@@ -101,6 +101,8 @@ interface IClaimRegistry {
     error InvalidNonce(uint256 expectedNonce, uint256 providedNonce);
     error InvalidParameterVersion(uint256 expectedVersion, uint256 providedVersion);
     error TransferFailed();
+    error ClaimSpamRateExceeded(address account, uint256 count, uint256 limit);
+    error TooManyOpenClaims(address account, uint256 count, uint256 limit);
 
     // =========================================================================
     // Legacy write functions

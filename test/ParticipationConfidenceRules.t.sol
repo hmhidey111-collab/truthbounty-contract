@@ -81,12 +81,12 @@ contract ParticipationConfidenceRulesTest is Test {
         );
         assertEq(uint256(below.reason), uint256(ParticipationThresholdTypes.InconclusiveReason.INSUFFICIENT_VERIFIER_COUNT));
 
-        ParticipationThresholdTypes.ThresholdEvaluation memory at = ParticipationConfidenceRules.evaluate(
+        ParticipationThresholdTypes.ThresholdEvaluation memory tie = ParticipationConfidenceRules.evaluate(
             _weights(100 ether, 100 ether, 2),
             baseConfig,
             ParticipationThresholdTypes.RoundKind.FIRST
         );
-        assertEq(uint256(at.reason), uint256(ParticipationThresholdTypes.InconclusiveReason.TIE));
+        assertEq(uint256(tie.reason), uint256(ParticipationThresholdTypes.InconclusiveReason.TIE));
     }
 
     function test_InsufficientWeightImmediatelyBelow() public view {

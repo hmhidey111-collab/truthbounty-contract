@@ -130,6 +130,21 @@ describe("VerificationSubmission", function () {
                 .to.be.revertedWithCustomError(submissionEngine, "VerificationWindowClosed");
         });
 
+        it("accepts inclusion at the deadline and rejects inclusion after it", async function () {
+            const { registry, submissionEngine, updater, verifier1, verifier2, claimId, deadline } =
+                await loadFixture(deployFixture);
+            await registry.connect(updater).updateClaimStatus(claimId, 1);
+
+            await time.setNextBlockTimestamp(Number(deadline));
+            await submissionEngine.connect(verifier1).submitVerification(claimId, 0, MIN_STAKE);
+            expect((await submissionEngine.getVerification(1)).submittedAt).to.equal(BigInt(deadline));
+
+            await time.setNextBlockTimestamp(Number(deadline) + 1);
+            await expect(submissionEngine.connect(verifier2).submitVerification(claimId, 1, MIN_STAKE))
+                .to.be.revertedWithCustomError(submissionEngine, "VerificationWindowClosed");
+            expect(await submissionEngine.getVerificationCount()).to.equal(1);
+        });
+
         it("reverts on duplicate verification from same wallet", async function () {
             const { registry, submissionEngine, updater, verifier1, claimId } = await loadFixture(deployFixture);
             await registry.connect(updater).updateClaimStatus(claimId, 1);

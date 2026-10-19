@@ -88,6 +88,16 @@ interface IFeeManager {
         address indexed newToken
     );
 
+    event ReservedFeesAdded(
+        uint256 amount,
+        uint256 newTotalReserved
+    );
+
+    event FeesDistributedDeterministically(
+        uint256 totalDistributed,
+        uint256 remainingReserved
+    );
+
     // ============ Fee Calculation & Collection ============
 
     /**
@@ -220,4 +230,16 @@ interface IFeeManager {
      * @return token The ERC20 token used for fee payments
      */
     function getFeeToken() external view returns (address token);
+
+    /**
+     * @notice Get the current amount of reserved fees awaiting distribution
+     * @return reserved The total amount of fees currently reserved
+     */
+    function getReservedFees() external view returns (uint256 reserved);
+
+    /**
+     * @notice Distribute all currently reserved fees across allocation targets
+     * @dev Can only be called by an address with COLLECTOR_ROLE
+     */
+    function distributeReservedFees() external;
 }

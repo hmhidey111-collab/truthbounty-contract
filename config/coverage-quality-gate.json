@@ -1,0 +1,58 @@
+{
+  "thresholds": {
+    "line": 85,
+    "branch": 80,
+    "function": 90
+  },
+  "criticalPaths": [
+    "contracts/TruthBounty.sol",
+    "contracts/TruthBountyWeighted.sol",
+    "contracts/TruthBountyClaims.sol",
+    "contracts/WeightedStaking.sol",
+    "contracts/staking.sol",
+    "contracts/ReputationUpdateEngine.sol",
+    "contracts/ReputationEngine.sol",
+    "contracts/ReputationSnapshot.sol",
+    "contracts/ReputationSnapshotEngine.sol",
+    "contracts/RewardEngine.sol",
+    "contracts/TreasuryAccounting.sol",
+    "contracts/TreasuryManagement.sol",
+    "contracts/ClaimRegistry.sol",
+    "contracts/ClaimLifecycle.sol",
+    "contracts/DisputeResolution.sol",
+    "contracts/VerificationRoundManager.sol",
+    "contracts/VerificationSubmission.sol",
+    "contracts/VerificationAggregator.sol",
+    "contracts/VerificationAggregation.sol",
+    "contracts/EvidenceManager.sol",
+    "contracts/FeeManager.sol",
+    "contracts/ProvisionalSettlementEngine.sol",
+    "contracts/VerifierSlashing.sol",
+    "contracts/GovernanceController.sol",
+    "contracts/EmergencyController.sol",
+    "contracts/GovernanceOwnable.sol",
+    "contracts/ParameterVersionRegistry.sol",
+    "contracts/ResolverRoleTimelock.sol"
+  ],
+  "excludedPaths": [
+    "test/**",
+    "script/**",
+    "contracts/mocks/**",
+    "contracts/test/**",
+    "contracts/bootstrap/**",
+    "contracts/upgrade/**",
+    "contracts/performance/**",
+    "lib/**",
+    "@openzeppelin/**"
+  ],
+  "invariantTestPaths": [
+    "test/invariant/**"
+  ],
+  "eventTestPaths": [
+    "test/**/*Event*.test.ts",
+    "test/**/*Event*.t.sol",
+    "test/CanonicalEvents.test.ts",
+    "test/EventArchitecture.test.ts",
+    "test/EventSchemaConsistency.test.ts"
+  ]
+}

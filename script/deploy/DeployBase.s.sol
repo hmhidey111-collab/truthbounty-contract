@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import "forge-std/Script.sol";
 import "forge-std/console2.sol";
+import "./DeploymentPreflight.sol";
 
 contract DeployBase is Script {
     struct DeploymentConfig {
@@ -78,6 +79,37 @@ contract DeployBase is Script {
         } else {
             revert(string(abi.encodePacked("Unknown environment: ", env)));
         }
+
+        _preflightChecks();
+    }
+
+    function _preflightChecks() internal view {
+        if (vm.envOr("SKIP_DEPLOYMENT_PREFLIGHT", false)) return;
+
+        uint256 expectedChainId = vm.envOr("EXPECTED_CHAIN_ID", uint256(0));
+        if (expectedChainId != 0) DeploymentPreflight.requireExpectedChainId(expectedChainId);
+
+        address expectedDeployer = vm.envOr("EXPECTED_DEPLOYER", address(0));
+        if (expectedDeployer != address(0)) {
+            DeploymentPreflight.requireDeployer(expectedDeployer, msg.sender);
+        }
+
+        DeploymentPreflight.requireNonZeroAddress(config.admin, "admin");
+        if (config.governanceController != address(0)) {
+            DeploymentPreflight.requireNonZeroAddress(config.governanceController, "governanceController");
+        }
+
+        uint256 minBalance = vm.envOr("MIN_GAS_BALANCE", uint256(0.01 ether));
+        if (minBalance != 0) {
+            DeploymentPreflight.requireSufficientBalance(msg.sender, minBalance);
+        }
+    }
+
+    function requireArtifactFreshness(string memory artifactPath, bytes32 expectedArtifactHash) internal view {
+        if (expectedArtifactHash == bytes32(0)) return;
+
+        bytes32 actualArtifactHash = keccak256(bytes(vm.readFile(artifactPath)));
+        DeploymentPreflight.requireArtifactFreshness(actualArtifactHash, expectedArtifactHash, artifactPath);
     }
 
     function saveDeployment(string memory artifactName, string memory content) internal {

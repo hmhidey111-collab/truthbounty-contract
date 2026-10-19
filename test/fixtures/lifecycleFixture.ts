@@ -10,6 +10,7 @@ import {
   RewardToken,
   MockReputationOracle,
   GovernanceController,
+  StakeVault,
 } from "../../typechain-types";
 import { deployClaimRegistry } from "../helpers/deployClaimRegistry";
 
@@ -37,6 +38,7 @@ export interface LifecycleEnvironment {
     settlementEngine: ProvisionalSettlementEngine;
     appealRound: AppealVerificationRound;
     appealAggregator: VerificationAggregator;
+    bondVault: StakeVault;
   };
   constants: {
     VERIFICATION_WINDOW: number;
@@ -93,6 +95,17 @@ export async function deployLifecycleFixture(): Promise<LifecycleEnvironment> {
   const token = await TokenFactory.deploy(deployer.address, ethers.parseEther("10000000"));
   await token.waitForDeployment();
 
+  // 1b. Deploy Bond-Custody StakeVault (V2-SC-016/059 appeal bonds live here)
+  const StakeVaultFactory = await ethers.getContractFactory(
+    "contracts/StakeVault.sol:StakeVault",
+    deployer
+  );
+  const bondVault = (await StakeVaultFactory.deploy(
+    deployer.address,
+    await token.getAddress()
+  )) as StakeVault;
+  await bondVault.waitForDeployment();
+
   // 2. Deploy Oracle
   const OracleFactory = await ethers.getContractFactory("MockReputationOracle", deployer);
   const oracle = await OracleFactory.deploy();
@@ -146,16 +159,26 @@ export async function deployLifecycleFixture(): Promise<LifecycleEnvironment> {
     stakeMultiplierBps: 15000n, // 1.5x
     maxWeightCap: ethers.parseEther("50000"),
     parameterVersion: 1n,
+    maxAppealRounds: 1n,
+    appealBond: ethers.parseEther("100"),
+    appealBondEscalationBps: 10000n,
+    maxAppealBond: ethers.parseEther("100"),
+    maxVotersPerRound: 200n,
   };
   const appealRound = await AppealFactory.deploy(
     await token.getAddress(),
     await claimRegistry.getAddress(),
     await oracle.getAddress(),
+    await bondVault.getAddress(),
     appealConfig,
     await govController.getAddress(),
     deployer.address
   );
   await appealRound.waitForDeployment();
+
+  // Authorise the appeal module to lock appeal bonds in the vault
+  const OPERATOR_ROLE = ethers.keccak256(ethers.toUtf8Bytes("OPERATOR_ROLE"));
+  await bondVault.grantRole(OPERATOR_ROLE, await appealRound.getAddress());
 
   // 9. Deploy Second-round Verification Aggregator (for appeals)
   const appealAggregator = await AggFactory.deploy(
@@ -177,6 +200,7 @@ export async function deployLifecycleFixture(): Promise<LifecycleEnvironment> {
     await token.transfer(acct.address, ethers.parseEther("10000"));
     await token.connect(acct).approve(await truthBounty.getAddress(), ethers.MaxUint256);
     await token.connect(acct).approve(await appealRound.getAddress(), ethers.MaxUint256);
+    await token.connect(acct).approve(await bondVault.getAddress(), ethers.MaxUint256);
   }
 
   // Pre-seed 0th claim on TruthBountyWeighted so claim indices match 1-based ClaimRegistry
@@ -268,6 +292,7 @@ export async function deployLifecycleFixture(): Promise<LifecycleEnvironment> {
       settlementEngine,
       appealRound,
       appealAggregator,
+      bondVault,
     },
     constants: {
       VERIFICATION_WINDOW,

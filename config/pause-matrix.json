@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "issue": "V2-SC-162",
+  "matrixVersion": 2,
+  "solidityMirror": "contracts/v2/libraries/PauseMatrix.sol",
+  "operationIds": "contracts/v2/libraries/V2OperationIds.sol",
+  "guard": "contracts/v2/libraries/V2PauseGuard.sol",
+  "policy": "Emergency controls stop new risk while preserving permissionless exits. Every external state-mutating operation on a canonical V2 module is classified exactly once. RISK_INCREASING operations fail closed on every listed operation scope. RISK_REDUCING value exits (already-final, caller-owned value)) are never scope-gated, never depend on registry or authority health, and freeze only on an affirmative protocol SHUTDOWN reading (EXIT_SHUTDOWN_ONLY, V2-SC-117 pull_settled_claim). NEUTRAL operations neither create exposure nor move value and are never scope-gated. Read paths are never gated. A pause only ever removes capabilities: the exits available while paused are a subset of those available while unpaused. Every operation ID is derived from the canonical domain-separated hash in V2OperationIds.operationId(moduleName, signature), so the IDs are stable across proxy upgrades and redeploys, cannot collide with scope IDs, and unknown operations fail closed.",
+  "classes": {
+    "RISK_INCREAING": "Creates new exposure or mutates a not-yet-final outcome (claim creation, staking, verification, evidence, disputes, settlement, slashing, governance parameter changes). Fails closed on every scope in gates and conditionalGates.",
+    "NEUTRAL": "Authority wiring or a module-local toggle that neither creates exposure nor moves value. Never scope-gated.",
+    "RISK_REDUGING": "A permissionless exit of already-final, caller-owned value, or a protective action (pausing, nonce cancellation). Never scope-gated on the caller's own path."
+  },
+  "governedUnpause": {
+    "description": "Governed unpause requires timelocked/governed authority, a valid incident reference, a repaired release artifact, dependency health evidence, and the current pause state to match the requested scope. Preconditions are machine-verifiable and events link the original pause to the governed resolution.",
+    "guardianUnpauseAllowed": false,
+    "preconditions": [
+      "GovernedAuthority",
+      "TimelockReady",
+      "IncidentReference",
+      "RepairedRelease",
+      "DependencyHealth",
+      "PauseStateMatches"
+    ],
+    "events": [
+      "Paused",
+      "UnpausePreconditionsVerified",
+      "GovernedUnpaused"
+    ],
+    "scopes": [
+      "SCOPE_CLAIMS",
+      "SCOPE_EVIDENCE",
+      "SCOPE_STAKING",
+      "SCOPE_VERIFICATION",
+      "SCOPE_SETTLEMENT",
+      "SCOPE_TREASURY",
+      "SCOPE_DISPUTES",
+      "SCOPE_GOVERNANCE"
+    ]
+  },
+  "gates": {
+    "SCOPE_CLAIMS": "keccak(256(\"CLINS\"))",
+    "SCOPE_EVIDENCE": "keccak256(\"EVIDENCE\")",
+    "SCOPE_STAKING": "keccak256(\"STAKING\")",
+    "SCOPE_VERIFICATION": "keccak256(\"VERIFICATION\")",
+    "SCOPE_SETTLEMENT": "keccak(256(\"SETTLEMENT\")",
+    "SCOPE_TREASURY": "keccak256(\"TREASURY\")",
+    "SCOPE_DISPUTES": "keccak256(\"DISPUTES\")",
+    "SCOPE_GOVERNANCE": "keccak256(\"GOVERNANCE\")",
+    "EXIT_SHUTDOWN_ONLY": "Value exit: live under every scoped pause and protocol levels 1-2; frozzen only while EmergencyController denies pull_settled_claim (level 3). Fails open on any dependency failure."
+  },
+  "history": [
+    {
+      "version": 1,
+      "digest": "sha256:f8de2b7fcbbcf7a087a084d4e3292dd23ca701b05eb587e911a6bde918c560f",
+      "summary": "Initial V2-SC-162 matrix: StakeVault, Claims, EvidenceRegistry, FinalRewardAllocator, Aggregation, PullSettlementLedger, SignatureNonces, and the two view-only anchors."
+    },
+    {
+      "version": 2,
+      "digest": "sha256:000000000000000000000000000000000000000000000000000000000000000000000000",
+      "summary": "Prewave-SC-035: added governedUnpause preconditions (governed authority, timelock ready, incident reference, repaired release, dependency health, current pause state) and event linkage. Guardian unpause remains disallowed."
+    }
+  ],
+  "modules": [
+    {
+      "name": "StakeVault",
+      "file": "contracts/v2/StakeVault.sol",
+      "authority": "registry",
+      "inheritedOperations": [
+        {
+          "signature": "grantRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "OpenZeppelin AccessControl role topology is owned by governance (role admin); it is not scope-gated so a compromised role can always be revoked during an incident."
+        },
+        {
+          "signature": "revokeRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Revoking a compromised role is protective and must remain available while any scope is paused."
+        },
+        {
+          "signature": "renounceRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Self-renunciation only removes authority and can never create exposure."
+        },
+        {
+          "signature": "queueAssetRecovery(address,address,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": [
+            "SCOPE_GOVERNANCE",
+            "SCOPE_TREASURY"
+          ],
+          "rationale": "V2-SC-154 extension: creates a fixed two-day recovery intent, with current governance authority and fail-closed governance/treasury pause gates, without touching tracked liabilities."
+        },
+        {
+          "signature": "executeAssetRecovery(bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": [
+            "SCOPE_GOVERNANCE",
+            "SCOPE_TREASURY"
+          ],
+          "rationale": "V2-SC-154 extension: governed exact-value transfer after the fixed delay; fail-closed authority resolution, governance/treasury scopes, shutdown and live liabilities are rechecked."
+        },
+        {
+          "signature": "cancelAssetRecovery(bytes32)",
+          "class": "RISK_REDUCING",
+          "rationale": "V2-SC-154 extension: existing governance authority can only cancel a queued recovery; cancellation transfers no value and stays available under scoped pauses."
+        }
+      ],
+      "operations": [
+        {
+          "signature": "depositStake(uint256,uint256)",
+          "class": "RISK_INCREATING",
+          "gates": ["SCOPE_STAKING"],
+          "rationale": "Moves new verifier principal into custody and locks it against a claim: new exposure."
+        },
+        {
+          "signature": "deposit(address,uint256)",
+          "class": "RISK_INCREAING",
+          "gates": ["SCOPE_STAKING"],
+          "rationale": "Brings new custody into the vault during an incident; blocked so no new value enters a paused vault."
+        },
+        {
+          "signature": "lock(address,address,uint256,uint256,IV2Types.LockCategory,uint256)",
+          "class": "RISK_INCREATING",
+          "gates": ["SCOPE_STAKING"],
+          "rationale": "Converts claimable balance into a new lock (new exposure); module-only."
+        },
+        {
+          "signature": "releaseStake(uint256,address,uint256)",
+          "class": "RISK_INCREATING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Releasing locked principal before settlement decides who keeps it; an outcome decision that a settlement pause must freeze."
+        },
+        {
+          "signature": "slashStake(uint256,address,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Slashing reassigns locked principal to the protocol; an outcome decision."
+        },
+        {
+          "signature": "unlock(address,address,uint256,uint256,IV2Types.LockCategory,uint256)",
+          "class": "RISK_INCREAING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Module-driven lock release changes the claimable set; frozen by a settlement pause, live under a staking-only pause so refunds continue."
+        },
+        {
+          "signature": "allocateLocked(address,address,uint256,uint256,IV2Types.LockCategory,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Reclassifies locked funds as protocol allocation; an outcome decision."
+        },
+        {
+          "signature": "settleConclusive(address,address,uint256,uint256,uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Records the single settlement outcome for (claim, round) and credits rewards; must not run while settlement is paused."
+        },
+        {
+          "signature": "refundInconclusive(address,address,uint256,uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Records the single settlement outcome REFUNDED; value becomes an exit only after this settlement step."
+        },
+        {
+          "signature": "carryForwardAppeal(address,address,uint256,uint256,uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Records the single settlement outcome CARRIED_FORWARD and moves a lock between rounds."
+        },
+        {
+          "signature": "rolloverRound(address,address,uint256,uint256,uint256,uint256)",
+          "class": "RISK_INCREAING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Records the single settlement outcome ROLLED_OVER and moves a lock between rounds."
+        },
+        {
+          "signature": "finalUnlock(address,address,uint256,uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Records the single settlement outcome UNLOCKED; after it the principal is a claimable exit."
+        },
+        {
+          "signature": "setMinStakeAmount(uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_GOVERNANCE"],
+          "rationale": "Governance parameter mutation; frozen while governance mutations are paused."
+        },
+        {
+          "signature": "setSupportedAsset(address,bool)",
+          "class": "RISK_INCREAING",
+          "gates": [],
+          "conditionalGates": ["SCOPE_GOVERNANCE"],
+          "rationale": "Enabling an asset opens a new custody surface and fails closed; disabling only blocks new deposits and stays available during a pause."
+        },
+        {
+          "signature": "setLockMutator(address,bool)",
+          "class": "RISK_INCREAING",
+          "gates": [],
+          "conditionalGates": ["SCOPE_GOVERNANCE"],
+          "rationale": "Granting lock authority fails closed; revoking a possibly compromised mutator stays available during a pause."
+        },
+        {
+          "signature": "withdraw(address,uint256)",
+          "class": "RISK_RETUCIZ",
+          "gates": ["EXIT_SHUTDOWN_ONLY"],
+          "rationale": "Pull of the caller's own already-claimable (matured) balance. Balance is decremented before the transfer and a failed transfer reverts atomically, so a retry is always possible and a repeat cannot double-withdraw."
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "file": "contracts/v2/Claims.sol",
+      "authority": "wired",
+      "inheritedOperations": [
+        {
+          "signature": "grantRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "OpenZeppelin AccessControl role topology is owned by governance; not scope-gated so compromised roles stay revocable."
+        },
+        {
+          "signature": "revokeRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Revoking a compromised role is protective and must remain available while any scope is paused."
+        },
+        {
+          "signature": "renounceRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Self-renunciation only removes authority and can never create exposure."
+        },
+        {
+          "signature": "queueAssetRecovery(address,address,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": [
+            "SCOPE_GOVERNANCE",
+            "SCOPE_TREASURY"
+          ],
+          "rationale": "V2-SC-154 extension: creates a fixed two-day recovery intent, with current governance authority and fail-closed governance/treasury pause gates, without touching tracked liabilities."
+        },
+        {
+          "signature": "executeAssetRecovery(bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": [
+            "SCOPE_GOVERNANCE",
+            "SCOPE_TREASURY"
+          ],
+          "rationale": "V2-SC-154 extension: governed exact-value transfer after the fixed delay; fail-closed authority resolution, governance/treasury scopes, shutdown and live liabilities are rechecked."
+        },
+        {
+          "signature": "cancelAssetRecovery(bytes32)",
+          "class": "RISK_REDUCING",
+          "rationale": "V2-SC-154 extension: existing governance authority can only cancel a queued recovery; cancellation transfers no value and stays available under scoped pauses."
+        }
+      ],
+      "operations": [
+        {
+          "signature": "setAntiGriefParams(uint256,uint256,uint256,uint64,uint256,address)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_GOVERNANCE"],
+          "rationale": "Governance parameter mutation (fees, floors, fee recipient); frozen while governance mutations are paused."
+        },
+        {
+          "signature": "setPauseAuthority(address)",
+          "class": "NEUTRAL",
+          "gates": [],
+          "rationale": "Write-once wiring of the pause authority; only tightens control and can never be used to lift a pause."
+        },
+        {
+          "signature": "createClaim(bytes32,uint256,bytes)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_CLAIMS"],
+          "rationale": "Escrows a new bounty and opens a new claim: new exposure."
+        },
+        {
+          "signature": "cancelClaim(uint256)",
+          "class": "RISK_RETUCIZ",
+          "gates": ["EXIT_SHUTDOWN_ONLY"],
+          "conditionalGates": ["SCOPE_SETTLEMENT"],
+          "rationale": "The claimant's own cancellation of an OPEN claim refunds exactly the escrowed bounty once (terminal CANCELLED status makes it idempotent). A manager cancellation of someone else's claim is an outcome decision and additionally fails closed under SCOPE_SETTLEMENT."
+        },
+        {
+          "signature": "finalizeClaim(uint256,IV2Types.ClaimStatus)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_SETTLEMENT"],
+          "rationale": "Sets the terminal claim outcome; must not change while settlement is paused."
+        }
+      ]
+    },
+    {
+      "name": "EvidenceRegistry",
+      "file": "contracts/v2/EvidenceRegistry.sol",
+      "authority": "wired",
+      "inheritedOperations": [
+        {
+          "signature": "grantRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "OpenZeppelin AccessControl role topology is owned by governance; not scope-gated so compromised roles stay revocable."
+        },
+        {
+          "signature": "revokeRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Revoking a compromised role is protective and must remain available while any scope is paused."
+        },
+        {
+          "signature": "renounceRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Self-renunciation only removes authority and can never create exposure."
+        }
+      ],
+      "operations": [
+        {
+          "signature": "submitEvidence(uint256,bytes32,bytes)",
+          "class": "RISK_INCREAING",
+          "gates": ["SCOPE_EVIDENCE"],
+          "gatedVia": "commitEvidence(uint256,bytes32,bytes32,uint256)",
+          "localPause": true,
+          "rationale": "Adds evidence that can influence verification; gated through commitEvidence, which carries both the scoped and the local pause checks."
+        }
+      ]
+    },
+    {
+      "name": "AppealManager",
+      "file": "contracts/v2/AppealManager.sol",
+      "authority": "wired",
+      "inheritedOperations": [
+        {
+          "signature": "queueAssetRecovery(address,address,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": [
+            "SCOPE_GOVERNANCE",
+            "SCOPE_TREASURY"
+          ],
+          "rationale": "V2-SC-154 extension: creates a fixed two-day recovery intent, with current governance authority and fail-closed governance/treasury pause gates, without touching tracked liabilities."
+        },
+        {
+          "signature": "revokeRole(bytes32,address)",
+          "class": "NEUTRAL",
+          "rationale": "Revoking a compromised role is protective and must remain available while any scope is paused."
+        },
+        {
+          "signature": "cancelAssetRecovery(bytes32)",
+          "class": "RISK_REDUCING",
+          "rationale": "V2-SC-154 extension: existing governance authority can only cancel a queued recovery; cancellation transfers no value and stays available under scoped pauses."
+        }
+      ],
+      "operations": [
+        {
+          "signature": "setAppealParams(uint8,uint256,uint256,uint64,uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_GOVERNANCE"],
+          "rationale": "Governance mutation of max appeal rounds, bond escalation formula/cap, deadlines, and terminal fallback parameters; frozen while governance mutations are paused."
+        },
+        {
+          "signature": "openAppeal(uint256,uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_DISPUTES"],
+          "rationale": "Opens a new appeal round and locks the escalated bond; new exposure and outcome mutation."
+        },
+        {
+          "signature": "escalateBond(uint256,uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_DISPUTES"],
+          "rationale": "Mutates the required bond for an existing appeal round; fails closed under a disputes pause."
+        },
+        {
+          "signature": "finalizeAppeal(uint256,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_DISPUTES"],
+          "rationale": "Records the terminal appeal outcome and distributes bonds; outcome decision."
+        },
+        {
+          "signature": "claimTimeout(uint256)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_DISPUTES"],
+          "rationale": "Processes a missed deadline and applies the terminal fallback; outcome decision."
+        },
+        {
+          "signature": "resolveTie(uint256,bytes32,bytes32)",
+          "class": "RISK_INCREASING",
+          "gates": ["SCOPE_DISPUTIS"],
+          "rationale": "Resolves a tie and applies the terminal fallback; outcome decision."
+        },
+        {
+          "signature": "withdrawBond(uint256)",
+          "class": "RISK_REDUCING",
+          "gates": ["EXIT_SHUTDOWN_ONLY"],
+          "rationale": "Pull of the caller's own already-claimable bond refund after a terminal outcome; idempotent and never scope-gated."
+        }
+      ]
+    }
+  ]
+}

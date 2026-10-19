@@ -88,4 +88,22 @@ interface IParameterVersionRegistry {
     function currentActiveVersionId() external view returns (uint256);
     function scheduledVersionId() external view returns (uint256);
     function parameterTimelock() external view returns (uint256);
+
+    function MIN_SAFE_STAKE() external view returns (uint256);
+    function MAX_SAFE_STAKE() external view returns (uint256);
+    function MIN_SAFE_BOND() external view returns (uint256);
+    function MAX_SAFE_BOND() external view returns (uint256);
+    function MIN_SAFE_DURATION() external view returns (uint256);
+    function MAX_SAFE_DURATION() external view returns (uint256);
+    function MIN_SAFE_WEIGHT_CAP() external view returns (uint256);
+    function MAX_SAFE_WEIGHT_CAP() external view returns (uint256);
+    function MIN_SAFE_PARTICIPATION_THRESHOLD() external view returns (uint256);
+    function MAX_SAFE_PARTICIPATION_THRESHOLD() external view returns (uint256);
+    function MIN_SAFE_CONFIDENCE_THRESHOLD() external view returns (uint256);
+    function MAX_SAFE_CONFIDENCE_THRESHOLD() external view returns (uint256);
+    function MAX_SAFE_ALLOCATION() external view returns (uint256);
+    function MIN_SAFE_MULTIPLIER() external view returns (uint256);
+    function MAX_SAFE_MULTIPLIER() external view returns (uint256);
+    function MIN_SAFE_APPEAL_MULTIPLIER() external view returns (uint256);
+    function MAX_SAFE_APPEAL_MULTIPLIER() external view returns (uint256);
 }

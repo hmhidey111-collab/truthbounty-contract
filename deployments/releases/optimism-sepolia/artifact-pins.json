@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "kind": "truthbounty.release-artifact-pins",
+  "buildOutputKind": "hardhat",
+  "toolchain": {
+    "solc": "0.8.28",
+    "evmVersion": "cancun",
+    "viaIR": true,
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadataBytecodeHash": "ipfs"
+  },
+  "contracts": {
+    "Aggregation": {
+      "source": "contracts/v2/Aggregation.sol",
+      "bytecodeKeccak": "0x42c604a2a8b7148f959b260eccebde6bb61ed35e33cf0e94e7a6aa5001d0d437",
+      "deployedBytecodeKeccak": "0x60ba8ee294416fe788950be9a11cec61f6f053e87015d4307141997eaee26c51",
+      "creationBytes": 4146,
+      "runtimeBytes": 3951,
+      "immutableSlots": 1,
+      "linkReferences": 0,
+      "abiSha256": "0x582db6c0ac0baeee25cb601ca7ef5ee3255e55c21721131892ce49557cbcb95c"
+    },
+    "Claims": {
+      "source": "contracts/v2/Claims.sol",
+      "bytecodeKeccak": "0xf56387d492453b611b7769bbb7d88ab8c522979a9630471e07cf11e6cd99e7e9",
+      "deployedBytecodeKeccak": "0x5876cc4d43cd99b4ac3aa768c7d727e118def79c4f1dfb3daeb8a985283ec9b2",
+      "creationBytes": 8419,
+      "runtimeBytes": 7439,
+      "immutableSlots": 1,
+      "linkReferences": 0,
+      "abiSha256": "0x0aeea418e292d867523cc6919c21f2fc46a93272715c8df39f8a2a80629376ab"
+    },
+    "ConsumerGuaranteesAnchor": {
+      "source": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+      "bytecodeKeccak": "0x353aa2fb6f693a8214119d921f9a5318e58153207817dda1b6573946c0e0f09e",
+      "deployedBytecodeKeccak": "0x6b95a79229c09d9e184b0bed428cef8be03dbf202b9980b75a39abcf1c1d1b0a",
+      "creationBytes": 2510,
+      "runtimeBytes": 854,
+      "immutableSlots": 8,
+      "linkReferences": 0,
+      "abiSha256": "0x40c1b3fc4b4dd86bb28866032b24dccfb93428e4b56ea37800c5699a82326b9f"
+    },
+    "EmergencyControls": {
+      "source": "contracts/v2/EmergencyControls.sol",
+      "bytecodeKeccak": "0x0e965b1f21db84b22d39545d05a71d6b270efb6e5bf1192a6789be2bbb5fb95f",
+      "deployedBytecodeKeccak": "0xcda01d3ed25a233b01cca46c7828821413862f5e05fcacd649a40405c3c24aae",
+      "creationBytes": 3665,
+      "runtimeBytes": 2510,
+      "immutableSlots": 0,
+      "linkReferences": 0,
+      "abiSha256": "0x24cd8b4fd146fd73fb6928e45daedcfcca9a6d391ee2bec828fd3e7639be0786"
+    },
+    "EmergencyGatekeeper": {
+      "source": "contracts/v2/EmergencyGatekeeper.sol",
+      "bytecodeKeccak": "0x5a0d39eda93e1002526cc3423e3881cafe57fa6e9ee22f0e2eac55eeb2ff647d",
+      "deployedBytecodeKeccak": "0x6129c2cd98d6b38a5f49b5a218cec0728fe1de999c0f2cc428e1dca0fec03e09",
+      "creationBytes": 5067,
+      "runtimeBytes": 4000,
+      "immutableSlots": 0,
+      "linkReferences": 0,
+      "abiSha256": "0x07bfb2ddf6ccaf7006c480e3ca6c43a2dd19dca7298b494847f51f0fc968ef22"
+    },
+    "EventCompletenessAnchor": {
+      "source": "contracts/v2/EventCompletenessAnchor.sol",
+      "bytecodeKeccak": "0x6ce694cf5b023cc5307142a733f142509cfb1063f2ee1fe613a2ae01fc8d6743",
+      "deployedBytecodeKeccak": "0xa133ed1d70638611c7bba98620acb667d1544d5f7ad97db682339cc009ab256a",
+      "creationBytes": 14923,
+      "runtimeBytes": 8018,
+      "immutableSlots": 11,
+      "linkReferences": 0,
+      "abiSha256": "0x5fac4b7b9cce4929e5ed0b51a7bdf1a8b749175d61f2a81fdc9d1e032ae69e0c"
+    },
+    "EvidenceRegistry": {
+      "source": "contracts/v2/EvidenceRegistry.sol",
+      "bytecodeKeccak": "0x74af8f4ae7fa3eb88d070852938e07514014b4fcb4b0fae518ecb1b98c0e4e18",
+      "deployedBytecodeKeccak": "0x9b56909dbc29f5ac6566a852d0b5b7149afa0b781b6987c896b21b249bd9b889",
+      "creationBytes": 8620,
+      "runtimeBytes": 7828,
+      "immutableSlots": 1,
+      "linkReferences": 0,
+      "abiSha256": "0x4482c833d8e3c17904b56280000b4f5edbb714c37d186df7a4db0b41a089f73e"
+    },
+    "FinalRewardAllocator": {
+      "source": "contracts/v2/FinalRewardAllocator.sol",
+      "bytecodeKeccak": "0xb5f023e111067588a677816c1c82ce46afc1218fd7a0d15e378280b9ca9a4c7a",
+      "deployedBytecodeKeccak": "0xbe586991bc4265bec2483d6f3e8dc4b112b03e17830ccb37fc83e0f7d7465828",
+      "creationBytes": 5459,
+      "runtimeBytes": 5230,
+      "immutableSlots": 2,
+      "linkReferences": 0,
+      "abiSha256": "0x88ea79aa6c7f5271255010c69aa6acd5a5e489299eefb4fa0d572e3408697d72"
+    },
+    "ModuleRegistry": {
+      "source": "contracts/v2/ModuleRegistry.sol",
+      "bytecodeKeccak": "0xfa00d49d74d7eee00e28d592291efdec8923c9acee2f2da9fd8d102ddf369228",
+      "deployedBytecodeKeccak": "0x7978705ae39c0677c61d20e11735a84c15e632198dcbdce9a463415b47303437",
+      "creationBytes": 18660,
+      "runtimeBytes": 17668,
+      "immutableSlots": 0,
+      "linkReferences": 0,
+      "abiSha256": "0x551daa6fc1143d9236b14a702c217aa4dfcb4e43d290d838c0e3dce147153194"
+    },
+    "RewardToken": {
+      "source": "contracts/RewardToken.sol",
+      "bytecodeKeccak": "0x610c99433744a784b41ea3252aac90e6e2552c63fc6a09ad875aba4324b0f41f",
+      "deployedBytecodeKeccak": "0x220f6ab5dce4ff7d0c961b10903889bab3bde81eb364d529fe3fa12829500b84",
+      "creationBytes": 4306,
+      "runtimeBytes": 3066,
+      "immutableSlots": 0,
+      "linkReferences": 0,
+      "abiSha256": "0x8d8c3360399c19b8c1a218be9872c1236a338c200fc35db89b6a00c1a2a4de8e"
+    },
+    "StakeVault": {
+      "source": "contracts/v2/StakeVault.sol",
+      "bytecodeKeccak": "0x96bb168705aaa48ff5ac018a4c274bd68ae5e7d892d4ddc1cdb03052e06021cb",
+      "deployedBytecodeKeccak": "0xd39c55088c87a117957e7c40f471d2fcdfefc1ac6eef0c90a6e88a17b44aff24",
+      "creationBytes": 16546,
+      "runtimeBytes": 15603,
+      "immutableSlots": 2,
+      "linkReferences": 0,
+      "abiSha256": "0x687fc9c8f8af6562e6a2f343c57ab056657e0caacf0c2f9c28a854abda42bcc2"
+    }
+  }
+}

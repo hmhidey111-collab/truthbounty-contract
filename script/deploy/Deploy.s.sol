@@ -15,9 +15,10 @@ import "../../contracts/deployment/MigrationManager.sol";
 
 contract Deploy is DeployBase {
     function run(string memory env) external {
+        loadConfig(env);
+
         vm.startBroadcast();
 
-        loadConfig(env);
         console2.log("Deploying to:", env);
         console2.log("Admin:", config.admin);
 

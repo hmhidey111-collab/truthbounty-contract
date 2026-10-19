@@ -1,0 +1,461 @@
+{
+  "schema": "truthbounty/eip712-vectors/v1",
+  "description": "Canonical EIP-712 vectors for contracts/EIP712Verifier.sol. Regenerate with: node scripts/check-eip712-vectors.mjs --emit. Verify with: node scripts/check-eip712-vectors.mjs",
+  "signaturePolicy": "No signature is committed. Tests derive signatures at runtime with vm.sign (Foundry) and wallet.signTypedData (ethers) using the well-known Hardhat test key 0xac0974...ff80 only; production keys must never appear here.",
+  "canonicalSigningKeyReference": {
+    "kind": "well-known-hardhat-account-0-test-key",
+    "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "note": "test-only key, publicly documented by Hardhat; never funded on mainnet by this repository"
+  },
+  "domain": {
+    "name": "TruthBounty",
+    "version": "1",
+    "typeString": "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+  },
+  "typeStrings": {
+    "ClaimSubmission": "ClaimSubmission(address claimant,uint256 bountyId,bytes32 contentHash,uint256 nonce,uint256 deadline)",
+    "VerificationIntent": "VerificationIntent(address verifier,uint256 bountyId,bool approve,string reason,uint256 nonce,uint256 deadline)"
+  },
+  "entryPoints": {
+    "ClaimSubmission": "EIP712Verifier.verifyClaimSubmission / EIP712Verifier.getClaimSubmissionHash",
+    "VerificationIntent": "EIP712Verifier.verifyVerificationIntent / EIP712Verifier.getVerificationIntentHash"
+  },
+  "implementations": [
+    "contracts/EIP712Verifier.sol",
+    "contracts/decay.sol"
+  ],
+  "constants": {
+    "EIP712Domain": "0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f",
+    "nameHash": "0x2fa99e49f5b52f9531f70c914e05e3b21b20a47ed8412a97840d11b17c33037e",
+    "versionHash": "0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6",
+    "ClaimSubmission": "0x583cd3a93ae50e2578ccd80e1f370aebc93e9e7f97bd0e38d39e542213b6e927",
+    "VerificationIntent": "0xc5a057e833163fcd0c5e1783fe90adfb24b27445ca62299745fbddb51869fd69"
+  },
+  "domainSeparators": {
+    "1": "0x3eb1639b71106693914d735157d11474bfdb60ffd5b896fb8311b7a8c9998b11",
+    "31337": "0x50a672b15211d46ac48525c21fd2b336612308d62a2fcf5aeaffcfea87bce188"
+  },
+  "deadlineSemantics": "verifyClaimSubmission/verifyVerificationIntent revert with SignatureExpired when block.timestamp > deadline; a signature valid at deadline is accepted (inclusive bound).",
+  "nonceSemantics": "nonces[account] starts at 0, is embedded in the struct hash, and increments by exactly 1 on every successful verification; a digest can never be used twice (usedSignatures).",
+  "positives": [
+    {
+      "caseId": "claim-submission-mainnet",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0xc6398127fdbb4a3bd776eb683a6569078a2cfd1eb0bac2b44714d05a733ee96c",
+      "digest": "0xbb5a29bd1e537284bc2631d86375fd606d16aaf7bb45144fd39eeea665a8cdb7"
+    },
+    {
+      "caseId": "claim-submission-local",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 31337,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "bountyId": 1,
+        "contentHash": "0x890a0d64b0bd5c32d6ad30f696f70ccc41dcb66e5dc376f394ad68af4c0d8a8f",
+        "nonce": 0,
+        "deadline": 4102444800
+      },
+      "structHash": "0x17a0828b8159f7e3fcd9e6e9ac42695948f679c0ea3ff30394ec9bdd5021e2c8",
+      "digest": "0x3624b82c760989324db7d91cb30762b0c3dc60f7ec1ecf9b23b864d2ac2e12e3"
+    },
+    {
+      "caseId": "verification-intent-mainnet",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x815f537bcffdc44868a823f6bd959fe11b90e1641d0c5dc661b85847583fa4f5",
+      "digest": "0xc24ae15f7579d0e5dac930fa987581be9895f8648630859ed87edc617f2f498a"
+    },
+    {
+      "caseId": "verification-intent-local",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 31337,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": false,
+        "reason": "content hash mismatch",
+        "nonce": 4,
+        "deadline": 4102444800
+      },
+      "structHash": "0x664ef87190c6c36a5f13dcec98307ee0eacd91d28f94f273735f6c4a9c3b31ed",
+      "digest": "0x4cb2cda7f6326bad39f733145e9ccec0ffcdaae4b5e8089d3a41c4a68bfb6db6"
+    }
+  ],
+  "negatives": [
+    {
+      "caseId": "claim-wrong-chain-id",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0xc6398127fdbb4a3bd776eb683a6569078a2cfd1eb0bac2b44714d05a733ee96c",
+      "digest": "0x29a07b0cb851e735e1b24eff7b0c28c10fbddb76740339ed9dd6c98d876bd067",
+      "mutation": "chainId",
+      "mutationValue": 10,
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "digest is domain-bound; a mainnet signature must not verify on chain 10"
+    },
+    {
+      "caseId": "claim-wrong-verifying-contract",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0xc6398127fdbb4a3bd776eb683a6569078a2cfd1eb0bac2b44714d05a733ee96c",
+      "digest": "0x4f19d2936b9d635fc6071bf5ab59f2a3cac27da622a49382fec685f040ad9db8",
+      "mutation": "verifyingContract",
+      "mutationValue": "0x000000000000000000000000000000000000bEEF",
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "a signature for one deployment must not replay on another; the same bytecode is deployed at this address by the tests"
+    },
+    {
+      "caseId": "claim-wrong-domain-name",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0xc6398127fdbb4a3bd776eb683a6569078a2cfd1eb0bac2b44714d05a733ee96c",
+      "digest": "0x1f8f2d5d044080f9d17ca414195c6164c4cadaac01c7123ee08fd35b5f66c9f3",
+      "mutation": "domainName",
+      "mutationValue": "TruthBountyV2",
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "the domain name is part of the signed payload"
+    },
+    {
+      "caseId": "claim-wrong-nonce",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 8,
+        "deadline": 4102444800
+      },
+      "structHash": "0xee9856d4913ead121109d47ff5ac4031904f35e1ae23c6ca989a2513810015a5",
+      "digest": "0x29e682d8a3a1700dda7c3b1e8a1c1567b2d0a1a4f3a126cacdaa87e99d8d33d6",
+      "mutation": "nonce",
+      "mutationValue": 8,
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "nonce is inside the struct hash, so a stale nonce cannot replay"
+    },
+    {
+      "caseId": "claim-wrong-deadline",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444801
+      },
+      "structHash": "0x00497843ba66b9ef67e460f528070e2132049ee6633dcfd7dd5655c19b8459e6",
+      "digest": "0xf2a3dcb9373cc48266a7102813180a56308a019d36ddb6db309684919ee03f8d",
+      "mutation": "deadline",
+      "mutationValue": 4102444801,
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "deadline is inside the struct hash and checked against block.timestamp"
+    },
+    {
+      "caseId": "claim-mutated-field-order",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0x39d6b7f4e2ff1cf7e594d9399a1d3ab4386b774964e5895a0252b7d8888d0dd3",
+      "digest": "0x24506cb83fd05e41be9f0a7d73dda470e2578c9bcb7f0f4b230a67d5256c57b5",
+      "mutation": "fieldOrder",
+      "mutationValue": "claimant<->bountyId",
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "field order is part of the encoding: swapping claimant/bountyId changes the digest"
+    },
+    {
+      "caseId": "claim-mutated-type-string",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0x66ff8c8eff5f6f4613d6aaf648d2dd001395f8bb11350ddaa37f3f018160eea2",
+      "digest": "0x019d904b3f6ec16bfa522cd00d39396a635bd2ede8e7b93a4091e6350c340cfd",
+      "mutation": "typeString",
+      "mutationValue": "ClaimSubmission(address claimant,uint256 bountyId,bytes32 contentHash,uint8 nonce,uint256 deadline)",
+      "mutationTypeString": "ClaimSubmission(address claimant,uint256 bountyId,bytes32 contentHash,uint8 nonce,uint256 deadline)",
+      "mustDifferFrom": "claim-submission-mainnet",
+      "note": "any change to the type string changes the type hash and therefore the digest"
+    },
+    {
+      "caseId": "intent-wrong-approve-flag",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": false,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x9b7dcec2f9241c0e6e0335d8327c4fc51993c1ebbb82cd225f396cfe40b02575",
+      "digest": "0x1098e444df7fe0aabe800043494864ccaf11210a27bf36a24d22f6080cfd7090",
+      "mutation": "approve",
+      "mutationValue": false,
+      "mustDifferFrom": "verification-intent-mainnet",
+      "note": "the approve flag is inside the signed payload, so a reject approval cannot be flipped"
+    },
+    {
+      "caseId": "intent-wrong-reason",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified ",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0xd905269175fbc8fd143a6ac5802567fe2a6d3e0eef8cfe7bbde5b784137902ae",
+      "digest": "0x862028ada5fec6673a96453d38d7735b6a5937d0983e3d028536132f2edb663e",
+      "mutation": "reason",
+      "mutationValue": "evidence verified ",
+      "mustDifferFrom": "verification-intent-mainnet",
+      "note": "the reason is hashed with keccak256(bytes(reason)); trailing whitespace changes it"
+    },
+    {
+      "caseId": "claim-expired-deadline",
+      "operation": "claimSubmission",
+      "primaryType": "ClaimSubmission",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "claimant": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        "bountyId": 42,
+        "contentHash": "0x7355b131ae14347426a26f8e37ac36b70b49ddb16f43f232370aa3007e0865c4",
+        "nonce": 7,
+        "deadline": 4102444800
+      },
+      "structHash": "0xc6398127fdbb4a3bd776eb683a6569078a2cfd1eb0bac2b44714d05a733ee96c",
+      "digest": "0xbb5a29bd1e537284bc2631d86375fd606d16aaf7bb45144fd39eeea665a8cdb7",
+      "mutation": "deadlineExpired",
+      "mutationValue": "block.timestamp > deadline",
+      "mustDifferFrom": null,
+      "expectedRevert": "SignatureExpired",
+      "note": "digest matches the positive vector; reverts only because block.timestamp > deadline"
+    },
+    {
+      "caseId": "intent-wrong-chain-id",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x815f537bcffdc44868a823f6bd959fe11b90e1641d0c5dc661b85847583fa4f5",
+      "digest": "0x749d126820762ba03c588d6af6c78262de85e39f2658af615265b371c5669349",
+      "mutation": "chainId",
+      "mutationValue": 10,
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-wrong-verifying-contract",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x815f537bcffdc44868a823f6bd959fe11b90e1641d0c5dc661b85847583fa4f5",
+      "digest": "0x4a0ed45436a29a3e9c639e6401913503f62b6b0bca52d4506930c153be70053b",
+      "mutation": "verifyingContract",
+      "mutationValue": "0x000000000000000000000000000000000000bEEF",
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-wrong-domain-name",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x815f537bcffdc44868a823f6bd959fe11b90e1641d0c5dc661b85847583fa4f5",
+      "digest": "0xbaaab7c7a8de96cf84dacc5b6f488453f069a2964b7cbea8fb8143faf86b5647",
+      "mutation": "domainName",
+      "mutationValue": "TruthBountyV2",
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-wrong-nonce",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 4,
+        "deadline": 4102444800
+      },
+      "structHash": "0xb35a29244f4abea4671f618bfb3459dad935a4565a6e5989d906406ec39893a4",
+      "digest": "0x6bd8f39121ea15e10b1d6025c13be2eff3a9c9ebc97c33c71dd8cf5f94ec741c",
+      "mutation": "nonce",
+      "mutationValue": 4,
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-wrong-deadline",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444801
+      },
+      "structHash": "0x59870f0b0a9867c3b12d2a4495dfa51eff1cbc34ec58b3c5df30569016550087",
+      "digest": "0x052fc4c606309c63e5acf2773e18260724b6bdbecc8887609b3cb14865b2c8b2",
+      "mutation": "deadline",
+      "mutationValue": 4102444801,
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-mutated-field-order",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0xdbd13c660b0418983ba242c68f41fb61a97cb7ade1ab7216e18790ba7d9214f4",
+      "digest": "0x8cf2540ee68a5824d923e243e2987c201bb9146df9477aa67e192e8aa27a37cb",
+      "mutation": "fieldOrder",
+      "mutationValue": "verifier<->bountyId",
+      "mustDifferFrom": "verification-intent-mainnet",
+      "expectedRevert": "InvalidSignature"
+    },
+    {
+      "caseId": "intent-expired-deadline",
+      "operation": "verificationIntent",
+      "primaryType": "VerificationIntent",
+      "chainId": 1,
+      "verifyingContract": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "message": {
+        "verifier": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+        "bountyId": 42,
+        "approve": true,
+        "reason": "evidence verified",
+        "nonce": 3,
+        "deadline": 4102444800
+      },
+      "structHash": "0x815f537bcffdc44868a823f6bd959fe11b90e1641d0c5dc661b85847583fa4f5",
+      "digest": "0xc24ae15f7579d0e5dac930fa987581be9895f8648630859ed87edc617f2f498a",
+      "mutation": "deadlineExpired",
+      "mutationValue": "block.timestamp > deadline",
+      "mustDifferFrom": null,
+      "expectedRevert": "SignatureExpired"
+    }
+  ]
+}

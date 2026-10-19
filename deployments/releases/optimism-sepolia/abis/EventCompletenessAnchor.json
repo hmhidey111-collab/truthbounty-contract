@@ -1,0 +1,504 @@
+[
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "chainId",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint16",
+            "name": "completenessVersion",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "moduleCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cellCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bindingCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "catalogueRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bool",
+            "name": "everyMutationEmits",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "mutationsAreTerminal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "orderIsTotal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "projectionIsDeterministic",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct IEventCompleteness.EventCompleteness",
+        "name": "completeness_",
+        "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "deployer_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cellIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "AmbiguousCellEvent",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cellIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "IncoherentReductionRule",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "IndexOutOfRange",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidPageLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "reason",
+        "type": "string"
+      }
+    ],
+    "name": "InvalidRecord",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cellIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "OversizedEventSet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cellIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "UncoveredCell",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "chainId",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint16",
+            "name": "completenessVersion",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "moduleCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cellCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bindingCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "catalogueRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bool",
+            "name": "everyMutationEmits",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "mutationsAreTerminal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "orderIsTotal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "projectionIsDeterministic",
+            "type": "bool"
+          }
+        ],
+        "indexed": false,
+        "internalType": "struct IEventCompleteness.EventCompleteness",
+        "name": "completeness",
+        "type": "tuple"
+      }
+    ],
+    "name": "EventCompletenessPublished",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "CHAIN_ID",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "cursor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "cellCoverage",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "cellId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "moduleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cellIndex",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "coverage",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "closingEventCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "closingSetRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "reductionRuleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "restatementCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "restatementSetRoot",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct IEventCompleteness.CellCoverage[]",
+        "name": "page",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "cellSources",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "closingEvents",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "restatements",
+        "type": "bytes32[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "reductionRuleId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "covered",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "deployer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eventCompleteness",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "chainId",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint16",
+            "name": "completenessVersion",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "moduleCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cellCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "bindingCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "catalogueRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bool",
+            "name": "everyMutationEmits",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "mutationsAreTerminal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "orderIsTotal",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "projectionIsDeterministic",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct IEventCompleteness.EventCompleteness",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "moduleCoverage",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "moduleId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cellCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "everyMutationEmits",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isImmutable",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct IEventCompleteness.ModuleCoverage",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolVersion",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "major",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "minor",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proveCatalogueComplete",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

@@ -1,0 +1,7 @@
+ScenarioGasSnapshotsTest:test_gas_registryReadCold() (gas: 15771)
+ScenarioGasSnapshotsTest:test_gas_registryReadWarm() (gas: 28835)
+ScenarioGasSnapshotsTest:test_gas_registryUpdateFirst() (gas: 43744)
+ScenarioGasSnapshotsTest:test_gas_registryUpdateRepeat() (gas: 78799)
+ScenarioGasSnapshotsTest:test_gas_settlementBatchAtMaximumBound() (gas: 9584635)
+ScenarioGasSnapshotsTest:test_gas_settlementBatchOverMaximumReverts() (gas: 202485)
+ScenarioGasSnapshotsTest:test_gas_upgradeProposal() (gas: 492406)

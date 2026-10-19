@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title IVerificationSource
@@ -104,6 +105,7 @@ contract VerificationAggregator is AccessControl {
     error AlreadyAggregated(uint256 claimId);
     error ThresholdNotMet(string reason);
     error NotAggregated(uint256 claimId);
+    error WinningWeightExceedsTotal(uint256 winningWeight, uint256 total);
 
     // ============ Constructor ============
 
@@ -186,8 +188,9 @@ contract VerificationAggregator is AccessControl {
      * @return Confidence in basis points (0–10 000).
      */
     function calculateConfidence(uint256 winningWeight, uint256 total) public pure returns (uint256) {
+        if (winningWeight > total) revert WinningWeightExceedsTotal(winningWeight, total);
         if (total == 0) return 0;
-        return (winningWeight * BPS) / total;
+        return Math.mulDiv(winningWeight, BPS, total);
     }
 
     /**

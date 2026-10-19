@@ -1,0 +1,1221 @@
+{
+  "schemaVersion": 1,
+  "issue": "V2-SC-160",
+  "policy": "No security-sensitive digest may rely on ambiguous packed encoding. abi.encodePacked (and bytes.concat/string.concat or off-chain solidityPacked fed into a hash) is allowed only when every operand is fixed-width or a compile-time constant literal (FIXED_WIDTH), when every variable-length operand carries an explicit length prefix (LENGTH_PREFIXED), or when an external standard fixes the byte layout (PROTOCOL_DEFINED). Inside the canonical V2 scope those are the only digest classes. SINGLE_DYNAMIC (exactly one variable-length operand, therefore one parse) is tolerated only in legacy, deprecated, or test code. Non-hashed uses must be NON_DIGEST, or DELIMITED_VALIDATED when fields are delimiter-joined and a guard rejects the delimiter. LEGACY_MIRROR is reserved for test fixtures that reproduce retired schemes. See docs/ENCODE_PACKED_POLICY.md.",
+  "canonicalScope": [
+    "contracts/v2/",
+    "contracts/governance/v2/",
+    "contracts/libraries/",
+    "contracts/upgrade/",
+    "contracts/deployment/",
+    "contracts/verification/",
+    "contracts/settlement/",
+    "contracts/reward/",
+    "contracts/disputes/",
+    "contracts/utils/",
+    "contracts/EIP712Verifier.sol"
+  ],
+  "entries": [
+    {
+      "file": "contracts/EIP712Verifier.sol",
+      "fingerprint": "4ea9a2e48d00",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "EIP-191/EIP-712 typed-data digest: the constant 2-byte \"\\x19\\x01\" prefix followed by two bytes32 words is always exactly 66 bytes, so the preimage has one parse. Byte layout is fixed by EIP-712 and must not change (V2-SC-152 vectors).",
+      "excerpt": "abi.encodePacked(\"\\x19\\x01\",_buildDomainSeparator(),structHash)"
+    },
+    {
+      "file": "contracts/ExampleSettlement.sol",
+      "fingerprint": "30ee6c0a4a1c",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable slashing reason string (\"... for claim #<id>\"); emitted/stored as text only, never hashed or compared as a commitment.",
+      "excerpt": "abi.encodePacked(\"Malicious verification for claim #\",_toString(claimId))"
+    },
+    {
+      "file": "contracts/ExampleSettlement.sol",
+      "fingerprint": "a64658aafbd1",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable slashing reason string (\"... for claim #<id>\"); emitted/stored as text only, never hashed or compared as a commitment.",
+      "excerpt": "abi.encodePacked(\"Incorrect verification for claim #\",_toString(claimId))"
+    },
+    {
+      "file": "contracts/ReputationReceiver.sol",
+      "fingerprint": "f52db8822ded",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Second hash of the double-hashed Merkle leaf: a single bytes32 (32-byte preimage), which also keeps leaves (32-byte preimage) disjoint from internal nodes (64-byte preimage) against second-preimage splicing.",
+      "excerpt": "abi.encodePacked(keccak256(abi.encodePacked(user,score,timestamp)))"
+    },
+    {
+      "file": "contracts/ReputationReceiver.sol",
+      "fingerprint": "437b5fa825c9",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Reputation Merkle leaf preimage: address (20) || uint256 score (32) || uint256 timestamp (32) is always exactly 84 bytes, one parse. Consumed off-chain by the tree builder and pinned by test/vectors/encode-packed-commitments.vectors.json (reputation-merkle-leaf-*).",
+      "excerpt": "abi.encodePacked(user,score,timestamp)"
+    },
+    {
+      "file": "contracts/ReputationReceiver.sol",
+      "fingerprint": "87984e4fca4f",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Merkle internal node: bytes32 left || bytes32 right is always exactly 64 bytes; position-ordered by design. Pinned by the reputation-merkle-node-ab vector.",
+      "excerpt": "abi.encodePacked(computed,proof[i])"
+    },
+    {
+      "file": "contracts/ReputationReceiver.sol",
+      "fingerprint": "5e4a24ceeed3",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Merkle internal node: bytes32 left || bytes32 right is always exactly 64 bytes; position-ordered by design. Pinned by the reputation-merkle-node-ab vector.",
+      "excerpt": "abi.encodePacked(proof[i],computed)"
+    },
+    {
+      "file": "contracts/ReputationSnapshot.sol",
+      "fingerprint": "d20e23de13cc",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Merkle internal node: bytes32 left || bytes32 right is always exactly 64 bytes; position-ordered by design. Pinned by the reputation-merkle-node-ab vector.",
+      "excerpt": "abi.encodePacked(left,right)"
+    },
+    {
+      "file": "contracts/ReputationSnapshot.sol",
+      "fingerprint": "f52db8822ded",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Second hash of the double-hashed Merkle leaf: a single bytes32 (32-byte preimage), which also keeps leaves (32-byte preimage) disjoint from internal nodes (64-byte preimage) against second-preimage splicing.",
+      "excerpt": "abi.encodePacked(keccak256(abi.encodePacked(user,score,timestamp)))"
+    },
+    {
+      "file": "contracts/ReputationSnapshot.sol",
+      "fingerprint": "437b5fa825c9",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Reputation Merkle leaf preimage: address (20) || uint256 score (32) || uint256 timestamp (32) is always exactly 84 bytes, one parse. Consumed off-chain by the tree builder and pinned by test/vectors/encode-packed-commitments.vectors.json (reputation-merkle-leaf-*).",
+      "excerpt": "abi.encodePacked(user,score,timestamp)"
+    },
+    {
+      "file": "contracts/VerifierSlashing.sol",
+      "fingerprint": "76b2341a32ce",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "bytes32",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Legacy V1 penalty record id: address (20) || bytes32 (32) || uint256 (32) || uint256 (32) is always 116 bytes; one parse. Internal storage key only.",
+      "excerpt": "abi.encodePacked(verifier,offenceId,block.timestamp,slashAmount)"
+    },
+    {
+      "file": "contracts/crosschain/CrossChainEndpoint.sol",
+      "fingerprint": "117e83ae26a0",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "uint256",
+        "uint256",
+        "address",
+        "address",
+        "bytes",
+        "uint256"
+      ],
+      "justification": "DEPRECATED module (contracts/LEGACY_V1.md). The payload is the only variable-length operand and every other operand is fixed-width (32+32+20+20 before, 32 after), so len(payload) = len(preimage) - 136 and the preimage has exactly one parse. The message id is recomputed by relayers and by processMessage on the destination chain; changing it would strand in-flight messages, and the deprecated module is not expanded (non-goal). Outside the canonical V2 scope.",
+      "excerpt": "abi.encodePacked(block.chainid,destinationChainId,msg.sender,target,payload,nonce)"
+    },
+    {
+      "file": "contracts/crosschain/CrossChainEndpoint.sol",
+      "fingerprint": "b8de3645cbe1",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "uint256",
+        "uint256",
+        "address",
+        "address",
+        "bytes",
+        "uint256"
+      ],
+      "justification": "Destination-side recomputation of the same deprecated message id (see sendMessage): single variable-length payload between fixed-width operands, so the preimage has one parse; must stay byte-identical to the source-chain derivation.",
+      "excerpt": "abi.encodePacked(message.sourceChainId,message.destinationChainId,message.sender,message.target,message.pay..."
+    },
+    {
+      "file": "contracts/decay.sol",
+      "fingerprint": "4ea9a2e48d00",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "EIP-191/EIP-712 typed-data digest: the constant 2-byte \"\\x19\\x01\" prefix followed by two bytes32 words is always exactly 66 bytes, so the preimage has one parse. Byte layout is fixed by EIP-712 and must not change (V2-SC-152 vectors).",
+      "excerpt": "abi.encodePacked(\"\\x19\\x01\",_buildDomainSeparator(),structHash)"
+    },
+    {
+      "file": "contracts/deployment/Create2AddressPlanner.sol",
+      "fingerprint": "dddbf5bc12d4",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes1",
+        "address",
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "CREATE2 address derivation fixed by EIP-1014: 0xff (1) || deployer (20) || salt (32) || initCodeHash (32) = 85 bytes. Changing it would break deterministic deployment addresses; pinned by the EIP-1014 published examples in the vectors.",
+      "excerpt": "abi.encodePacked(bytes1(0xff),deployer,salt,initCodeHash)"
+    },
+    {
+      "file": "contracts/deployment/Create2AddressPlanner.sol",
+      "fingerprint": "4b99e09fd2b8",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Reviewed-salt derivation: moduleId (32) || reviewedSalt (32) = 64 bytes, one parse. Externally consumed by deployment manifests (planned addresses), so it is retained byte-for-byte and pinned by the create2-derive-salt vector.",
+      "excerpt": "abi.encodePacked(moduleId,reviewedSalt)"
+    },
+    {
+      "file": "contracts/disputes/AppealVerificationRound.sol",
+      "fingerprint": "3eaecdf1dd5c",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Appeal-bond vault lock id: compile-time constant tag \"V2_APPEAL_BOND\" (14 bytes) || claimId (32) || roundIndex (32) = 78 bytes for every input, one parse. The constant tag namespaces it away from DisputeResolution's dispute-id locks. Pinned by the appeal-bond-lock-id vector; changing it would orphan live vault locks.",
+      "excerpt": "abi.encodePacked(\"V2_APPEAL_BOND\",claimId,roundIndex)"
+    },
+    {
+      "file": "contracts/insurance/InsuranceFund.sol",
+      "fingerprint": "7e84938ef7e5",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "address",
+        "uint8",
+        "uint256",
+        "string"
+      ],
+      "justification": "Legacy V1 duplicate-incident guard (contracts/insurance is LEGACY). descriptionURI is the only variable-length operand and it is last, after fixed-width address (20) || enum uint8 (1) || uint256 (32), so the preimage has exactly one parse. The hash is only compared against hashes of the same schema in a private mapping and is not a signature or claim commitment; out of the canonical V2 scope and intentionally untouched.",
+      "excerpt": "abi.encodePacked(msg.sender,category,requestedAmount,descriptionURI)"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "bf6257524707",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "SimulationConfig",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Simulation run id: SimulationConfig contains only value-type members (enum and uint256 fields, nested GovernanceParams of uint256), followed by block.timestamp and a counter; every operand is fixed-width. Not security sensitive (off-chain analysis tooling).",
+      "excerpt": "abi.encodePacked(config,block.timestamp,_simulationCounter)"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "37e9dc0f2592",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable simulation warning string (label || decimal value || unit); report text only, never hashed.",
+      "excerpt": "abi.encodePacked(\"HIGH_INFLATION:Rate=\",_uintToString(metrics.inflationRate),\"bps\")"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "935f8f891cd0",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable simulation warning string (label || decimal value || unit); report text only, never hashed.",
+      "excerpt": "abi.encodePacked(\"LOW_TREASURY:Balance=\",_uintToString(metrics.treasurySolvency))"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "03b89c52636f",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable simulation warning string (label || decimal value || unit); report text only, never hashed.",
+      "excerpt": "abi.encodePacked(\"LOW_VERIFIER_PROFIT:Avg=\",_uintToString(metrics.verifierProfitability))"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "b403d7f71a1b",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable simulation warning string (label || decimal value || unit); report text only, never hashed.",
+      "excerpt": "abi.encodePacked(\"HIGH_RESERVE_UTILISATION:Util=\",_uintToString(metrics.reserveUtilisation),\"bps\")"
+    },
+    {
+      "file": "contracts/simulation/EconomicSimulation.sol",
+      "fingerprint": "b56a2f2f6c7d",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Human-readable simulation warning string (label || decimal value || unit); report text only, never hashed.",
+      "excerpt": "abi.encodePacked(\"LOW_SUSTAINABILITY:Index=\",_uintToString(metrics.sustainabilityIndex))"
+    },
+    {
+      "file": "contracts/treasury/TreasuryAccounting.sol",
+      "fingerprint": "8418156970cd",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "uint256",
+        "uint256",
+        "address",
+        "uint256"
+      ],
+      "justification": "Legacy V1 transaction id: block.timestamp (32) || block.number (32) || msg.sender (20) || transactionCount (32) = 116 bytes, one parse; internal storage key.",
+      "excerpt": "abi.encodePacked(block.timestamp,block.number,msg.sender,transactionCount)"
+    },
+    {
+      "file": "contracts/treasury/TreasuryManagement.sol",
+      "fingerprint": "f5091b938ae1",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "uint256",
+        "uint256",
+        "address",
+        "uint256",
+        "address",
+        "address",
+        "uint256"
+      ],
+      "justification": "Legacy V1 treasury record id: all seven operands are fixed-width (uint256/address) = 188 bytes, one parse; uniqueness is additionally enforced by the _recordExists check.",
+      "excerpt": "abi.encodePacked(block.timestamp,block.number,msg.sender,_recordCount,from,to,amount)"
+    },
+    {
+      "file": "contracts/upgrade/TimelockOwnedProxyAdmin.sol",
+      "fingerprint": "0076d8f1e226",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Upgrade operation id: proxy (20) || implementation (20) || timestamp (32) || nonce (32) = 104 bytes, one parse; the monotonic nonce and the pendingUpgrades existence check make it unique.",
+      "excerpt": "abi.encodePacked(proxy,newImplementation,block.timestamp,_operationNonce)"
+    },
+    {
+      "file": "contracts/utils/ResolverRoleTimelock.sol",
+      "fingerprint": "ce748fbe4006",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "bytes32",
+        "address",
+        "bool",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Resolver-role operation id: address(this) (20) || role (32) || account (20) || grant (1) || timestamp (32) || nonce (32) = 137 bytes, one parse; bound to the contract and made unique by a monotonic nonce.",
+      "excerpt": "abi.encodePacked(address(this),_resolverRole(),account,grant,block.timestamp,_operationNonce)"
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "fingerprint": "ded2e7ebd0fa",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "DELIMITED_VALIDATED",
+      "guard": "_requireNoDelimiter",
+      "justification": "Canonical V2 attestation record serialisation (not hashed): free-form fields are joined with '|' and split back by supplyChainAttestation(). Injective because _requireNoDelimiter rejects '|' in every free-form field (V2Errors.AttestationFieldContainsDelimiter) and the remaining fields are on-chain-rendered lowercase hex / decimal, which cannot contain '|'.",
+      "excerpt": "abi.encodePacked(deps[i].name,\"|\",deps[i].version,\"|\",deps[i].kind,\"|\",deps[i].rev,\"|\",deps[i].integrity)"
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "fingerprint": "7c556fb9d5df",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "DELIMITED_VALIDATED",
+      "guard": "_requireNoDelimiter",
+      "justification": "Canonical V2 attestation record serialisation (not hashed): free-form fields are joined with '|' and split back by supplyChainAttestation(). Injective because _requireNoDelimiter rejects '|' in every free-form field (V2Errors.AttestationFieldContainsDelimiter) and the remaining fields are on-chain-rendered lowercase hex / decimal, which cannot contain '|'.",
+      "excerpt": "abi.encodePacked(artifacts[i].path,\"|\",bytes32ToHexString(artifacts[i].sha256),\"|\",uint2str(artifacts[i].si..."
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "fingerprint": "c09a4f830b73",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "DELIMITED_VALIDATED",
+      "guard": "_requireNoDelimiter",
+      "justification": "Canonical V2 attestation record serialisation (not hashed): free-form fields are joined with '|' and split back by supplyChainAttestation(). Injective because _requireNoDelimiter rejects '|' in every free-form field (V2Errors.AttestationFieldContainsDelimiter) and the remaining fields are on-chain-rendered lowercase hex / decimal, which cannot contain '|'.",
+      "excerpt": "abi.encodePacked(subjects[i].name,\"|\",bytes32ToHexString(subjects[i].digest))"
+    },
+    {
+      "file": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "fingerprint": "82f711b789f3",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "DELIMITED_VALIDATED",
+      "guard": "_requireNoDelimiter",
+      "justification": "Canonical V2 attestation record serialisation (not hashed): free-form fields are joined with '|' and split back by supplyChainAttestation(). Injective because _requireNoDelimiter rejects '|' in every free-form field (V2Errors.AttestationFieldContainsDelimiter) and the remaining fields are on-chain-rendered lowercase hex / decimal, which cannot contain '|'.",
+      "excerpt": "abi.encodePacked(materials[i].uri,\"|\",bytes32ToHexString(materials[i].digest))"
+    },
+    {
+      "file": "script/deploy/DeployBase.s.sol",
+      "fingerprint": "dec34b26323d",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Deployment-script string building (error messages, artifact paths, JSON artifact body); the bytes are written to files or revert reasons and never hashed or signed.",
+      "excerpt": "abi.encodePacked(\"Unknown environment: \",env)"
+    },
+    {
+      "file": "script/deploy/DeployBase.s.sol",
+      "fingerprint": "dfbf3d33e4d6",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Deployment-script string building (error messages, artifact paths, JSON artifact body); the bytes are written to files or revert reasons and never hashed or signed.",
+      "excerpt": "abi.encodePacked(root,\"/deployments/\",deployEnv,\"/\",artifactName)"
+    },
+    {
+      "file": "script/deploy/DeployBase.s.sol",
+      "fingerprint": "69dd6b8f1f69",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Deployment-script string building (error messages, artifact paths, JSON artifact body); the bytes are written to files or revert reasons and never hashed or signed.",
+      "excerpt": "abi.encodePacked('{\\n','  \"protocolVersion\": \"',version,'\",\\n','  \"environment\": \"',deployEnv,'\",\\n','  \"de..."
+    },
+    {
+      "file": "test/ChainConfigRegistry.t.sol",
+      "fingerprint": "a7e7bb7b6698",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256"
+      ],
+      "justification": "Test-only salt: constant literal tag followed by one uint256 — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"salt-\",i)"
+    },
+    {
+      "file": "test/ChainConfigRegistry.t.sol",
+      "fingerprint": "f24b48ce167f",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Test-only handler salt: constant literal tag followed by two uint256 values — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"handler-salt-\",registrationCount,seed)"
+    },
+    {
+      "file": "test/ChainConfigRegistry.t.sol",
+      "fingerprint": "76a16e39742f",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256"
+      ],
+      "justification": "Test-only manifest hash: constant literal tag followed by one uint256 — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"manifest-\",registrationCount)"
+    },
+    {
+      "file": "test/EIP712Verifier1271.t.sol",
+      "fingerprint": "46c83d01c064",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only 65-byte ECDSA signature assembly r (32) || s (32) || v (1), the layout ecrecover/ECDSA.recover expect; not a hash preimage.",
+      "excerpt": "abi.encodePacked(r,s,v)"
+    },
+    {
+      "file": "test/ReputationReceiver.test.ts",
+      "fingerprint": "0428a70688c7",
+      "kind": "solidityPackedKeccak256",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Off-chain mirror of the reputation Merkle leaf inner hash (84-byte fixed-width preimage); must stay identical to contracts/ReputationReceiver.sol#_makeLeaf.",
+      "excerpt": "solidityPackedKeccak256([\"address\",\"uint256\",\"uint256\"],[user,score,timestamp])"
+    },
+    {
+      "file": "test/ReputationReceiver.test.ts",
+      "fingerprint": "1d0cda787d0e",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the second leaf hash (single bytes32).",
+      "excerpt": "solidityPacked([\"bytes32\"],[inner])"
+    },
+    {
+      "file": "test/ReputationReceiver.test.ts",
+      "fingerprint": "019d6d746ed9",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the Merkle internal node (64-byte fixed-width preimage).",
+      "excerpt": "solidityPacked([\"bytes32\",\"bytes32\"],[left,right])"
+    },
+    {
+      "file": "test/ReputationSnapshot.invariants.test.ts",
+      "fingerprint": "0428a70688c7",
+      "kind": "solidityPackedKeccak256",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Off-chain mirror of the reputation Merkle leaf inner hash (84-byte fixed-width preimage); must stay identical to contracts/ReputationSnapshot.sol#_makeLeaf.",
+      "excerpt": "solidityPackedKeccak256([\"address\",\"uint256\",\"uint256\"],[user,score,timestamp])"
+    },
+    {
+      "file": "test/ReputationSnapshot.invariants.test.ts",
+      "fingerprint": "1d0cda787d0e",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the second leaf hash (single bytes32).",
+      "excerpt": "solidityPacked([\"bytes32\"],[inner])"
+    },
+    {
+      "file": "test/ReputationSnapshot.invariants.test.ts",
+      "fingerprint": "019d6d746ed9",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the Merkle internal node (64-byte fixed-width preimage).",
+      "excerpt": "solidityPacked([\"bytes32\",\"bytes32\"],[left,right])"
+    },
+    {
+      "file": "test/ReputationSnapshot.test.ts",
+      "fingerprint": "0428a70688c7",
+      "kind": "solidityPackedKeccak256",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Off-chain mirror of the reputation Merkle leaf inner hash (84-byte fixed-width preimage); must stay identical to contracts/ReputationSnapshot.sol#_makeLeaf.",
+      "excerpt": "solidityPackedKeccak256([\"address\",\"uint256\",\"uint256\"],[user,score,timestamp])"
+    },
+    {
+      "file": "test/ReputationSnapshot.test.ts",
+      "fingerprint": "1d0cda787d0e",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the second leaf hash (single bytes32).",
+      "excerpt": "solidityPacked([\"bytes32\"],[inner])"
+    },
+    {
+      "file": "test/ReputationSnapshot.test.ts",
+      "fingerprint": "019d6d746ed9",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Off-chain mirror of the Merkle internal node (64-byte fixed-width preimage).",
+      "excerpt": "solidityPacked([\"bytes32\",\"bytes32\"],[left,right])"
+    },
+    {
+      "file": "test/RewardEngine.fuzz.test.ts",
+      "fingerprint": "db08519c54f7",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "string",
+        "uint256"
+      ],
+      "justification": "Test-only settlement id: the string value is always the constant \"settlement\" and the only variable-length operand, followed by a fixed-width uint256; one parse. Not a protocol commitment.",
+      "excerpt": "solidityPacked([\"string\",\"uint256\"],[\"settlement\",index])"
+    },
+    {
+      "file": "test/RewardEngine.fuzz.test.ts",
+      "fingerprint": "7f5218ceab8a",
+      "kind": "solidityPacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "string",
+        "uint256"
+      ],
+      "justification": "Test-only calculation id: the string value is always the constant \"calculation\" and the only variable-length operand, followed by a fixed-width uint256; one parse. Not a protocol commitment.",
+      "excerpt": "solidityPacked([\"string\",\"uint256\"],[\"calculation\",index])"
+    },
+    {
+      "file": "test/deployment/Create2AddressPlanner.t.sol",
+      "fingerprint": "8a85a500f710",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "PROTOCOL_DEFINED",
+      "args": [
+        "bytes",
+        "bytes"
+      ],
+      "standard": "EIP-1014 (CREATE2) / EVM init code layout",
+      "justification": "CREATE2 init-code hash: the EVM defines init code as creationCode || abi.encode(constructorArgs) and hashes exactly those bytes; the concatenation is dictated by the EVM, not chosen by the protocol.",
+      "excerpt": "abi.encodePacked(type(Create2Probe).creationCode,abi.encode(marker))"
+    },
+    {
+      "file": "test/fuzz/EIP712VerifierFuzz.sol",
+      "fingerprint": "2cde037803e6",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "EIP-191/EIP-712 typed-data digest: the constant 2-byte \"\\x19\\x01\" prefix followed by two bytes32 words is always exactly 66 bytes, so the preimage has one parse. Byte layout is fixed by EIP-712 and must not change (V2-SC-152 vectors).",
+      "excerpt": "abi.encodePacked(\"\\x19\\x01\",sep,structHash)"
+    },
+    {
+      "file": "test/fuzz/InsuranceFund.fuzz.sol",
+      "fingerprint": "194eae2e89e3",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "address",
+        "uint8",
+        "uint256",
+        "string"
+      ],
+      "justification": "Test mirror of the legacy InsuranceFund duplicate-incident hash; must stay byte-identical to contracts/insurance/InsuranceFund.sol (single trailing variable-length operand, one parse).",
+      "excerpt": "abi.encodePacked(claimant,category,requestedAmount,desc)"
+    },
+    {
+      "file": "test/fuzz/InsuranceFund.fuzz.sol",
+      "fingerprint": "ffc99f45c64d",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"ipfs://\",i)"
+    },
+    {
+      "file": "test/fuzz/V2SecurityAuditFuzz.t.sol",
+      "fingerprint": "b74c37db72c7",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256"
+      ],
+      "justification": "Test-only content hash: constant literal tag followed by one uint256 — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"c\",i)"
+    },
+    {
+      "file": "test/fuzz/V2SecurityAuditFuzz.t.sol",
+      "fingerprint": "ccfd7d5ffff7",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256"
+      ],
+      "justification": "Test-only metadata hash: constant literal tag followed by one uint256 — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"m\",i)"
+    },
+    {
+      "file": "test/invariant/TruthBountyInvariant.t.sol",
+      "fingerprint": "d303ce85137a",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"claim_\",seed)"
+    },
+    {
+      "file": "test/testnet/TestnetFuzz.t.sol",
+      "fingerprint": "640b027e9689",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Claim \",vm.toString(seed))"
+    },
+    {
+      "file": "test/testnet/TestnetFuzz.t.sol",
+      "fingerprint": "5557fa2fa03e",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Pause level \",vm.toString(level))"
+    },
+    {
+      "file": "test/testnet/TestnetFuzz.t.sol",
+      "fingerprint": "729fc8781b21",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Upgrade to v\",vm.toString(major))"
+    },
+    {
+      "file": "test/testnet/TestnetFuzz.t.sol",
+      "fingerprint": "1a799448ac34",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"C\",seed)"
+    },
+    {
+      "file": "test/testnet/TestnetFuzz.t.sol",
+      "fingerprint": "d2de87c99148",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "count": 2,
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Claim \",i)"
+    },
+    {
+      "file": "test/testnet/TestnetGasBudgets.t.sol",
+      "fingerprint": "d2de87c99148",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Claim \",i)"
+    },
+    {
+      "file": "test/testnet/TestnetIndexerReplay.t.sol",
+      "fingerprint": "d2de87c99148",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Claim \",i)"
+    },
+    {
+      "file": "test/testnet/TestnetInvariants.t.sol",
+      "fingerprint": "d2de87c99148",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Claim \",i)"
+    },
+    {
+      "file": "test/testnet/TestnetInvariants.t.sol",
+      "fingerprint": "d303ce85137a",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"claim_\",seed)"
+    },
+    {
+      "file": "test/testnet/TestnetRecovery.t.sol",
+      "fingerprint": "02f937967e24",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal"
+      ],
+      "justification": "Test-only migration plan hash of a single constant literal; equivalent to keccak256(bytes(literal)).",
+      "excerpt": "abi.encodePacked(\"migration-plan-v2\")"
+    },
+    {
+      "file": "test/testnet/helpers/TestnetHelpers.t.sol",
+      "fingerprint": "2993bcadacfd",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Zero address: \",label)"
+    },
+    {
+      "file": "test/testnet/helpers/TestnetHelpers.t.sol",
+      "fingerprint": "5a44bf52062f",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"Zero value: \",label)"
+    },
+    {
+      "file": "test/testnet/helpers/TestnetHelpers.t.sol",
+      "fingerprint": "26c85c7652ae",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "string"
+      ],
+      "justification": "Test helper hashing exactly one string: identical to keccak256(bytes(s)), there is no boundary to shift. Not a protocol commitment.",
+      "excerpt": "abi.encodePacked(s)"
+    },
+    {
+      "file": "test/testnet/helpers/TestnetHelpers.t.sol",
+      "fingerprint": "ad5898feb0cc",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "SINGLE_DYNAMIC",
+      "args": [
+        "string"
+      ],
+      "justification": "Test helper deriving a role id from exactly one string: identical to keccak256(bytes(role)), matching AccessControl role constants.",
+      "excerpt": "abi.encodePacked(role)"
+    },
+    {
+      "file": "test/testnet/invariant/TruthBountyInvariantHandler.t.sol",
+      "fingerprint": "d303ce85137a",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only fixture text (claim content, pause reason, version label, revert message, URI) passed as a string argument; never hashed by the test as a commitment.",
+      "excerpt": "abi.encodePacked(\"claim_\",seed)"
+    },
+    {
+      "file": "test/testnet/recovery/RecoveryScenarios.t.sol",
+      "fingerprint": "02f937967e24",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal"
+      ],
+      "justification": "Test-only migration plan hash of a single constant literal; equivalent to keccak256(bytes(literal)).",
+      "excerpt": "abi.encodePacked(\"migration-plan-v2\")"
+    },
+    {
+      "file": "test/upgrade/StorageLayoutManifest.t.sol",
+      "fingerprint": "3365265678ad",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "LENGTH_PREFIXED",
+      "args": [
+        "literal",
+        "uint256",
+        "uint256",
+        "bytes",
+        "uint256",
+        "bytes"
+      ],
+      "justification": "Storage-layout canonical hash (V2-SC-121): constant domain tag \"TB-STORAGE-LAYOUT-V1\" and schema version, then each variable-length operand is immediately preceded by its uint256 byte length, so field boundaries are explicit and the preimage has one parse. Consumed by scripts/storageLayoutManifest.ts; retained byte-for-byte.",
+      "excerpt": "abi.encodePacked(\"TB-STORAGE-LAYOUT-V1\",uint256(1),uint256(bytes(sourcePath).length),bytes(sourcePath),uint..."
+    },
+    {
+      "file": "test/v2/ConsumerGuarantees.t.sol",
+      "fingerprint": "ba43e3de5912",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only calldata assembly selector (4) || ABI-encoded args for a low-level call; not a hash preimage.",
+      "excerpt": "abi.encodePacked(selector,args)"
+    },
+    {
+      "file": "test/v2/EIP712CanonicalVectors.t.sol",
+      "fingerprint": "46c83d01c064",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only 65-byte ECDSA signature assembly r (32) || s (32) || v (1), the layout ecrecover/ECDSA.recover expect; not a hash preimage.",
+      "excerpt": "abi.encodePacked(r,s,v)"
+    },
+    {
+      "file": "test/v2/EIP712CanonicalVectors.t.sol",
+      "fingerprint": "07e4933810e5",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256"
+      ],
+      "justification": "Test-only warm-up content hash: constant literal tag followed by one uint256 — fixed width for every input.",
+      "excerpt": "abi.encodePacked(\"canonical-warmup-claim\",nonce)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "d20e23de13cc",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "LEGACY_MIRROR",
+      "args": [
+        "string",
+        "string"
+      ],
+      "mirrors": "generic keccak256(abi.encodePacked(string, string))",
+      "justification": "V2-SC-160 constructive collision fixture: deliberately reproduces the ambiguous adjacent-dynamic packed pattern to prove (\"ab\",\"c\") and (\"a\",\"bc\") collide.",
+      "excerpt": "abi.encodePacked(left,right)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "b4a8d2d5bb30",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "LEGACY_MIRROR",
+      "args": [
+        "string",
+        "uint256",
+        "address"
+      ],
+      "mirrors": "CanonicalEventLibrary.computeOperationId V1 (retired)",
+      "justification": "V2-SC-160 fixture reproducing the retired V1 operation-id scheme so the suite can prove the V2 id never equals it and that it collided with the V1 upgrade proposal id.",
+      "excerpt": "abi.encodePacked(domain,nonce,actor)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "0bf36a08928a",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "LEGACY_MIRROR",
+      "args": [
+        "literal",
+        "address",
+        "address",
+        "string",
+        "address",
+        "uint256"
+      ],
+      "mirrors": "UpgradeController proposalId V1 (retired)",
+      "justification": "V2-SC-160 fixture reproducing the retired V1 upgrade proposal-id scheme for the cross-schema collision and non-reinterpretation checks.",
+      "excerpt": "abi.encodePacked(\"UPGRADE\",target,newImpl,version,proposer,ts)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "393895eb3ca2",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "LEGACY_MIRROR",
+      "args": [
+        "address",
+        "address",
+        "address",
+        "string",
+        "uint8",
+        "uint256"
+      ],
+      "mirrors": "UpgradeController upgradeHash V1 (retired)",
+      "justification": "V2-SC-160 fixture reproducing the retired V1 upgrade-hash scheme so the suite can prove the V2 upgradeHash never equals it.",
+      "excerpt": "abi.encodePacked(target,currentImpl,newImpl,version,upgradeType,ts)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "cc17d7cc197c",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "LEGACY_MIRROR",
+      "mirrors": "SupplyChainAttestationAnchor delimiter-joined record without the V2-SC-160 guard",
+      "justification": "V2-SC-160 fixture reproducing the delimiter-joined attestation record to prove that an unguarded '|' inside a field shifts field boundaries.",
+      "excerpt": "abi.encodePacked(name,\"|\",version)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "ea2bcceaa003",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "LEGACY_MIRROR",
+      "mirrors": "cross-schema collision domain for CanonicalEventLibrary V1 vs UpgradeController V1",
+      "justification": "V2-SC-160 fixture building the caller-chosen operation domain (\"UPGRADE\" || target || newImplementation || version) that reproduced the V1 proposal-id preimage.",
+      "excerpt": "abi.encodePacked(\"UPGRADE\",V.UPGRADE_TARGET,V.UPGRADE_NEW_IMPL,V.UPGRADE_VERSION)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "e704d5f8a9ac",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32"
+      ],
+      "justification": "Second hash of the double-hashed Merkle leaf: a single bytes32 (32-byte preimage), which also keeps leaves (32-byte preimage) disjoint from internal nodes (64-byte preimage) against second-preimage splicing.",
+      "excerpt": "abi.encodePacked(keccak256(abi.encodePacked(user,score,ts)))"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "a84228bb590e",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "address",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Reputation Merkle leaf preimage: address (20) || uint256 score (32) || uint256 timestamp (32) is always exactly 84 bytes, one parse. Consumed off-chain by the tree builder and pinned by test/vectors/encode-packed-commitments.vectors.json (reputation-merkle-leaf-*).",
+      "excerpt": "abi.encodePacked(user,score,ts)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "fe422fee11bf",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "Merkle internal node: bytes32 left || bytes32 right is always exactly 64 bytes; position-ordered by design. Pinned by the reputation-merkle-node-ab vector.",
+      "excerpt": "abi.encodePacked(leftNode,rightNode)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "3eaecdf1dd5c",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "uint256",
+        "uint256"
+      ],
+      "justification": "Test mirror of AppealVerificationRound._appealLockId: constant tag || uint256 || uint256 = 78 bytes for every input.",
+      "excerpt": "abi.encodePacked(\"V2_APPEAL_BOND\",claimId,roundIndex)"
+    },
+    {
+      "file": "test/v2/EncodePackedCommitments.t.sol",
+      "fingerprint": "897cf4594846",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "literal",
+        "bytes32",
+        "bytes32"
+      ],
+      "justification": "EIP-191/EIP-712 typed-data digest: the constant 2-byte \"\\x19\\x01\" prefix followed by two bytes32 words is always exactly 66 bytes, so the preimage has one parse. Byte layout is fixed by EIP-712 and must not change (V2-SC-152 vectors).",
+      "excerpt": "abi.encodePacked(\"\\x19\\x01\",domainSeparator,structHash)"
+    },
+    {
+      "file": "test/v2/ReputationWeightedVotingBounds.t.sol",
+      "fingerprint": "a781c612b665",
+      "kind": "abi.encodePacked",
+      "context": "digest",
+      "classification": "FIXED_WIDTH",
+      "args": [
+        "uint64",
+        "uint64"
+      ],
+      "justification": "Test-only snapshot hash: two uint64 values (8 + 8 bytes), fixed width.",
+      "excerpt": "abi.encodePacked(snapBlock,claimBlock)"
+    },
+    {
+      "file": "test/v2/SignatureNonces.t.sol",
+      "fingerprint": "46c83d01c064",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "count": 2,
+      "classification": "NON_DIGEST",
+      "justification": "Test-only 65-byte ECDSA signature assembly r (32) || s (32) || v (1), the layout ecrecover/ECDSA.recover expect; not a hash preimage.",
+      "excerpt": "abi.encodePacked(r,s,v)"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "32ce15bd6ae9",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.dependencies[\",i.toString(),\"].name\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "618665c9853c",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.dependencies[\",i.toString(),\"].version\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "3b64a5a00c6a",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.dependencies[\",i.toString(),\"].kind\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "2178cca07977",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.dependencies[\",i.toString(),\"].rev\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "60ad9b89cf29",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.dependencies[\",i.toString(),\"].integrity\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "715d2d8a35c4",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.artifacts[\",i.toString(),\"].sha256\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "961abdcec8f2",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.artifacts[\",i.toString(),\"].path\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "5414202e7380",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.artifacts[\",i.toString(),\"].size\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "ba6e2b57c0af",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.subjects[\",i.toString(),\"].digest\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "eb9226b91f00",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.subjects[\",i.toString(),\"].name\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "d3ceda76eefb",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.materials[\",i.toString(),\"].digest\")"
+    },
+    {
+      "file": "test/v2/SupplyChainAttestationManifest.t.sol",
+      "fingerprint": "ca4fea4c8f3d",
+      "kind": "abi.encodePacked",
+      "context": "non-digest",
+      "classification": "NON_DIGEST",
+      "justification": "Test-only JSON path construction for vm.parseJson* cheatcodes; the string is a lookup key, never hashed.",
+      "excerpt": "abi.encodePacked(\".supplyChainAttestation.materials[\",i.toString(),\"].uri\")"
+    }
+  ]
+}

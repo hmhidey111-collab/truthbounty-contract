@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "forge-std/Test.sol";
+import "../contracts/TruthBounty.sol";
+
+contract EmergencyDrillTest is Test {
+    TruthBounty bounty;
+
+    address admin = makeAddr("admin");
+    address guardian = makeAddr("guardian");
+    address user = makeAddr("user");
+    address attacker = makeAddr("attacker");
+
+    bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
+
+    function setUp() public {
+        vm.startPrank(admin);
+        bounty = new TruthBounty();
+        // Setup guardian role authority
+        bounty.grantRole(GUARDIAN_ROLE, guardian);
+        vm.stopPrank();
+    }
+
+    function testFail_UnauthorizedPause() public {
+        vm.prank(attacker);
+        // Unauthorized user attempts to pause (must revert)
+        bounty.emergencyPause();
+    }
+
+    function test_AuthorizedGuardianPause() public {
+        vm.prank(guardian);
+        bounty.emergencyPause();
+        assertTrue(bounty.paused());
+    }
+
+    function testFail_GuardianCannotUnpause() public {
+        vm.prank(guardian);
+        bounty.emergencyPause();
+
+        // Guardian attempts to unpause (must revert - requires governed path)
+        vm.prank(guardian);
+        bounty.unpause();
+    }
+}

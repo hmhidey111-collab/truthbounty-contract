@@ -7,8 +7,8 @@ pragma solidity ^0.8.28;
  *      used by other protocol contracts (staking, rewards, slashing)
  */
 interface ITreasuryAccounting {
-    // ============ ENUMS ============
-    
+    // =========== ENUMS ===========
+
     enum TreasuryAccount {
         STAKING_RESERVE,      // Tokens actively staked by users
         REWARDS_POOL,         // Reserved for reward distribution
@@ -18,7 +18,7 @@ interface ITreasuryAccounting {
         SLASHED_TREASURY      // Tokens slashed from verifiers
     }
 
-    // ============ STRUCTS ============
+    // =========== STRUCTS ===========
 
     struct TokenMovement {
         uint256 timestamp;
@@ -39,7 +39,23 @@ interface ITreasuryAccounting {
         address snapshotSender;
     }
 
-    // ============ EXTERNAL FUNCTIONS USED BY PROTOCOL CONTRACTS ============
+    // =========== CANONICAL ACCOUNTING COMPONENTS ===========
+
+    /**
+     * @dev The canonical accounting components that make up tracked custody.
+     *      Tracked custody = principal + rewards + fees + donations.
+     *      Unexplained deltas are reconciled as a governed recovery path.
+     */
+    struct ConservationComponents {
+        uint256 trackedPrincipal;
+        uint256 trackedRewards;
+        uint256 trackedFees;
+        uint256 trackedDonations;
+        uint256 unexplainedDelta;
+        uint256 totalTrackedCustody;
+    }
+
+    // =========== EXTERNAL FUNCTIONS USED BY PROTOCOL CONTRACTS ===========
 
     /**
      * @dev Deposit tokens from external sources into a specific treasury account
@@ -54,7 +70,6 @@ interface ITreasuryAccounting {
      * @param amount The amount staked
      */
     function recordStake(address user, uint256 amount) external;
-
 
     /**
      * @dev Record a user unstaking tokens from the staking reserve
@@ -91,7 +106,29 @@ interface ITreasuryAccounting {
         string calldata movementType
     ) external;
 
-    // ============ VIEW FUNCTIONS ============
+    /**
+     * @dev Record an external donation into a treasury account.
+     *      Donations are an accounting component and must not be conflated with fees.
+     * @param targetAccount The treasury account to credit
+     * @param amount Amount of tokens donated
+     */
+    function recordDonation(TreasuryAccount targetAccount, uint256 amount) external;
+
+    /**
+     * @dev Record unexplained token deltas discovered during reconciliation.
+     *      Unexplained deltas enter a governed recovery path and must not be
+     *      silently absorbed into tracked custody.
+     * @param delta The unexplained delta (may be negative via signed intent)
+     * @param recoveryAccount The account to route the delta through
+     * @param reason Human-readable reason for the recovery route
+     */
+    function recordUnexplainedDelta(
+        int256 delta,
+        TreasuryAccount recoveryAccount,
+        string calldata reason
+    ) external;
+
+    // =========== VIEW FUNCTIONS ===========
 
     /**
      * @dev Get the balance of a specific treasury account
@@ -108,7 +145,22 @@ interface ITreasuryAccounting {
      */
     function calculateTotalAssets() external view returns (uint256);
 
-    // ============ EVENTS ============
+    /**
+     * @dev Return the canonical conservation components used for reconciliation.
+     */
+    function getConservationComponents() external view returns (ConservationComponents memory);
+
+    /**
+     * @dev Return the total tracked custody (components sum).
+     */
+    function getTotalTrackedCustody() external view returns (uint256);
+
+    /**
+     * @dev Return the unexplained delta currently awaiting governed recovery.
+     */
+    function getUnexplainedDelta() external view returns (int256);
+
+    // =========== EVENTS ===========
 
     event FundsTransferred(
         bytes32 indexed transactionId,
@@ -139,5 +191,26 @@ interface ITreasuryAccounting {
         uint256 timestamp,
         uint256 totalAssets,
         address indexed snapshotter
+    );
+
+    event DonationRecorded(
+        bytes32 indexed transactionId,
+        TreasuryAccount indexed targetAccount,
+        uint256 amount,
+        address indexed donor
+    );
+
+    event UnexplainedDeltaRecorded(
+        bytes32 indexed transactionId,
+        int256 delta,
+        TreasuryAccount indexed recoveryAccount,
+        string reason
+    );
+
+    event ConservationViolation(
+        uint256 expectedTotal,
+        uint256 actualTotal,
+        int256 unexplainedDelta,
+        bytes32 indexed reconciliationId
     );
 }

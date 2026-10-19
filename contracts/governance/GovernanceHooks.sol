@@ -8,7 +8,7 @@ pragma solidity ^0.8.20;
  *      owned by ParameterVersionRegistry and intentionally excluded from this interface.
  */
 interface GovernanceHooks {
-    // ============ Parameter Update Types ============
+    // ============= Parameter Update Types =============
     
     enum ParameterType {
         // TruthBounty parameters (0-9)
@@ -61,7 +61,7 @@ interface GovernanceHooks {
         PROTOCOL_FEE_ALLOCATION_BPS
     }
 
-    // ============ Events ============
+    // ============= Events =============
 
     event ParameterUpdateRequested(
         ParameterType indexed paramType,
@@ -102,7 +102,7 @@ interface GovernanceHooks {
         address newImplementation
     );
 
-    // ============ Parameter Update Functions ============
+    // ============= Parameter Update Functions =============
 
     /**
      * @notice Request a parameter update (requires governance approval)
@@ -138,7 +138,7 @@ interface GovernanceHooks {
      */
     function cancelParameterUpdate(bytes32 proposalId) external;
 
-    // ============ Role Management Functions ============
+    // ============= Role Management Functions =============
 
     /**
      * @notice Request a role assignment change
@@ -153,7 +153,7 @@ interface GovernanceHooks {
         bool grant
     ) external returns (bytes32 proposalId);
 
-    // ============ Upgrade Authorization Functions ============
+    // ============= Upgrade Authorization Functions =============
 
     /**
      * @notice Request authorization for a contract upgrade
@@ -170,7 +170,7 @@ interface GovernanceHooks {
      */
     function executeUpgrade(bytes32 proposalId) external;
 
-    // ============ View Functions ============
+    // ============= View Functions =============
 
     /**
      * @notice Get the current value of a parameter

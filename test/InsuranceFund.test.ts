@@ -149,6 +149,18 @@ describe("InsuranceFund", function () {
       expect(claim.state).to.equal(0); // SUBMITTED
     });
 
+    it("bounds stored claim description URIs", async function () {
+      const { fund, claimant } = await loadFixture(deployFixture);
+      const maximum = Number(await fund.MAX_DESCRIPTION_URI_BYTES());
+
+      await fund.connect(claimant).submitClaim(0, 100, "u".repeat(maximum));
+
+      await expect(fund.connect(claimant).submitClaim(1, 100, "u".repeat(maximum + 1)))
+        .to.be.revertedWithCustomError(fund, "DescriptionUriTooLong")
+        .withArgs(maximum + 1, maximum);
+      expect(await fund.getClaimCount()).to.equal(1n);
+    });
+
     it("should increment claimCounter", async function () {
       const { fund, claimant } = await loadFixture(deployFixture);
 

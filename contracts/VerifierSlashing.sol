@@ -13,10 +13,53 @@ import "./IReputationOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IReputationPenaltyReceiver.sol";
 
+/// @dev Minimal appeal-manager surface consumed by VerifierSlashing.
+///      The full interface lives in IAppealVerificationRound.sol; we declare
+///      only the one function we need here to avoid a circular import and to
+///      keep the slashing module's dependency surface minimal.
+interface IAppealManager {
+    /// @notice Returns true when the appeal round for `claimId` is open.
+    function isAppealOpen(uint256 claimId) external view returns (bool);
+}
+
 /**
  * @title VerifierSlashing
- * @dev Advanced slashing mechanism for TruthBounty protocol verifiers
- * @notice Handles slashing of verifier stakes when incorrect verifications are proven
+ * @notice Slashing module for TruthBounty protocol verifiers.
+ *
+ * @dev PREWAVE-SC-082 — Bound Slashing Amounts and Authority.
+ *
+ *      Security properties (post-Wave-9 hardening):
+ *
+ *      1. **Canonical exposure cap** — every slash path reads the current lock
+ *         from the staking contract and reverts with `SlashAmountExceedsExposure`
+ *         before calling `forceSlash` when the computed amount would exceed the
+ *         current stake.  A percentage × stake formula already guarantees this
+ *         arithmetically, but the explicit guard makes the boundary a hard revert
+ *         rather than an implicit truncation, so it is auditable at the call site.
+ *
+ *      2. **One offence, one slash** — `slashVerifier` keys duplicate protection
+ *         on `(claimId, roundId, verifier, reasonHash)`.  A second call with the
+ *         same tuple reverts with `DuplicateSlash`.  `executePenalty` keys on
+ *         `(verifier, offenceId, claimId, roundId)`.  `slash` and `criticalSlash`
+ *         carry `claimId = 0` and `roundId = 0` by convention (un-routed) and are
+ *         not deduplicated at the contract level; callers are responsible for
+ *         single-dispatch from their own state machine.
+ *
+ *      3. **Event-complete records** — every slash emits `reason` (or `reasonHash`),
+ *         `claimId`, `roundId`, `executor`, `slashAmount`, and `settlementEpoch`.
+ *         The `SlashRecord` struct is extended with `roundId`.
+ *
+ *      4. **Appeal / finality gate** — when the optional `appealManager` is wired,
+ *         `slashVerifier` and `executePenalty` refuse to slash while the appeal round
+ *         for the target claim is open, reverting with `AppealPending`.  This
+ *         prevents slashing a verifier whose outcome may still be reversed by the
+ *         appeal layer.  The gate is enforced only when `appealManager != address(0)`
+ *         and only for calls that carry a nonzero `claimId`.
+ *
+ *      5. **Authorized caller** — every write path requires `RESOLVER_ROLE` (standard
+ *         slashing) or `CRITICAL_SLASHER_ROLE` (critical/100 % slash), both
+ *         governed through `ResolverRoleTimelock`.  Governance and admin paths are
+ *         protected by `onlyGovernanceOrAdmin`.
  */
 
 // Interface for the staking contract
@@ -69,6 +112,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
         string reason;
         address slashedBy;
         uint256 claimId;
+        uint256 roundId;        // V2-SC-082: verification round reference (0 = un-routed)
         uint256 settlementEpoch;
         bytes32 offenceId;
         bytes32 reasonHash;
@@ -163,6 +207,20 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
 
     /// @notice claimId + verifier + reasonHash => already processed.
     mapping(bytes32 => bool) public processedOffences;
+
+    // =========================================================================
+    // V2-SC-082: Appeal gate and penalty dedup state
+    // =========================================================================
+
+    /// @notice Optional appeal-manager adapter.  When set, `slashVerifier` and
+    ///         `executePenalty` refuse to proceed while the appeal round for the
+    ///         target claim is open.  Set to `address(0)` to disable the gate.
+    IAppealManager public appealManager;
+
+    /// @notice Dedup key for `executePenalty`: (verifier, offenceId, claimId, roundId).
+    /// @dev Prevents the same penalty (same offence on the same verifier for the same
+    ///      claim and round) from being executed twice.
+    mapping(bytes32 => bool) public processedPenaltyOffences;
     
     // Events
     event Slashed(
@@ -243,6 +301,8 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
     );
 
     event ReputationOracleUpdated(address newOracle);
+    /// @notice Emitted when the appeal-manager adapter is updated.
+    event AppealManagerUpdated(address indexed oldManager, address indexed newManager);
     
     // Custom errors for gas efficiency
     error UnauthorizedSlashing();
@@ -262,6 +322,10 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
     error VerifierBanned();
     error DuplicateSlash();
     error InvalidEpochDuration();
+    /// @notice The computed slash amount exceeds the verifier's canonical locked principal.
+    error SlashAmountExceedsExposure(uint256 requested, uint256 currentStake);
+    /// @notice Slashing is blocked while the appeal round for the target claim is open.
+    error AppealPending(uint256 claimId);
     
     /**
      * @dev Constructor sets up roles and initial configuration
@@ -332,16 +396,54 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
     }
 
     /**
-     * @dev Execute penalty for a registered offence
-     * @param verifier Verifier address to penalize
+     * @notice Execute penalty for a registered offence (un-routed path, claimId = 0).
+     * @dev Un-routed penalties are NOT deduplicated by claim/round; the caller's
+     *      state machine must prevent double-dispatch.  The appeal gate is not applied
+     *      when claimId is 0.  For claim-scoped enforcement use {executePenaltyForClaim}.
+     * @param verifier  Verifier address to penalize
      * @param offenceId Offence identifier hash
-     * @param reason Description of the event/offence
+     * @param reason    Description of the event/offence
      */
     function executePenalty(
         address verifier,
         bytes32 offenceId,
         string calldata reason
     ) external nonReentrant whenNotPaused {
+        _executePenaltyInternal(verifier, offenceId, reason, 0, 0);
+    }
+
+    /**
+     * @notice Execute a claim-scoped penalty for a registered offence.
+     * @dev V2-SC-082 hardening:
+     *      - Deduplication key is `(verifier, offenceId, claimId, roundId)`.
+     *      - Appeal gate: reverts with `AppealPending` when `claimId != 0` and the
+     *        optional `appealManager` reports the claim's appeal round is open.
+     *      - Conservation cap: reverts with `SlashAmountExceedsExposure` when the
+     *        computed slash amount would exceed current stake.
+     * @param verifier  Verifier address to penalize
+     * @param offenceId Offence identifier hash
+     * @param claimId   Claim the offence is linked to
+     * @param roundId   Verification round within the claim (0 = pre-round or unknown)
+     * @param reason    Description of the event/offence
+     */
+    function executePenaltyForClaim(
+        address verifier,
+        bytes32 offenceId,
+        uint256 claimId,
+        uint256 roundId,
+        string calldata reason
+    ) external nonReentrant whenNotPaused {
+        _executePenaltyInternal(verifier, offenceId, reason, claimId, roundId);
+    }
+
+    /// @dev Shared implementation for both executePenalty entry points.
+    function _executePenaltyInternal(
+        address verifier,
+        bytes32 offenceId,
+        string calldata reason,
+        uint256 claimId,
+        uint256 roundId
+    ) internal {
         if (!hasRole(RESOLVER_ROLE, msg.sender)) {
             revert UnauthorizedSlashing();
         }
@@ -364,12 +466,32 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             revert SlashSameBlock();
         }
 
+        // V2-SC-082: dedup for claim-scoped penalties
+        if (claimId != 0) {
+            bytes32 penaltyDedupKey = keccak256(abi.encode(verifier, offenceId, claimId, roundId));
+            if (processedPenaltyOffences[penaltyDedupKey]) {
+                revert DuplicateSlash();
+            }
+            processedPenaltyOffences[penaltyDedupKey] = true;
+
+            // V2-SC-082: appeal gate — block slashing while appeal is open
+            if (address(appealManager) != address(0)) {
+                if (appealManager.isAppealOpen(claimId)) {
+                    revert AppealPending(claimId);
+                }
+            }
+        }
+
         // Fetch current stake
         (uint256 currentStake,) = stakingContract.stakes(verifier);
 
         uint256 slashAmount = 0;
         if (currentStake > 0 && config.slashPercentage > 0) {
             slashAmount = (currentStake * config.slashPercentage) / 100;
+            // V2-SC-082: conservation cap — must not exceed locked principal
+            if (slashAmount > currentStake) {
+                revert SlashAmountExceedsExposure(slashAmount, currentStake);
+            }
         }
 
         lastSlashTime[verifier] = block.timestamp;
@@ -377,10 +499,10 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
 
         if (slashAmount > 0) {
             totalSlashed[verifier] += slashAmount;
-            
+
             // Execute slash (this transfers tokens to this contract)
             stakingContract.forceSlash(verifier, slashAmount);
-            
+
             // Route the slashed tokens to treasury split destinations
             _routeSlashedTokens(slashAmount);
         }
@@ -405,17 +527,13 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             try reputationOracle.getReputationScore(verifier) returns (uint256 score) {
                 previousScore = score;
                 uint256 reduction = (score * config.reputationPenalty) / 100;
-                if (reduction > score) {
-                    newScore = 0;
-                } else {
-                    newScore = score - reduction;
-                }
+                newScore = reduction > score ? 0 : score - reduction;
             } catch {}
         }
         reputationPenaltyScores[verifier] += config.reputationPenalty;
 
-        // Record execution record
-        bytes32 penaltyId = keccak256(abi.encodePacked(verifier, offenceId, block.timestamp, slashAmount));
+        // Record execution record (penaltyId includes claimId and roundId for uniqueness)
+        bytes32 penaltyId = keccak256(abi.encodePacked(verifier, offenceId, claimId, roundId, block.timestamp, slashAmount));
         penaltyRecords[penaltyId] = PenaltyRecord({
             verifier: verifier,
             offenceId: offenceId,
@@ -429,14 +547,15 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
         });
         verifierPenaltyIds[verifier].push(penaltyId);
 
-        // Record slash history for backward compatibility
+        // V2-SC-082: event-complete slash record including claimId and roundId
         slashHistory[verifier].push(SlashRecord({
             timestamp: block.timestamp,
             amount: slashAmount,
             percentage: config.slashPercentage,
             reason: reason,
             slashedBy: msg.sender,
-            claimId: 0,
+            claimId: claimId,
+            roundId: roundId,
             settlementEpoch: block.timestamp / settlementEpochDuration,
             offenceId: offenceId,
             reasonHash: keccak256(bytes(reason))
@@ -444,14 +563,14 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
 
         if (slashAmount > 0) {
             emit StakeSlashed(verifier, slashAmount, offenceId);
-            
+
             uint256 remainingStake = currentStake > slashAmount ? currentStake - slashAmount : 0;
             emit Slashed(verifier, slashAmount, config.slashPercentage, remainingStake, reason, msg.sender);
         }
         emit ReputationPenalized(verifier, previousScore, newScore);
         emit PenaltyExecuted(penaltyId);
     }
-    
+
     /**
      * @dev Slash a verifier's stake for incorrect verification
      * @param verifier Address of the verifier to slash
@@ -498,6 +617,11 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
         if (slashAmount == 0) {
             revert SlashAmountTooHigh();
         }
+
+        // V2-SC-082: conservation cap
+        if (slashAmount > currentStake) {
+            revert SlashAmountExceedsExposure(slashAmount, currentStake);
+        }
         
         lastSlashTime[verifier] = block.timestamp;
         lastSlashBlock[verifier] = block.number;
@@ -510,6 +634,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             reason: reason,
             slashedBy: msg.sender,
             claimId: 0,
+            roundId: 0,
             settlementEpoch: block.timestamp / settlementEpochDuration,
             offenceId: bytes32(0),
             reasonHash: keccak256(bytes(reason))
@@ -547,11 +672,21 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
 
     /**
      * @notice Slash a verifier for a unique claim offence.
-     * @dev Duplicate key is claimId + verifier + reasonHash.
+     * @dev V2-SC-082:
+     *      - Duplicate key is `(claimId, roundId, verifier, reasonHash)`.
+     *      - Appeal gate: reverts with `AppealPending` while the appeal round is open.
+     *      - Conservation cap: reverts with `SlashAmountExceedsExposure` when slash
+     *        would exceed current stake.
+     * @param verifier  Address of the verifier to slash
+     * @param claimId   Claim the offence is linked to
+     * @param roundId   Verification round within the claim (0 = pre-round or unknown)
+     * @param percentage Percentage of stake to slash (1..maxSlashPercentage)
+     * @param reason    Human-readable reason for slashing
      */
     function slashVerifier(
         address verifier,
         uint256 claimId,
+        uint256 roundId,
         uint256 percentage,
         string calldata reason
     ) external nonReentrant whenNotPaused {
@@ -560,8 +695,9 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
         }
 
         bytes32 reasonHash = keccak256(bytes(reason));
+        // V2-SC-082: dedup key includes roundId
         bytes32 offenceId = keccak256(
-            abi.encode(claimId, verifier, reasonHash)
+            abi.encode(claimId, roundId, verifier, reasonHash)
         );
 
         if (processedOffences[offenceId]) {
@@ -576,6 +712,13 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             revert NoStakeToSlash();
         }
 
+        // V2-SC-082: appeal gate — block slashing while appeal is open
+        if (address(appealManager) != address(0)) {
+            if (appealManager.isAppealOpen(claimId)) {
+                revert AppealPending(claimId);
+            }
+        }
+
         (uint256 currentStake,) = stakingContract.stakes(verifier);
         if (currentStake == 0) {
             revert NoStakeToSlash();
@@ -586,6 +729,11 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             revert SlashAmountTooHigh();
         }
 
+        // V2-SC-082: conservation cap
+        if (slashAmount > currentStake) {
+            revert SlashAmountExceedsExposure(slashAmount, currentStake);
+        }
+
         uint256 epoch = block.timestamp / settlementEpochDuration;
 
         processedOffences[offenceId] = true;
@@ -593,6 +741,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
         lastSlashBlock[verifier] = block.number;
         totalSlashed[verifier] += slashAmount;
 
+        // V2-SC-082: event-complete record with roundId
         slashHistory[verifier].push(SlashRecord({
             timestamp: block.timestamp,
             amount: slashAmount,
@@ -600,6 +749,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             reason: reason,
             slashedBy: msg.sender,
             claimId: claimId,
+            roundId: roundId,
             settlementEpoch: epoch,
             offenceId: offenceId,
             reasonHash: reasonHash
@@ -704,6 +854,11 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             revert SlashAmountTooHigh();
         }
 
+        // V2-SC-082: conservation cap
+        if (slashAmount > currentStake) {
+            revert SlashAmountExceedsExposure(slashAmount, currentStake);
+        }
+
         lastSlashTime[verifier] = block.timestamp;
         lastSlashBlock[verifier] = block.number;
         totalSlashed[verifier] += slashAmount;
@@ -715,6 +870,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             reason: reason,
             slashedBy: msg.sender,
             claimId: 0,
+            roundId: 0,
             settlementEpoch: block.timestamp / settlementEpochDuration,
             offenceId: bytes32(0),
             reasonHash: keccak256(bytes(reason))
@@ -791,6 +947,7 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             reason: reason,
             slashedBy: msg.sender,
             claimId: 0,
+            roundId: 0,
             settlementEpoch: block.timestamp / settlementEpochDuration,
             offenceId: bytes32(0),
             reasonHash: keccak256(bytes(reason))
@@ -1019,6 +1176,14 @@ contract VerifierSlashing is ResolverRoleTimelock, ReentrancyGuard, Pausable, Go
             IReputationPenaltyReceiver(newReceiver);
 
         emit ReputationPenaltyReceiverUpdated(oldReceiver, newReceiver);
+    }
+
+    /// @notice Configure the optional appeal-manager adapter.
+    /// @dev Governance-gated. Setting `address(0)` disables the appeal gate.
+    function setAppealManager(address newManager) external onlyGovernanceOrAdmin {
+        address oldManager = address(appealManager);
+        appealManager = IAppealManager(newManager);
+        emit AppealManagerUpdated(oldManager, newManager);
     }
 
     /// @notice Configure settlement epoch duration.

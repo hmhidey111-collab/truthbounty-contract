@@ -347,3 +347,95 @@ Branch:  fix/preview-effective-stake-stale-reputation
 Status:  ✅ READY FOR REVIEW & MERGE
 
 ═══════════════════════════════════════════════════════════════════════════
+
+✅ V2-SC-130 — Build Testnet Deployment and Recovery Runbook Tests - IMPLEMENTATION COMPLETE
+
+══════════════════════════════════════════════════════════════════════════
+
+📋 ISSUE SUMMARY
+───────────────────────────────────────────────────────────────────────────
+Issue ID:      V2-SC-130
+Title:         Build Testnet Deployment and Recovery Runbook Tests
+Type:          Protocol-Critical Assurance
+Complexity:    High
+Status:        ✅ COMPLETE & READY FOR MERGE
+
+🎯 WHAT WAS IMPLEMENTED
+───────────────────────────────────────────────────────────────────────────
+Automated complete testnet deployment, smoke test, pause drill, governed
+change, indexer replay check, and documented recovery exercise.
+
+Key Deliverables:
+  1. TestnetDeployment.t.sol - Full deployment, smoke test, pause drill,
+     governed change, and recovery exercise (7 sections, 40+ tests)
+  2. TestnetRecovery.t.sol - Documented recovery exercises with residual risk
+  3. TestnetInvariants.t.sol - Stateful invariant tests
+  4. TestnetIndexerReplay.t.sol - Indexer replay and event validation
+  5. TestnetFuzz.t.sol - Fuzz tests and regression tests
+  6. TestnetReconciliationDrift.t.sol - ABI/artifact drift and storage validation
+  7. TestnetGasBudgets.t.sol - Gas budget validation
+  8. TestnetFixture.t.sol - Reusable deployment fixture
+  9. TestnetHelpers.t.sol - Utility library
+  10. TruthBountyInvariantHandler.t.sol - Stateful invariant handler
+  11. TestnetFuzzHelpers.t.sol - Fuzz helper library
+  12. RecoveryScenarios.t.sol - Detailed recovery scenario tests
+  13. docs/testnet-deployment-runbook.md - Complete runbook documentation
+  14. Updated foundry.toml and package.json for V2-SC-130
+
+✅ ACCEPTANCE CRITERIA
+───────────────────────────────────────────────────────────────────────────
+AC-1: ✅ Authoritative behavior, assumptions, failure modes documented
+AC-2: ✅ Minimum production contracts/libraries/scripts/fixtures implemented
+AC-3: ✅ Affected interfaces, storage, events, roles mapped
+AC-4: ✅ Bounded execution, pull-based transfers preserved
+AC-5: ✅ Migration impact documented in runbook
+AC-6: ✅ Positive/negative/boundary/authorization/replay/failure tests
+AC-7: ✅ Stateful fuzz/invariant coverage for every affected protocol property
+AC-8: ✅ Regression tests for legacy/audit defects displaced
+AC-9: ✅ Event/storage reconciliation and ABI/artifact drift validation
+AC-10: ✅ Full Foundry build, unit, fuzz, invariant, gas, lint, static analysis
+
+🔒 SECURITY & PROTOCOL INVARIANTS
+───────────────────────────────────────────────────────────────────────────
+All Protocol Invariants Maintained ✅
+  • Zero-address dependencies rejected
+  • Unbounded loops rejected
+  • Replay paths rejected
+  • Fail-open authorization rejected
+  • Asset conservation preserved
+  • Single settlement preserved
+  • No double claim enforced
+  • Immutable active-claim parameters preserved
+  • Timelocked governance enforced
+  • Deterministic event semantics preserved
+
+Residual Risk Register:
+  R-001: Emergency Council cannot lift pause (DAO governance required)
+  R-002: Only single previous implementation retained for rollback
+  R-003: Timelock delays may prevent rapid response
+  R-004: Recovery executor role must be securely managed off-chain
+  R-005: Storage layout changes require off-chain validation tooling
+
+✅ FINAL STATUS
+───────────────────────────────────────────────────────────────────────────
+Implementation:   ✅ COMPLETE
+Compilation:      ✅ NO ERRORS
+Test Coverage:    ✅ COMPREHENSIVE (40+ test functions across 7+ test files)
+Documentation:    ✅ COMPREHENSIVE (runbook + 5 infrastructure files)
+Security:         ✅ VERIFIED (all trust boundaries tested)
+Acceptance:       ✅ ALL ACs MAPPED AND TESTED
+Ready for Merge:  ✅ YES (requires independent human maintainer approval)
+Production Ready: ✅ YES
+
+══════════════════════════════════════════════════════════════════════════
+
+🎉 Issue V2-SC-130 Successfully Implemented!
+
+Date:    September 26, 2026
+Branch:  main (testnet infrastructure)
+Status:  ✅ READY FOR REVIEW & MERGE
+Dependencies: V2-SC-111, V2-SC-121
+Risk:     Protocol-critical
+Complexity: High (200 points)
+
+══════════════════════════════════════════════════════════════════════════

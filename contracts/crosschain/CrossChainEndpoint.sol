@@ -6,6 +6,12 @@ import "./ICrossChainReceiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CrossChainEndpoint is ICrossChainEndpoint, Ownable {
+    /// @notice Maximum encoded cross-chain payload stored or executed by this endpoint.
+    /// @dev 4 KiB bounds storage expansion to 128 data slots per message.
+    uint256 public constant MAX_MESSAGE_PAYLOAD_BYTES = 4_096;
+    /// @notice Maximum gas forwarded to an untrusted cross-chain receiver callback.
+    uint256 public constant RECEIVER_CALL_GAS_LIMIT = 500_000;
+
     // Registry of supported chain IDs
     mapping(uint256 => bool) public supportedChains;
     
@@ -47,7 +53,10 @@ contract CrossChainEndpoint is ICrossChainEndpoint, Ownable {
         bytes calldata payload
     ) external onlySupportedChain(destinationChainId) returns (bytes32 messageId) {
         require(target != address(0), "Invalid target");
-        require(payload.length > 0, "Empty payload");
+        if (payload.length == 0) revert EmptyPayload();
+        if (payload.length > MAX_MESSAGE_PAYLOAD_BYTES) {
+            revert MessagePayloadTooLarge(payload.length, MAX_MESSAGE_PAYLOAD_BYTES);
+        }
 
         uint256 nonce = outboundNonce++;
         
@@ -84,6 +93,10 @@ contract CrossChainEndpoint is ICrossChainEndpoint, Ownable {
         require(message.destinationChainId == block.chainid, "Invalid destination chain");
         require(supportedChains[message.sourceChainId], "Unsupported source chain");
         require(!_processedMessages[message.messageId], "Message already processed");
+        if (message.payload.length == 0) revert EmptyPayload();
+        if (message.payload.length > MAX_MESSAGE_PAYLOAD_BYTES) {
+            revert MessagePayloadTooLarge(message.payload.length, MAX_MESSAGE_PAYLOAD_BYTES);
+        }
         
         // Verify message ID matches payload
         bytes32 expectedMessageId = keccak256(
@@ -101,32 +114,42 @@ contract CrossChainEndpoint is ICrossChainEndpoint, Ownable {
         _processedMessages[message.messageId] = true;
         _messages[message.messageId] = message; // Store received message for record
 
-        // Call target contract
-        (bool success, bytes memory returnData) = message.target.call(
-            abi.encodeWithSelector(
-                ICrossChainReceiver.handleCrossChainMessage.selector,
-                message.sourceChainId,
-                message.sender,
-                message.payload
-            )
+        // The receiver has no return value; retain only the first revert word for the event.
+        bytes memory callData = abi.encodeWithSelector(
+            ICrossChainReceiver.handleCrossChainMessage.selector,
+            message.sourceChainId,
+            message.sender,
+            message.payload
         );
+        (bool success, bytes32 reason) = _callReceiver(message.target, callData);
 
         if (success) {
             _messages[message.messageId].status = MessageStatus.Processed;
             emit CrossChainMessageProcessed(message.messageId);
         } else {
             _messages[message.messageId].status = MessageStatus.Rejected;
-            // Get revert reason if available, otherwise default
-            bytes32 reason;
-            if (returnData.length > 0) {
-                // Assembly to extract reason
-                assembly {
-                    reason := mload(add(returnData, 32))
-                }
-            } else {
-                reason = bytes32("Execution failed");
-            }
             emit CrossChainMessageRejected(message.messageId, reason);
+        }
+    }
+
+    function _callReceiver(address target, bytes memory callData) private returns (bool success, bytes32 reason) {
+        assembly {
+            let freePointer := mload(0x40)
+            mstore(0x40, add(freePointer, 0x20))
+            success := call(RECEIVER_CALL_GAS_LIMIT, target, 0, add(callData, 0x20), mload(callData), 0, 0)
+
+            if iszero(success) {
+                let returnSize := returndatasize()
+                if iszero(returnSize) {
+                    reason := "Execution failed"
+                }
+                if returnSize {
+                    let copySize := returnSize
+                    if gt(copySize, 0x20) { copySize := 0x20 }
+                    returndatacopy(freePointer, 0, copySize)
+                    reason := mload(freePointer)
+                }
+            }
         }
     }
 

@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "description": "Pinned toolchain and scope for the zero-new-finding static analysis baseline. Changing any value under toolchain or scope requires re-triaging config/slither-baseline.json in the same commit. Release SBOM and provenance attestation inputs are pinned here and must remain immutable across clean regeneration.",
+  "toolchain": {
+    "slither": "0.11.6",
+    "cryticCompile": "0.4.2",
+    "solc": "0.8.28",
+    "python": "3.12",
+    "setuptools": "75.8.0",
+    "wheel": "0.45.1"
+  },
+  "requirementsFile": "config/requirements-static-analysis.txt",
+  "releaseAttestation": {
+    "sbomFile": "out/release/sbom.spdx.json",
+    "provenanceFile": "out/release/provenance.intoto.jsonl",
+    "sourceHashFile": "out/release/source-hashes.json",
+    "artifactDigestFile": "out/release/artifact-digests.json",
+    "licenseFile": "out/release/licenses.json"
+  },
+  "scope": {
+    "target": "contracts/v2",
+    "filterPaths": [
+      "lib",
+      "node_modules",
+      "test",
+      "script",
+      "contracts/mocks",
+      "contracts/upgrade",
+      "contracts/bootstrap",
+      "contracts/performance"
+    ],
+    "excludeBySeverity": []
+  },
+  "baselineFile": "config/slither-baseline.json",
+  "pinnedInputs": {
+    "npmLockfile": "package-lock.json",
+    "foundryLockfile": "foundry.lock",
+    "submoduleConfig": ".gitmodules",
+    "compilerVersion": "0.8.28",
+    "actionsRef": ".github/workflows",
+    "scriptsDir": "script"
+  },
+  "disallowedInputs": [
+    "unpinned-source",
+    "missing-license",
+    "checksum-mismatch"
+  ],
+  "reportFile": "out/static-analysis/slither-report.json",
+  "suppressibleDispositions": [
+    "false-positive",
+    "accepted-risk"
+  ],
+  "minJustificationLength": 80,
+  "exceptionPolicy": {
+    "requireExpiry": true,
+    "maxExpiryDays": 180,
+    "allowWildcardPaths": false,
+    "requiredFields": [
+      "id",
+      "finding",
+      "path",
+      "reason",
+      "owner",
+      "expiresAt"
+    ]
+  },
+  "accessControlEventPolicy": {
+    "requireEventsForAccessControlMutations": true,
+    "coveredMutations": [
+      "zero-address-check",
+      "relayer-change",
+      "timelock-cooldown-change",
+      "allowance-change"
+    ],
+    "requiredEvents": [
+      "RelayerChanged",
+      "TimelockCooldownChanged",
+      "AllowanceChanged"
+    ]
+  },
+  "zeroAddressPolicy": {
+    "allowZeroAddress": false,
+    "requiredChecks": [
+      "address(0) != newAddress",
+      "address(0) != relayer",
+      "address(0) != governance"
+    ]
+  },
+  "accessControlPolicy": {
+    "preserveTopology": "V2 Optimism/EVM",
+    "governanceAuthority": "timelock",
+    "scopedPauseModel": true,
+    "deterministicArtifacts": true,
+    "consumerInterfaceHandoffs": true
+  },
+  "arithmeticPolicy": {
+    "exactArithmetic": true,
+    "allowUnsafeRounding": false
+  },
+  "securityGardPolicy": {
+    "weakenFailingGate": false,
+    "zeroNewFindings": true
+  }
+}

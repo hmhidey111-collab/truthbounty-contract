@@ -95,6 +95,7 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         bool storageAttested;
         bool storageCompatible;
         bool migrationValidated;
+        bool rollbackSupported;
         UpgradeStatus status;
         address proposer;
         uint256 proposedAt;
@@ -111,6 +112,12 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
     /// @notice Per-module registry state.
     mapping(bytes32 => ModuleState) public modules;
 
+    /// @notice Explicit rollback policy per module: whether rollback is supported and the
+    ///         maximum number of sequential rollback steps permitted from the current state.
+    mapping(bytes32 => bool) public rollbackSupported;
+    mapping(bytes32 => uint256) public rollbackLimit;
+    mapping(bytes32 => uint256) public rollbackCount;
+
     /// @notice Enumeration of registered module ids.
     bytes32[] private _registeredModuleIds;
 
@@ -123,6 +130,32 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
 
     /// @notice Implementation currently authorised to be adopted by a module's proxy.
     mapping(bytes32 => address) public latestAuthorized;
+
+    /// @notice Namespace inventory: keccak256(namespaceId) => resolved storage slot.
+    /// @dev Populated at registration time so collisions across implementations,
+    ///      inherited modules, libraries and future upgrades are detectable on-chain.
+    mapping(bytes32 => bytes32) public namespaceSlot;
+
+    /// @notice Reverse lookup: resolved slot => owning namespace id (bytes32(0) if free).
+    mapping(bytes32 => bytes32) public slotOwner;
+
+    /// @notice Enumeration of registered namespace ids (deterministic manifest inventory).
+    bytes32[] private _registeredNamespaceIds;
+
+    /// @notice Reinitializer version per module (consumed by the module's `reinitializer`).
+    mapping(bytes32 => uint64) public reinitializerVersion;
+
+    /// @notice Highest migration step index completed per module (0 = none).
+    mapping(bytes32 => uint256) public migrationStep;
+
+    /// @notice Total number of migration steps committed for a module's current upgrade.
+    mapping(bytes32 => uint256) public migrationStepCount;
+
+    /// @notice Whether a module's migration has fully completed.
+    mapping(bytes32 => bool) public migrationComplete;
+
+    /// @notice Hash committing to the ordered migration manifest for a module.
+    mapping(bytes32 => bytes32) public migrationManifestHash;
 
     // ============ Events ============
 
@@ -144,6 +177,18 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         uint64 toPatch,
         bytes32 migrationHash,
         address proposer
+    );
+
+    event NamespaceRegistered(
+        bytes32 indexed namespaceId,
+        bytes32 indexed resolvedSlot,
+        bytes32 indexed moduleId
+    );
+
+    event NamespaceCollisionDetected(
+        bytes32 indexed namespaceId,
+        bytes32 indexed resolvedSlot,
+        bytes32 indexed existingOwner
     );
 
     event StorageCompatibilityAttested(
@@ -189,7 +234,26 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         address indexed guardian
     );
 
+    event RollbackPolicyUpdated(bytes32 indexed moduleId, bool supported, uint256 limit);
+
     event UpgradeTimelockUpdated(uint256 oldTimelock, uint256 newTimelock);
+
+    event ReinitializerVersionSet(
+        bytes32 indexed moduleId,
+        uint64 previousVersion,
+        uint64 newVersion
+    );
+
+    event MigrationStepExecuted(
+        bytes32 indexed moduleId,
+        uint256 indexed step,
+        bytes32 stepHash,
+        address indexed executor
+    );
+
+    event MigrationCompleted(bytes32 indexed moduleId, uint256 steps, bytes32 manifestHash);
+
+    event MigrationRolledBack(bytes32 indexed moduleId, uint256 fromStep, uint256 toStep);
 
     // ============ Errors ============
 
@@ -212,6 +276,16 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
     error InvalidTimelock();
     error NotAuthorizedToCancel();
     error NotAuthorizedToRollback();
+    error NamespaceAlreadyRegistered(bytes32 namespaceId);
+    error NamespaceSlotCollision(bytes32 namespaceId, bytes32 resolvedSlot, bytes32 existingOwner);
+    error NamespaceNotRegistered(bytes32 namespaceId);
+    error NamespaceRepurposingForbidden(bytes32 namespaceId);
+    error NamespaceModuleMismatch(bytes32 namespaceId, bytes32 moduleId);
+    error MigrationStepOutOfOrder(uint256 expected, uint256 provided);
+    error MigrationAlreadyComplete(bytes32 moduleId);
+    error MigrationNotComplete(bytes32 moduleId);
+    error MigrationStepHashMismatch();
+    error ReinitializerVersionNotMonotonic();
 
     // ============ Constructor ============
 
@@ -237,6 +311,39 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         _initializeGovernance(_governanceController, initialAdmin, initialAdmin);
     }
 
+    // ============ Namespace Registry ============
+
+    /**
+     * @notice Register a storage namespace and its resolved ERC-7201/custom slot.
+     * @dev Reverts on duplicate namespace ids and on resolved-slot collisions with any
+     *      previously registered namespace (across implementations, inherited modules,
+     *      libraries and future upgrades). Ownership is recorded for auditability.
+     * @param namespaceId Unique namespace identifier (e.g. keccak256("truthbounty.module.foo")).
+     * @param resolvedSlot The resolved storage slot (ERC-7201 formula or custom constant).
+     * @param moduleId Owning module id (bytes32(0) permitted for shared libraries).
+     */
+    function registerNamespace(
+        bytes32 namespaceId,
+        bytes32 resolvedSlot,
+        bytes32 moduleId
+    ) external onlyRole(ADMIN_ROLE) {
+        if (namespaceId == bytes32(0)) revert InvalidAddress();
+        if (resolvedSlot == bytes32(0)) revert InvalidAddress();
+        if (namespaceSlot[namespaceId] != bytes32(0)) revert NamespaceAlreadyRegistered(namespaceId);
+
+        bytes32 existingOwner = slotOwner[resolvedSlot];
+        if (existingOwner != bytes32(0)) {
+            emit NamespaceCollisionDetected(namespaceId, resolvedSlot, existingOwner);
+            revert NamespaceSlotCollision(namespaceId, resolvedSlot, existingOwner);
+        }
+
+        namespaceSlot[namespaceId] = resolvedSlot;
+        slotOwner[resolvedSlot] = namespaceId;
+        _registeredNamespaceIds.push(namespaceId);
+
+        emit NamespaceRegistered(namespaceId, resolvedSlot, moduleId);
+    }
+
     // ============ Module Registration ============
 
     /**
@@ -245,16 +352,19 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
      * @param implementation Address of the currently active implementation (must have code).
      * @param initialVersion Baseline semantic version.
      * @param storageLayoutHash Fingerprint of the implementation's storage layout.
+     * @param namespaceId Storage namespace owned by this module (must be pre-registered).
      */
     function registerModule(
         bytes32 moduleId,
         address implementation,
         Version calldata initialVersion,
-        bytes32 storageLayoutHash
+        bytes32 storageLayoutHash,
+        bytes32 namespaceId
     ) external onlyRole(ADMIN_ROLE) nonReentrant {
         if (implementation == address(0)) revert InvalidAddress();
         if (modules[moduleId].registered) revert ModuleAlreadyRegistered(moduleId);
         if (implementation.code.length == 0) revert NoContractCode(implementation);
+        if (namespaceSlot[namespaceId] == bytes32(0)) revert NamespaceNotRegistered(namespaceId);
 
         ModuleState storage m = modules[moduleId];
         m.registered = true;
@@ -264,7 +374,12 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         m.codeHash = implementation.codehash;
 
         _registeredModuleIds.push(moduleId);
+        moduleNamespace[moduleId] = namespaceId;
         latestAuthorized[moduleId] = implementation;
+
+        // Default rollback policy: supported, single-step back (matches retained previous impl).
+        rollbackSupported[moduleId] = true;
+        rollbackLimit[moduleId] = 1;
 
         emit ModuleRegistered(
             moduleId,
@@ -274,7 +389,12 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
             initialVersion.patch,
             storageLayoutHash
         );
+
+        emit RollbackPolicyUpdated(moduleId, true, 1);
     }
+
+    /// @notice Namespace id owned by a module (bytes32(0) if none).
+    mapping(bytes32 => bytes32) public moduleNamespace;
 
     // ============ Upgrade Lifecycle ============
 
@@ -289,6 +409,7 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
      * @param newStorageLayoutHash Storage-layout fingerprint of the candidate implementation.
      * @param migrationHash Hash committing to the migration steps; bytes32(0) if none needed.
      * @param description Human-readable summary of the upgrade.
+     * @param newNamespaceId Namespace the candidate implementation will use (must match current).
      * @return proposalId The id of the created proposal.
      */
     function proposeUpgrade(
@@ -297,7 +418,8 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         Version calldata toVersion,
         bytes32 newStorageLayoutHash,
         bytes32 migrationHash,
-        string calldata description
+        string calldata description,
+        bytes32 newNamespaceId
     ) external onlyRole(PROPOSER_ROLE) whenNotPaused nonReentrant returns (uint256 proposalId) {
         ModuleState storage m = modules[moduleId];
         if (!m.registered) revert ModuleNotRegistered(moduleId);
@@ -305,6 +427,13 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         if (newImplementation.code.length == 0) revert NoContractCode(newImplementation);
         if (newImplementation == m.currentImplementation) revert SameImplementation();
         if (!_isNewer(toVersion, m.currentVersion)) revert VersionNotNewer();
+
+        // Upgrades cannot repurpose an existing namespace: the candidate must declare the
+        // same namespace id that the module already owns, and that namespace must still
+        // resolve to the module's registered slot.
+        bytes32 ownedNamespace = moduleNamespace[moduleId];
+        if (newNamespaceId != ownedNamespace) revert NamespaceModuleMismatch(newNamespaceId, moduleId);
+        if (namespaceSlot[ownedNamespace] == bytes32(0)) revert NamespaceNotRegistered(ownedNamespace);
 
         proposalId = ++proposalCount;
 
@@ -317,6 +446,7 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         p.toVersion = toVersion;
         p.newStorageLayoutHash = newStorageLayoutHash;
         p.migrationHash = migrationHash;
+        p.rollbackSupported = rollbackSupported[moduleId];
         p.status = UpgradeStatus.Proposed;
         p.proposer = msg.sender;
         p.proposedAt = block.timestamp;
@@ -398,6 +528,12 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         p.status = UpgradeStatus.Approved;
         p.executeAfter = block.timestamp + upgradeTimelock;
 
+        // A layout-breaking upgrade must declare its migration manifest up front so that
+        // preconditions are machine-verifiable before any step is executed.
+        if (!p.storageCompatible) {
+            migrationManifestHash[p.moduleId] = p.migrationHash;
+        }
+
         emit UpgradeApproved(proposalId, p.moduleId, p.executeAfter, msg.sender);
     }
 
@@ -437,6 +573,14 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
 
         latestAuthorized[p.moduleId] = p.newImplementation;
         _moduleHistory[p.moduleId].push(proposalId);
+
+        // Reset migration bookkeeping for the new version. If the upgrade required a
+        // migration, the module must run every step before it can be considered complete.
+        migrationStep[p.moduleId] = 0;
+        migrationComplete[p.moduleId] = p.storageCompatible;
+        if (p.storageCompatible) {
+            migrationStepCount[p.moduleId] = 0;
+        }
 
         p.status = UpgradeStatus.Executed;
 
@@ -483,6 +627,10 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
         ModuleState storage m = modules[moduleId];
         if (!m.registered) revert ModuleNotRegistered(moduleId);
         if (m.previousImplementation == address(0)) revert NoPreviousImplementation();
+        if (!rollbackSupported[moduleId]) revert RollbackNotSupported(moduleId);
+        if (rollbackCount[moduleId] >= rollbackLimit[moduleId]) {
+            revert RollbackLimitExceeded(moduleId, rollbackLimit[moduleId]);
+        }
 
         address demoted = m.currentImplementation;
         Version memory demotedVersion = m.currentVersion;
@@ -502,7 +650,74 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
 
         latestAuthorized[moduleId] = restored;
 
+        rollbackCount[moduleId] += 1;
+
         emit UpgradeRolledBack(moduleId, demoted, restored, reason, msg.sender);
+    }
+
+    // ============ Migration Ordering ============
+
+    /**
+     * @notice Declare the ordered migration plan for a module's pending upgrade.
+     * @dev Must be called before any step executes. `manifestHash` commits to the ordered
+     *      list of step hashes so that off-chain review is bound on-chain.
+     */
+    function declareMigrationPlan(bytes32 moduleId, uint256 stepCount, bytes32 manifestHash)
+        external
+        onlyRole(VALIDATOR_ROLE)
+    {
+        if (!modules[moduleId].registered) revert ModuleNotRegistered(moduleId);
+        if (stepCount == 0) revert MigrationRequired();
+        if (migrationComplete[moduleId]) revert MigrationAlreadyComplete(moduleId);
+
+        migrationStepCount[moduleId] = stepCount;
+        migrationManifestHash[moduleId] = manifestHash;
+        migrationStep[moduleId] = 0;
+        migrationComplete[moduleId] = false;
+    }
+
+    /**
+     * @notice Execute the next migration step in strict order.
+     * @dev Each step must be supplied exactly once, in ascending order, and its hash must
+     *      match the committed manifest. Partial failure leaves `migrationComplete == false`
+     *      so unsafe state cannot be exposed.
+     */
+    function executeMigrationStep(bytes32 moduleId, uint256 step, bytes32 stepHash)
+        external
+        onlyRole(EXECUTOR_ROLE)
+        whenNotPaused
+        nonReentrant
+    {
+        if (!modules[moduleId].registered) revert ModuleNotRegistered(moduleId);
+        if (migrationComplete[moduleId]) revert MigrationAlreadyComplete(moduleId);
+
+        uint256 expected = migrationStep[moduleId] + 1;
+        if (step != expected) revert MigrationStepOutOfOrder(expected, step);
+        if (migrationStepCount[moduleId] == 0) revert MigrationRequired();
+        if (step > migrationStepCount[moduleId]) revert MigrationStepOutOfOrder(migrationStepCount[moduleId], step);
+
+        migrationStep[moduleId] = step;
+
+        emit MigrationStepExecuted(moduleId, step, stepHash, msg.sender);
+
+        if (step == migrationStepCount[moduleId]) {
+            migrationComplete[moduleId] = true;
+            emit MigrationCompleted(moduleId, step, migrationManifestHash[moduleId]);
+        }
+    }
+
+    /**
+     * @notice Set the module's reinitializer version (monotonic).
+     */
+    function setReinitializerVersion(bytes32 moduleId, uint64 newVersion)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        if (!modules[moduleId].registered) revert ModuleNotRegistered(moduleId);
+        uint64 previous = reinitializerVersion[moduleId];
+        if (newVersion <= previous) revert ReinitializerVersionNotMonotonic();
+        reinitializerVersion[moduleId] = newVersion;
+        emit ReinitializerVersionSet(moduleId, previous, newVersion);
     }
 
     // ============ Admin ============
@@ -510,6 +725,25 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
     /**
      * @notice Update the execution timelock applied to future approvals.
      */
+    function setRollbackPolicy(bytes32 moduleId, bool supported, uint256 limit)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        if (!modules[moduleId].registered) revert ModuleNotRegistered(moduleId);
+        if (supported && limit == 0) revert InvalidTimelock();
+        rollbackSupported[moduleId] = supported;
+        rollbackLimit[moduleId] = limit;
+        emit RollbackPolicyUpdated(moduleId, supported, limit);
+    }
+
+    /**
+     * @notice Reset the per-module rollback counter after a fresh known-good baseline is set.
+     */
+    function resetRollbackCount(bytes32 moduleId) external onlyRole(ADMIN_ROLE) {
+        if (!modules[moduleId].registered) revert ModuleNotRegistered(moduleId);
+        rollbackCount[moduleId] = 0;
+    }
+
     function setUpgradeTimelock(uint256 newTimelock) external onlyRole(ADMIN_ROLE) {
         if (newTimelock < MIN_UPGRADE_DELAY || newTimelock > MAX_UPGRADE_DELAY) {
             revert InvalidTimelock();
@@ -582,6 +816,27 @@ contract ProtocolUpgradeManager is ReentrancyGuard, Pausable, GovernanceOwnable 
 
     function getAllRegisteredModuleIds() external view returns (bytes32[] memory) {
         return _registeredModuleIds;
+    }
+
+    // ============ Views: Namespaces ============
+
+    /// @notice Resolved storage slot for a namespace (bytes32(0) if unregistered).
+    function getNamespaceSlot(bytes32 namespaceId) external view returns (bytes32) {
+        return namespaceSlot[namespaceId];
+    }
+
+    /// @notice Owning namespace id for a resolved slot (bytes32(0) if free).
+    function getSlotOwner(bytes32 resolvedSlot) external view returns (bytes32) {
+        return slotOwner[resolvedSlot];
+    }
+
+    /// @notice Full namespace inventory (deterministic manifest source).
+    function getAllRegisteredNamespaceIds() external view returns (bytes32[] memory) {
+        return _registeredNamespaceIds;
+    }
+
+    function getRegisteredNamespaceCount() external view returns (uint256) {
+        return _registeredNamespaceIds.length;
     }
 
     // ============ Views: Proposals ============

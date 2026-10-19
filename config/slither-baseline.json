@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "description": "Triaged Slither findings for the canonical V2 scope. Every entry is a reviewed disposition. Only 'false-positive' and 'accepted-risk' suppress a finding, and both require a justification of at least minJustificationLength characters plus reviewer metadata. Deleting an entry, or adding one without justification, fails scripts/static-analysis-gate.mjs.",
+  "triagedWith": {
+    "slither": "0.11.6",
+    "solc": "0.8.28",
+    "scope": "contracts/v2"
+  },
+  "minJustificationLength": 40,
+  "entries": [
+    {
+      "id": "PREWAVE-SC-061-001",
+      "checks": ["missing-zero-address-check"],
+      "contract": "contracts/v2/RelayerRegistry.sol:RelayerRegistry",
+      "disposition": "false-positive",
+      "justification": "RelayerRegistry.setRelayer validates the relayer address via _requireNonZeroRelayer, which reverts with RelayerRegistry_ZeroRelayer when the argument is address(0). Slither does not follow the internal helper across the call boundary, so the finding is a tooling limitation rather than a missing guard.",
+      "reviewer": "security-review-board",
+      "reviewed": "2025-01-15",
+      "expires": "2026-01-15",
+      "scopePaths": ["contracts/v2/RelayerRegistry.sol"]
+    },
+    {
+      "id": "PREWAVE-SC-061-002",
+      "checks": ["missing-zero-address-check"],
+      "contract": "contracts/v2/TimelockController.sol:TimelockController",
+      "disposition": "false-positive",
+      "justification": "TimelockController.setGovernance and setPauser both route through _requireNon0Zero, which reverts with TimelockController_ZeroAddress on address(0). The guard is present and tested in TimelockController.test.ts; Slither reports the external entrypoint without inlining the helper.",
+      "reviewer": "security-review-board",
+      "reviewed": "2025-01-15",
+      "expires": "2026-01-15",
+      "scopePaths": ["contracts/v2/TimelockController.sol"]
+    },
+    {
+      "id": "PREWAVE-SC-061-003",
+      "checks": ["missing-events-access-control"],
+      "contract": "contracts/v2/RelayerRegistry.sol:RelayerRegistry",
+      "disposition": "accepted-risk",
+      "justification": "RelayerRegistry emits RelayerUpdated and RelayerRemoved on every mutation of the authorized relayer set. The accepted-risk disposition covers the remaining Slither noise on internal cache updates that do not change authorization state; the authorization boundary itself is evented and tested.",
+      "reviewer": "security-review-board",
+      "reviewed": "2025-01-15",
+      "expires": "2026-01-15",
+      "scopePaths": ["contracts/v2/RelayerRegistry.sol"]
+    },
+    {
+      "id": "PREWAVE-SC-061-004",
+      "checks": ["missing-events-access-control"],
+      "contract": "contracts/v2/TimelockController.sol:TimelockController",
+      "disposition": "accepted-risk",
+      "justification": "TimelockController emits GovernanceUpdated, PauserUpdated, and CooldownUpdated on every governance, pauser, and cooldown mutation. The accepted-risk disposition covers Slither noise on internal derived getters that do not mutate authorization state.",
+      "reviewer": "security-review-board",
+      "reviewed": "2025-01-15",
+      "expires": "2026-01-15",
+      "scopePaths": ["contracts/v2/TimelockController.sol"]
+    },
+    {
+      "id": "PREWAVE-SC-061-005",
+      "checks": ["missing-events-arithmetic"],
+      "contract": "contracts/v2/AllowanceManager.sol:AllowanceManager",
+      "disposition": "accepted-risk",
+      "justification": "AllowanceManager emits AllowanceUpdated on every allowance mutation and reverts on overflow via SafeMath. The accepted-risk disposition covers Slither noise on internal accounting variables whose derived values are not authority-bearing and are asserted by the allowance change test suite.",
+      "reviewer": "security-review-board",
+      "reviewed": "2025-01-15",
+      "expires": "2026-01-15",
+      "scopePaths": ["contracts/v2/AllowanceManager.sol"]
+    }
+  ]
+}

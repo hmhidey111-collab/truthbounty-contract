@@ -486,6 +486,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         101,
+        0,
         percentage,
         "Dishonest verification"
       );
@@ -506,6 +507,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         202,
+        0,
         10,
         "Collusive vote"
       );
@@ -514,6 +516,7 @@ describe("VerifierSlashing", function () {
         slashing.connect(settlement).slashVerifier(
           verifier1.address,
           202,
+          0,
           10,
           "Collusive vote"
         )
@@ -527,6 +530,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         303,
+        0,
         10,
         "Incorrect vote"
       );
@@ -535,6 +539,7 @@ describe("VerifierSlashing", function () {
         slashing.connect(settlement).slashVerifier(
           verifier1.address,
           303,
+          0,
           10,
           "Fraudulent evidence"
         )
@@ -553,6 +558,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         claimId,
+        0,
         percentage,
         reason
       );
@@ -593,6 +599,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         claimId,
+        0,
         percentage,
         reason
       );
@@ -627,6 +634,7 @@ describe("VerifierSlashing", function () {
       await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         606,
+        0,
         100,
         "Catastrophic protocol violation"
       );
@@ -651,6 +659,7 @@ describe("VerifierSlashing", function () {
       const tx = await slashing.connect(settlement).slashVerifier(
         verifier1.address,
         707,
+        0,
         10,
         "Epoch test"
       );
@@ -666,6 +675,263 @@ describe("VerifierSlashing", function () {
       expect(history[0].settlementEpoch).to.equal(
         BigInt(Math.floor(block!.timestamp / 86400))
       );
+    });
+  });
+
+  describe("SC-082 Bound Slashing Amounts and Authority", function () {
+    it("Should revert on zero slash percentage", async function () {
+      const { slashing, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          0,
+          "zero slash"
+        )
+      ).to.be.revertedWithCustomError(slashing, "InvalidPercentage");
+    });
+
+    it("Should revert on over-max slash percentage", async function () {
+      const { slashing, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          51,
+          "over max"
+        )
+      ).to.be.revertedWithCustomError(slashing, "InvalidPercentage");
+    });
+
+    it("Should allow max (100%) slash and never exceed canonical exposure", async function () {
+      const { slashing, staking, admin, settlement, verifier1 } =
+        await loadFixture(deploySlashingFixture);
+
+      await slashing.connect(admin).updateSlashingConfig(100, 0);
+
+      const [beforeStake] = await staking.stakes(verifier1.address);
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          100,
+          "full confiscation"
+        )
+      ).to.emit(slashing, "VerifierSlashed");
+
+      const [afterStake] = await staking.stakes(verifier1.address);
+      expect(afterStake).to.equal(0);
+      expect(await slashing.totalSlashed(verifier1.address)).to.equal(
+        beforeStake
+      );
+
+      // Nothing left to slash: conservation enforced (no stake = no slash).
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "second slash"
+        )
+      ).to.be.revertedWithCustomError(slashing, "NoStakeToSlash");
+    });
+
+    it("Should not slash the same offence twice (round-scoped dedup)", async function () {
+      const { slashing, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      await slashing.connect(settlement).slashVerifier(
+        verifier1.address,
+        101,
+        5,
+        25,
+        "repeat offence"
+      );
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          101,
+          5,
+          25,
+          "repeat offence"
+        )
+      ).to.be.revertedWithCustomError(slashing, "DuplicateSlash");
+    });
+
+    it("Should treat the same offence in a different round as a distinct slashable event", async function () {
+      const { slashing, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      await slashing.connect(settlement).slashVerifier(
+        verifier1.address,
+        101,
+        1,
+        25,
+        "round bound"
+      );
+      // Same claim + reason, different round => not a duplicate.
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          101,
+          2,
+          25,
+          "round bound"
+        )
+      ).to.not.be.reverted;
+
+      expect(await slashing.getSlashCount(verifier1.address)).to.equal(2);
+    });
+
+    it("Should reject an unauthorized caller", async function () {
+      const { slashing, unauthorized, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      await expect(
+        slashing.connect(unauthorized).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "unauthorized"
+        )
+      ).to.be.revertedWithCustomError(slashing, "UnauthorizedSlashing");
+    });
+
+    it("Should block slashing while an appeal is pending (appeal gate)", async function () {
+      const { slashing, admin, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      const AppealManager = await ethers.getContractFactory("MockAppealManager");
+      const appealManager = await AppealManager.deploy();
+      await slashing.connect(admin).setAppealManager(
+        await appealManager.getAddress()
+      );
+
+      await appealManager.setAppealOpen(1, true);
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "pending appeal"
+        )
+      ).to.be.revertedWithCustomError(slashing, "AppealPending");
+
+      // A claim with no open appeal remains slashable.
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          2,
+          0,
+          10,
+          "no appeal"
+        )
+      ).to.not.be.reverted;
+    });
+
+    it("Should allow slashing once the appeal path is final / not open", async function () {
+      const { slashing, admin, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      const AppealManager = await ethers.getContractFactory("MockAppealManager");
+      const appealManager = await AppealManager.deploy();
+      await slashing.connect(admin).setAppealManager(
+        await appealManager.getAddress()
+      );
+
+      await appealManager.setAppealOpen(1, true);
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "pending"
+        )
+      ).to.be.revertedWithCustomError(slashing, "AppealPending");
+
+      await appealManager.setAppealOpen(1, false); // final
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "final"
+        )
+      ).to.not.be.reverted;
+    });
+
+    it("Should not apply the appeal gate when appealManager is unset", async function () {
+      const { slashing, settlement, verifier1 } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      expect(await slashing.appealManager()).to.equal(ethers.ZeroAddress);
+
+      await expect(
+        slashing.connect(settlement).slashVerifier(
+          verifier1.address,
+          1,
+          0,
+          10,
+          "no manager"
+        )
+      ).to.not.be.reverted;
+    });
+
+    it("Should allow governance to set the appeal manager and emit AppealManagerUpdated", async function () {
+      const { slashing, admin } = await loadFixture(deploySlashingFixture);
+
+      const AppealManager = await ethers.getContractFactory("MockAppealManager");
+      const appealManager = await AppealManager.deploy();
+
+      await expect(
+        slashing.connect(admin).setAppealManager(
+          await appealManager.getAddress()
+        )
+      )
+        .to.emit(slashing, "AppealManagerUpdated")
+        .withArgs(ethers.ZeroAddress, await appealManager.getAddress());
+
+      expect(await slashing.appealManager()).to.equal(
+        await appealManager.getAddress()
+      );
+    });
+
+    it("Should reject setting appeal manager from non-governance", async function () {
+      const { slashing, unauthorized } = await loadFixture(
+        deploySlashingFixture
+      );
+
+      const AppealManager = await ethers.getContractFactory("MockAppealManager");
+      const appealManager = await AppealManager.deploy();
+
+      await expect(
+        slashing.connect(unauthorized).setAppealManager(
+          await appealManager.getAddress()
+        )
+      ).to.be.reverted;
     });
   });
 

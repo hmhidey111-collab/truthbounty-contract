@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "issue": "PREWAVE-SC-062",
+  "description": "Per-contract and proxy deployment size budgets. Network limit is 24,576 bytes (EIP-170). Warning threshold and hard limit include a safety margin so that organic growth is caught before the network rejects the transaction. All budgets are in bytes.",
+  "networkLimitBytes": 24576,
+  "defaults": {
+    "warningThresholdBytes": 22000,
+    "hardLimitBytes": 23500,
+    "initcodeWarningBytes": 46000,
+    "initcodeHardLimitBytes": 49000
+  },
+  "contracts": {
+    "ClaimRegistry": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TruthBountyWeighted": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TruthBountyClaims": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "VerifierSlashing": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "WeightedStaking": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EvidenceManager": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ReputationEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ReputationUpdateEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ReputationSnapshotEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "GovernanceController": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EmergencyController": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TreasuryManagement": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TreasuryAccounting": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TreasuryInsolvencyModel": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "FeeManager": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "InsuranceFund": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "RewardEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ProtocolUpgradeManager": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "UpgradeController": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ModuleRegistry": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EvidenceRegistry": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "StakeVault": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EmergencyGatekeeper": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "FinalRewardAllocator": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TruthBountyGovernor": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "AppealVerificationRound": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "VerificationRoundManager": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "VerificationAggregator": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "DisputeResolution": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "BootstrapController": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ChainConfigRegistry": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "DeploymentConfigValidator": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EIP712Verifier": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "TokenomicsEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ProvisionalSettlementEngine": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "ParameterVersionRegistry": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "GovernanceOwnable": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "implementation"
+    },
+    "EconomicSimulation": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "simulation",
+      "note": "Simulation-only contract; not deployed to mainnet, but still budget-gated for test-env sanity."
+    },
+    "TimelockOwnedProxyAdmin": {
+      "warningThresholdBytes": 5000,
+      "hardLimitBytes": 7000,
+      "category": "proxy-admin"
+    },
+    "VersionRegistry": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "registry"
+    },
+    "StorageCompatibilityValidator": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "registry"
+    },
+    "Create2AddressPlanner": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "deployment"
+    },
+    "PostDeploymentRoleCheck": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "deployment"
+    },
+    "DeploymentAttestationRegistry": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "deployment"
+    },
+    "MigrationManager": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "deployment"
+    },
+    "GasBudgetRegistry": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "performance"
+    },
+    "V2EventCompleteness": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "library"
+    },
+    "V2Lifecycle": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "library"
+    },
+    "V2Errors": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "library"
+    },
+    "V2TimeBounds": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "library"
+    },
+    "PauseMatrix": {
+      "warningThresholdBytes": 22000,
+      "hardLimitBytes": 23500,
+      "category": "library"
+    },
+    "ProtocolModel": {
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "category": "library"
+    },
+    "V2Precision": {
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "category": "library"
+    },
+    "V2SafeCast": {
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "category": "library"
+    },
+    "AmountUnits": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "library"
+    },
+    "BoundedSafeERC20": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "library"
+    },
+    "ReleaseReproducibility": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "library"
+    },
+    "CanonicalEventLibrary": {
+      "warningThresholdBytes": 10000,
+      "hardLimitBytes": 12000,
+      "category": "library"
+    },
+    "ModuleRegistryLib": {
+      "warningThresholdBytes": 15000,
+      "hardLimitBytes": 18000,
+      "category": "library"
+    }
+  },
+  "optimizerProfile": {
+    "expectedRuns": 200,
+    "viaIR": true
+  },
+  "reportPath": "deployments/releases/deployment-size-report.json"
+}

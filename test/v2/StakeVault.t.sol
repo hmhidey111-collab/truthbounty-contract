@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
 import "../../contracts/v2/StakeVault.sol";
+import "../../contracts/v2/EmergencyControls.sol";
 import "../../contracts/v2/libraries/V2Errors.sol";
 import "../../contracts/v2/interfaces/IStakeCustody.sol";
 import "../../contracts/v2/interfaces/IV2Module.sol";
@@ -15,6 +16,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract StakeVaultTest is Test {
     StakeVault internal vault;
+    EmergencyControls internal emergency;
     MockModuleRegistry internal registry;
     MockERC20 internal token;
     MockERC20 internal tokenB;
@@ -33,12 +35,16 @@ contract StakeVaultTest is Test {
         registry = new MockModuleRegistry();
         token = new MockERC20("Stake", "STK");
         tokenB = new MockERC20("Alt", "ALT");
+        emergency = new EmergencyControls(admin, admin, admin);
         vault = new StakeVault(address(registry), address(token), admin);
+
+        // The vault is fail-closed: no mutation is reachable until the control plane is wired.
+        vault.setEmergencyControls(address(emergency));
 
         vault.setSupportedAsset(address(tokenB), true);
 
-        registry.registerModule(vault.MODULE_SETTLEMENT(), settlement);
-        registry.registerModule(vault.MODULE_SLASHING(), slashing);
+        registry.permitModule(vault.MODULE_SETTLEMENT(), settlement);
+        registry.permitModule(vault.MODULE_SLASHING(), slashing);
 
         token.mint(verifier, 1_000 ether);
         token.mint(verifier2, 1_000 ether);
@@ -65,7 +71,10 @@ contract StakeVaultTest is Test {
 
         assertEq(vault.staked(CLAIM_A, verifier), STAKE);
         assertEq(vault.totalStaked(CLAIM_A), STAKE);
-        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL), STAKE);
+        assertEq(
+            vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL),
+            STAKE
+        );
         assertEq(vault.claimableBalance(address(token), verifier), 0);
         assertEq(vault.totalCustody(address(token)), STAKE);
     }
@@ -130,7 +139,9 @@ contract StakeVaultTest is Test {
         );
 
         assertEq(vault.protocolAllocation(address(token)), STAKE / 4);
-        assertEq(vault.claimableBalance(address(token), verifier), STAKE / 2);
+        // Net effect: the allocated quarter left custody, the rest stays claimable
+        // (lock 50 then unlock 25 nets claimable = STAKE - STAKE/4).
+        assertEq(vault.claimableBalance(address(token), verifier), STAKE - STAKE / 4);
     }
 
     // -------------------------------------------------------------------------
@@ -225,6 +236,23 @@ contract StakeVaultTest is Test {
         assertEq(custody, obligations);
     }
 
+    function test_unexplainedBalanceDeltaReverts() public {
+        vm.prank(verifier);
+        token.transfer(address(vault), STAKE);
+
+        vm.prank(verifier);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                V2Errors.ConservationInvariantViolation.selector,
+                address(token),
+                0,
+                0,
+                STAKE
+            )
+        );
+        vault.depositStake(CLAIM_A, STAKE);
+    }
+
     function test_invariant_obligationsNeverExceedCustody() public {
         vm.prank(verifier);
         vault.depositStake(CLAIM_A, STAKE);
@@ -270,6 +298,46 @@ contract StakeVaultTest is Test {
         vault.depositStake(CLAIM_A, 0);
     }
 
+    function test_zeroStakeMutationsUseCanonicalZeroAmountError() public {
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, STAKE);
+
+        vm.prank(settlement);
+        vm.expectRevert(V2Errors.ZeroAmount.selector);
+        vault.releaseStake(CLAIM_A, verifier, 0);
+
+        vm.prank(slashing);
+        vm.expectRevert(V2Errors.ZeroAmount.selector);
+        vault.slashStake(CLAIM_A, verifier, 0, keccak256("zero-slash"));
+
+        vm.prank(settlement);
+        vm.expectRevert(V2Errors.ZeroAmount.selector);
+        vault.carryForwardAppeal(address(token), verifier, CLAIM_A, 0, 1, 0);
+
+        assertEq(vault.staked(CLAIM_A, verifier), STAKE, "failed zero mutations changed stake");
+        (uint256 custody, uint256 obligations) = vault.reconcile(address(token));
+        assertEq(custody, obligations, "zero mutations broke reconciliation");
+    }
+
+    function test_depositStake_enforcesMinimumBoundary() public {
+        uint256 minimum = vault.minStakeAmount();
+        uint256 custodyBefore = vault.totalCustody(address(token));
+
+        vm.prank(verifier);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.DustStake.selector, minimum - 1, minimum));
+        vault.depositStake(CLAIM_A, minimum - 1);
+        assertEq(vault.totalCustody(address(token)), custodyBefore, "rejected dust deposit changed custody");
+        assertEq(vault.staked(CLAIM_A, verifier), 0, "rejected dust deposit changed stake");
+
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, minimum);
+        assertEq(vault.staked(CLAIM_A, verifier), minimum);
+
+        vm.prank(verifier2);
+        vault.depositStake(CLAIM_B, minimum + 1);
+        assertEq(vault.staked(CLAIM_B, verifier2), minimum + 1);
+    }
+
     function test_unsupportedAssetReverts() public {
         MockERC20 unsupported = new MockERC20("X", "X");
         unsupported.mint(verifier, STAKE);
@@ -304,11 +372,25 @@ contract StakeVaultTest is Test {
         vm.prank(settlement);
         vault.unlock(address(malicious), address(attacker), CLAIM_A, 0, IV2Types.LockCategory.BOUNTY_ESCROW, STAKE);
 
+        // The malicious token fires its callback mid-transfer to reenter `withdraw`.
+        // The reentrancy guard plus the emptied claimable balance must swallow the
+        // inner attempt, so the outer withdrawal settles exactly once.
+        vm.expectEmit(false, false, false, true, address(malicious));
+        emit MaliciousERC20.AttackAttempted(address(attacker), STAKE);
         vm.prank(address(attacker));
-        vm.expectRevert();
         attacker.withdraw(STAKE);
 
-        assertEq(malicious.balanceOf(address(vault)), STAKE);
+        assertEq(malicious.balanceOf(address(attacker)), STAKE);
+        assertEq(malicious.balanceOf(address(vault)), 0);
+        assertEq(vault.claimableBalance(address(malicious), address(attacker)), 0);
+        assertEq(vault.totalCustody(address(malicious)), 0);
+
+        // Nothing left to drain: a replayed withdrawal (as the reentrancy attempted) reverts.
+        vm.prank(address(attacker));
+        vm.expectRevert(
+            abi.encodeWithSelector(V2Errors.InsufficientClaimable.selector, address(attacker), STAKE, 0)
+        );
+        attacker.withdraw(STAKE);
     }
 
     // -------------------------------------------------------------------------
@@ -343,15 +425,23 @@ contract StakeVaultTest is Test {
         vm.prank(verifier);
         vault.depositStake(CLAIM_A, STAKE);
 
-        // Fund protocol allocation for reward.
+        // Fund protocol allocation for the reward without touching the principal lock:
+        // deposit extra custody, lock it as a challenge bond, then move it to allocation.
         vm.prank(verifier);
         vault.deposit(address(token), STAKE);
+
+        vm.prank(settlement);
+        vault.lock(address(token), verifier, CLAIM_A, 1, IV2Types.LockCategory.CHALLENGE_BOND, STAKE);
+
         vm.prank(slashing);
-        vault.slashStake(CLAIM_A, verifier, STAKE, keccak256("reward-fund"));
+        vault.allocateLocked(
+            address(token), verifier, CLAIM_A, 1, IV2Types.LockCategory.CHALLENGE_BOND, STAKE, keccak256("reward-fund")
+        );
 
         vm.prank(settlement);
         vault.settleConclusive(address(token), verifier, CLAIM_A, 0, STAKE, STAKE / 2);
 
+        // Principal returned to claimable plus reward credited from protocol allocation.
         assertEq(vault.claimableBalance(address(token), verifier), STAKE + STAKE / 2);
         assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL), 0);
         assertEq(uint256(vault.settlementOutcome(CLAIM_A, 0)), uint256(IV2Types.SettlementOutcome.CONCLUDED));
@@ -388,6 +478,42 @@ contract StakeVaultTest is Test {
         vm.prank(settlement);
         vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
         vault.settleConclusive(address(token), verifier, CLAIM_A, 0, STAKE, 0);
+    }
+
+    function test_allAlternateEntryPointsRevertAfterSettlement() public {
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, STAKE);
+
+        vm.prank(settlement);
+        vault.settleConclusive(address(token), verifier, CLAIM_A, 0, STAKE, 0);
+
+        uint256 verifierBalanceBefore = token.balanceOf(verifier);
+        vm.prank(verifier);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.depositStake(CLAIM_A, STAKE);
+        assertEq(token.balanceOf(verifier), verifierBalanceBefore);
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.unlock(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL, STAKE);
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.releaseStake(CLAIM_A, verifier, STAKE);
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.slashStake(CLAIM_A, verifier, STAKE, keccak256("replay"));
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.lock(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.BOUNTY_ESCROW, 1);
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.SettlementAlreadyFinalized.selector, CLAIM_A, 0));
+        vault.allocateLocked(
+            address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL, 1, keccak256("replay")
+        );
     }
 
     function test_settleConclusive_overAllocationReverts() public {
@@ -489,8 +615,33 @@ contract StakeVaultTest is Test {
         vault.depositStake(CLAIM_A, STAKE);
 
         vm.prank(settlement);
-        vm.expectRevert(abi.encodeWithSelector(V2Errors.InvalidArgument.selector, "same round"));
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.InvalidRoundTransfer.selector, uint256(0), uint256(0)));
         vault.carryForwardAppeal(address(token), verifier, CLAIM_A, 0, 0, STAKE);
+    }
+
+    function test_carryForwardAppeal_priorRoundRevertsWithoutMovingLock() public {
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, STAKE);
+
+        vm.prank(settlement);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.InvalidArgument.selector, "destination round must be later"));
+        vault.carryForwardAppeal(address(token), verifier, CLAIM_A, 1, 0, STAKE);
+
+        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL), STAKE);
+        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 1, IV2Types.LockCategory.VERIFIER_PRINCIPAL), 0);
+        assertEq(vault.totalCustody(address(token)), STAKE);
+    }
+
+    function test_carryForwardAppeal_canMoveToLaterRound() public {
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, STAKE);
+
+        vm.prank(settlement);
+        vault.carryForwardAppeal(address(token), verifier, CLAIM_A, 0, 2, STAKE);
+
+        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL), 0);
+        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 2, IV2Types.LockCategory.VERIFIER_PRINCIPAL), STAKE);
+        assertEq(vault.totalCustody(address(token)), STAKE);
     }
 
     function test_rolloverRound_movesLockToNextRound() public {
@@ -533,6 +684,30 @@ contract StakeVaultTest is Test {
         vm.prank(verifier);
         vm.expectRevert(abi.encodeWithSelector(V2Errors.UnauthorizedModule.selector, verifier));
         vault.finalUnlock(address(token), verifier, CLAIM_A, 0, STAKE);
+    }
+
+    function test_timestampJumpCannotBypassSettlementAuthorizationOrCustody() public {
+        uint256 verifierBalanceBefore = token.balanceOf(verifier);
+        vm.prank(verifier);
+        vault.depositStake(CLAIM_A, STAKE);
+
+        vm.warp(block.timestamp + 30 days);
+        vm.expectRevert(abi.encodeWithSelector(V2Errors.UnauthorizedModule.selector, verifier));
+        vm.prank(verifier);
+        vault.finalUnlock(address(token), verifier, CLAIM_A, 0, STAKE);
+
+        assertEq(vault.lockedPrincipal(address(token), verifier, CLAIM_A, 0, IV2Types.LockCategory.VERIFIER_PRINCIPAL), STAKE);
+        assertEq(vault.totalCustody(address(token)), STAKE);
+        assertEq(token.balanceOf(address(vault)), STAKE);
+
+        vm.prank(settlement);
+        vault.finalUnlock(address(token), verifier, CLAIM_A, 0, STAKE);
+        vm.prank(verifier);
+        vault.withdraw(address(token), STAKE);
+
+        assertEq(token.balanceOf(verifier), verifierBalanceBefore);
+        assertEq(token.balanceOf(address(vault)), 0);
+        assertEq(vault.totalCustody(address(token)), 0);
     }
 
     function test_finalUnlock_duplicateReverts() public {

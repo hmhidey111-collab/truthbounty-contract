@@ -1,0 +1,547 @@
+{
+  "schemaVersion": 1,
+  "kind": "truthbounty.release-reproducibility",
+  "protocol": "TruthBounty",
+  "protocolVersion": "2.0.0",
+  "issue": "PREWAVE-SC-058",
+  "description": "Approved release manifest for source, bytecode, metadata, SBOM, and provenance attestation reproducibility. Regenerate only via `node scripts/check-release-reproducibility.mjs --write-manifest` after maintainer review; any hand edit invalidates manifestDigest and fails verification. contracts/v2/SignatureNonces.sol is abstract (no bytecode by design) and is pinned under sources only; its code is covered transitively through inheriting modules' bytecode.",
+  "upgrade": {
+    "reinitializerVersions": [
+      {
+        "version": 1,
+        "name": "initializer",
+        "description": "Initial deployment initialization for all canonical V2 modules.",
+        "prerequisites": [],
+        "atomic": true,
+        "resumable": false,
+        "rollback": "redeploy"
+      },
+      {
+        "version": 2,
+        "name": "post-wave-9-migration",
+        "description": "Post-Wave-9 migration reinitializer for ordered state migration across canonical V2 modules.",
+        "prerequisites": [
+          "version:1"
+        ],
+        "atomic": true,
+        "resumable": true,
+        "rollback": "pause-and-recover"
+      }
+    ],
+    "migrationSteps": [
+      {
+        "step": 1,
+        "id": "verify-preconditions",
+        "description": "Machine-verify all preconditions before any state mutation.",
+        "prerequisites": [
+          "version:1"
+        ],
+        "atomic": true,
+        "resumable": false,
+        "rollback": "no-op"
+      },
+      {
+        "step": 2,
+        "id": "migrate-module-registry",
+        "description": "Migrate ModuleRegistry state to the post-Wave-9 layout.",
+        "prerequisites": [
+          "step:1"
+        ],
+        "atomic": true,
+        "resumable": true,
+        "rollback": "pause-and-recover"
+      },
+      {
+        "step": 3,
+        "id": "migrate-emergency-controls",
+        "description": "Migrate EmergencyControls state to operation-scoped emergency controls.",
+        "prerequisites": [
+          "step:2"
+        ],
+        "atomic": true,
+        "resumable": true,
+        "rollback": "pause-and-recover"
+      },
+      {
+        "step": 4,
+        "id": "migrate-consumer-guarantees",
+        "description": "Migrate ConsumerGuaranteesAnchor state to the pinned consumer interface.",
+        "prerequisites": [
+          "step:3"
+        ],
+        "atomic": true,
+        "resumable": true,
+        "rollback": "pause-and-recover"
+      },
+      {
+        "step": 5,
+        "id": "finalize-migration",
+        "description": "Finalize migration and record completed versions in the manifest.",
+        "prerequisites": [
+          "step:4"
+        ],
+        "atomic": true,
+        "resumable": false,
+        "rollback": "pause-and-recover"
+      }
+    ],
+    "preconditions": [
+      {
+        "id": "timelock-authority",
+        "description": "Timelock must hold the required role authority for migration execution.",
+        "machineVerifiable": true
+      },
+      {
+        "id": "implementation-match",
+        "description": "Target implementation must match the pinned canonical V2 artifact bytecode.",
+        "machineVerifiable": true
+      },
+      {
+        "id": "no-emergency-stop",
+        "description": "No operation-scoped emergency stop may be active for the migration scope.",
+        "machineVerifiable": true
+      },
+      {
+        "id": "ordered-execution",
+        "description": "Each migration step must execute exactly once and in declared order.",
+        "machineVerifiable": true
+      }
+    ],
+    "atomicity": {
+      "mode": "all-or-nothing-per-step",
+      "partialFailure": "revert-step-and-preserve-prior-state",
+      "unsafeStateExposure": "prevented-by-precondition-gates"
+    },
+    "resume": {
+      "supported": true,
+      "strategy": "resume-from-last-completed-step",
+      "repeatedStep": "rejected",
+      "outOfOrderStep": "rejected",
+      "skippedStep": "rejected"
+    },
+    "rollback": {
+      "supported": true,
+      "strategy": "pause-and-recover",
+      "recovery": "timelock-authorized-recovery"
+    },
+    "events": [
+      {
+        "name": "MigrationStepExecuted",
+        "description": "Emitted when a migration step completes successfully.",
+        "evidence": true
+      },
+      {
+        "name": "MigrationCompleted",
+        "description": "Emitted when all migration steps complete and versions are recorded.",
+        "evidence": true
+      },
+      {
+        "name": "MigrationRolledBack",
+        "description": "Emitted when a migration step is rolled back or recovery is initiated.",
+        "evidence": true
+      }
+    ],
+    "manifest": {
+      "recordsCompletedVersions": true,
+      "completedVersions": []
+    }
+  },
+  "toolchain": {
+    "solc": "0.8.28",
+    "evmVersion": "cancun",
+    "viaIR": true,
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "hardhatConfig": "hardhat.config.ts",
+    "foundryConfig": "foundry.toml",
+    "bytecodeHash": "ipfs"
+  },
+  "libraries": {},
+  "sbom": {
+    "format": "CycloneDX",
+    "specVersion": "1.5",
+    "components": [
+      {
+        "type": "application",
+        "name": "TruthBounty",
+        "version": "2.0.0",
+        "licenses": [
+          "MIT"
+        ]
+      },
+      {
+        "type": "library",
+        "name": "solc",
+        "version": "0.8.28",
+        "licenses": [
+          "GPL-3.0"
+        ]
+      },
+      {
+        "type": "library",
+        "name": "hardhat",
+        "version": "pinned in package-lock.json",
+        "licenses": [
+          "MIT"
+        ]
+      },
+      {
+        "type": "library",
+        "name": "foundry",
+        "version": "pinned in foundry.toml",
+        "licenses": [
+          "MIT"
+        ]
+      }
+    ]
+  },
+  "provenance": {
+    "attestationType": "https://in-toto.io/Statement/v1",
+    "predicateType": "https://slsa.dev/provenance/v1",
+    "builder": "TruthBounty release reproducibility script",
+    "buildType": "https://truthbounty.io/buildtypes/release-reproducibility/v1",
+    "materials": [
+      "package-lock.json",
+      "foundry.toml",
+      "hardhat.config.ts",
+      "contracts/v2/**/*.sol"
+    ],
+    "invocation": {
+      "configSource": "deployments/releases/v2-sc-129-release-manifest.json",
+      "parameters": {
+        "solc": "0.8.28",
+        "evmVersion": "cancun",
+        "viaIR": true,
+        "optimizer": {
+          "enabled": true,
+          "runs": 200
+        },
+        "bytecodeHash": "ipfs"
+      }
+    },
+    "metadata": {
+      "reproducible": true,
+      "cleanCheckoutRequired": true,
+      "secretScan": "no secrets in artifacts"
+    }
+  },
+  "sources": [
+    {
+      "path": "contracts/v2/EvidenceRegistry.sol",
+      "sha256": "259d95de1e084063c5ea9e4d6d421130ae489b52c61c73f628c03a994f6b9148"
+    },
+    {
+      "path": "contracts/v2/StakeVault.sol",
+      "sha256": "14822ebf0ec065389a45ab23e73559edd14efac648fa7cdcb17a9170cd14ef68"
+    },
+    {
+      "path": "contracts/v2/EventCompletenessAnchor.sol",
+      "sha256": "65f25cf5cc49fe85d9fca92c6ca33098de07b49c0784890d51dc6ddfb11dcb0e"
+    },
+    {
+      "path": "contracts/v2/Aggregation.sol",
+      "sha256": "1ae9cec0711ca457d13492de49ce7e4461718f2ca8f067920a94bb3dd37995be"
+    },
+    {
+      "path": "contracts/v2/Claims.sol",
+      "sha256": "2c836ba04283c4b36bd263eda5297ea6ff35dce3dee29019be03c8da1da109d1"
+    },
+    {
+      "path": "contracts/v2/FinalRewardAllocator.sol",
+      "sha256": "9b8ce9b009dfa58cee418e325af9d6b802ff491141a7424d2ddd9de10dd460ed"
+    },
+    {
+      "path": "contracts/v2/ModuleRegistry.sol",
+      "sha256": "50f972f970faa309835d1f9a1f854dd26258baa92f859d1ea92027f48b4cd8e7"
+    },
+    {
+      "path": "contracts/v2/EmergencyControls.sol",
+      "sha256": "9050725cf8f056df31d7a4668a3cd06f6eb47eb9b6bd960825f064f41fef462d"
+    },
+    {
+      "path": "contracts/v2/EmergencyGatekeeper.sol",
+      "sha256": "d974f9e6083eda46aad4f090d86e1d045a754daa1e2c0b1509ac48de4f8a9637"
+    },
+    {
+      "path": "contracts/v2/SignatureNonces.sol",
+      "sha256": "a694f8d7043aeb18c7dc09d951c19b26ab6ca6e908097694e402d962d14d5a90"
+    },
+    {
+      "path": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+      "sha256": "1105d541d5f5989fd134f30b30fdd8481378b23460eacb85090fdb2229c67487"
+    },
+    {
+      "path": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "sha256": "1e7d898020cf629085618f8f221e4dda812617e0c06436c4f96a49a224798dfd"
+    },
+    {
+      "path": "contracts/v2/libraries/ReleaseReproducibility.sol",
+      "sha256": "7d29ff3ecbf7f8bc77c2022c0f44afbcfec8e307deb9481b12514c18d9f1b5d2"
+    },
+    {
+      "path": "contracts/v2/libraries/V2Errors.sol",
+      "sha256": "0f8ec2dfd10dbd83418772909c57bd2673980ac6718f55571cbded0e3be22dff"
+    },
+    {
+      "path": "contracts/v2/interfaces/IStakeCustody.sol",
+      "sha256": "4f4917e6ee4819d16fb6e919703315618544ca3e3464707fc5cd802f7fe25875"
+    },
+    {
+      "path": "contracts/v2/interfaces/IEvidence.sol",
+      "sha256": "9803984985c9fa0da0c1ab8420a99a2f923c41377e9efb316fb790126e96c663"
+    },
+    {
+      "path": "contracts/v2/interfaces/IEventCompleteness.sol",
+      "sha256": "180e0736eec751eedb580d039c82d6465f12b0ad548ee6c7aa228efdbffc3655"
+    },
+    {
+      "path": "contracts/v2/interfaces/IV2Module.sol",
+      "sha256": "ce8c861b94b308dffbdeccdfffb6a863953503a1c2caa4a78ae66002caf89f20"
+    },
+    {
+      "path": "contracts/v2/interfaces/IV2Types.sol",
+      "sha256": "d9a5a818dadd179c512cdba2b5ec57bcbf37fc358f2c46178e0b24e67314041"
+    },
+    {
+      "path": "hardhat.config.ts",
+      "sha256": "23092fc2ea0e0ac40001b9b6204d63e80f87c499389a79b334f85e0d003d5056"
+    },
+    {
+      "path": "foundry.toml",
+      "sha256": "b5e0281605e7d62455a9f4e5e4bc26d9680efadb52b3aa757c64715832f76ca9"
+    }
+  ],
+  "artifacts": [
+    {
+      "contract": "EvidenceRegistry",
+      "source": "contracts/v2/EvidenceRegistry.sol",
+      "bytecodeKeccak": "0xccddce7c76a7416d80b9232064e241b891a3411bc356cd6e2cbe3cae029209f3",
+      "deployedBytecodeKeccak": "0x92a2cf9c205382bab3107e5301dd534c06ef484cd1e8f76c439703d8a2b18235",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "StakeVault",
+      "source": "contracts/v2/StakeVault.sol",
+      "bytecodeKeccak": "0xbbe90d2a023f75a1c7dc71f78a2ace339d8e739dd6ec4a26dad517eeb139a589",
+      "deployedBytecodeKeccak": "0x401bf336fd71910172511642eca57ae5d1f3add540e13ee37ad499a388af9d7d",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "EventCompletenessAnchor",
+      "source": "contracts/v2/EventCompletenessAnchor.sol",
+      "bytecodeKeccak": "0x5b0e721a0df9d411fcdef974315049de296c6b41144ee347a1c9bce0eeffaeea",
+      "deployedBytecodeKeccak": "0x744a0ed5385752682f342a23c7e9528dee44915381d8d8d086f2a8f3c076cca0",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "Aggregation",
+      "source": "contracts/v2/Aggregation.sol",
+      "bytecodeKeccak": "0x320868f39ec32b5afee7352b12dad7f46cc2826f94130751e9f976248035ac4f",
+      "deployedBytecodeKeccak": "0x07b8f7b39d4c1af6e607782a6f92337977cdf34de7d06b38a5f65013fec9a465",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "Claims",
+      "source": "contracts/v2/Claims.sol",
+      "bytecodeKeccak": "0x1d5ae01502a2cd02d996818c24afe4b6c3bba2286bb63e390f5989d11561051f",
+      "deployedBytecodeKeccak": "0xfd31c0fc7aea56e3fe4709ce2ec826b6ebb912f2fb28cd923c8a7cbe3451d773",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "FinalRewardAllocator",
+      "source": "contracts/v2/FinalRewardAllocator.sol",
+      "bytecodeKeccak": "0xbfb6e7a0e81e740c59ac1af4b9c041a6733557ab1d0e1b78649bdbe2ad17fc50",
+      "deployedBytecodeKeccak": "0xd0bfa281016abbddd546ad0b13a56a412e512d90c6ba87dae525e3403be4cd55",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "ModuleRegistry",
+      "source": "contracts/v2/ModuleRegistry.sol",
+      "bytecodeKeccak": "0xed7ef482da76c942008a5acc472d4a4075a7a817dfd0a8ee308e0cda3a1aa736",
+      "deployedBytecodeKeccak": "0xccead081c2e6bb0666810124fb70b188e017c23f2cec4dcb693acd32eea3ba60",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "EmergencyControls",
+      "source": "contracts/v2/EmergencyControls.sol",
+      "bytecodeKeccak": "0xcdb78c337d9d449fb9ebb380461e34bef8a575258f82d657fe492ff1266f4667",
+      "deployedBytecodeKeccak": "0xcdf35369f9afec11f43b08ffdf714f4ed63f761fd661463929c7848de5df0c55",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "EmergencyGatekeeper",
+      "source": "contracts/v2/EmergencyGatekeeper.sol",
+      "bytecodeKeccak": "0xa5312caec0e69cb3f7fddbb558284ce69e77dd2c6c79243317d88cf5280d3ad7e",
+      "deployedBytecodeKeccak": "0x98fc16df7fdc9b9de1c8b29325d8d95a5c88269e7517dcfba5903fd6187e71e2",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "ConsumerGuaranteesAnchor",
+      "source": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+      "bytecodeKeccak": "0x5d11510972346660e7337b897ef510df6d81d12312c1b5001c7262b195bf3026",
+      "deployedBytecodeKeccak": "0xbe2127e427b360b11f2352a7acf5233cd636db76d8125842371fe3e0ffc4d38d",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "SupplyChainAttestationAnchor",
+      "source": "contracts/v2/SupplyChainAttestationAnchor.sol",
+      "bytecodeKeccak": "0x86ba73a615bca35d2f72bcb8af3545898fdfa26ff2c213fc0aba723fe6eab315",
+      "deployedBytecodeKeccak": "0xa3bc6a817a3f58fe351716f58b0b2c030ede25d69e69090521bf0a298a622d58",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    },
+    {
+      "contract": "ReleaseReproducibility",
+      "source": "contracts/v2/libraries/ReleaseReproducibility.sol",
+      "bytecodeKeccak": "0xe80fd83850c324dd8f31f4da28076085dee19bf47f1eb14b4f542aa3a86d169a",
+      "deployedBytecodeKeccak": "0x87b2f0b60eda81d738f73562052a95476aa1ac0a87deeb168c1f679c25ed815c",
+      "metadataSolc": "0.8.28",
+      "libraries": {}
+    }
+  ],
+  "namespaceInventory": {
+    "description": "ERC-7201/custom storage namespace inventory for upgrade collision detection. Each entry pins the owning implementation/library, the namespace identifier, the resolved slot, and the ownership boundary. Upgrades MUST not repurpose an existing namespace or resolved slot; duplicate or colliding entries fail CI.",
+    "erc7201": true,
+    "entries": [
+      {
+        "namespace": "truthbounty.v2.evidenceRegistry",
+        "owner": "contracts/v2/EvidenceRegistry.sol",
+        "ownerContract": "EvidenceRegistry",
+        "resolvedSlot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.stakeVault",
+        "owner": "contracts/v2/StakeVault.sol",
+        "ownerContract": "StakeVault",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.eventCompletenessAnchor",
+        "owner": "contracts/v2/EventCompletenessAnchor.sol",
+        "ownerContract": "EventCompletenessAnchor",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.aggregation",
+        "owner": "contracts/v2/Aggregation.sol",
+        "ownerContract": "Aggregation",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.claims",
+        "owner": "contracts/v2/Claims.sol",
+        "ownerContract": "Claims",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.finalRewardAllocator",
+        "owner": "contracts/v2/FinalRewardAllocator.sol",
+        "ownerContract": "FinalRewardAllocator",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.moduleRegistry",
+        "owner": "contracts/v2/ModuleRegistry.sol",
+        "ownerContract": "ModuleRegistry",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.emergencyControls",
+        "owner": "contracts/v2/EmergencyControls.sol",
+        "ownerContract": "EmergencyControls",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.emergencyGatekeeper",
+        "owner": "contracts/v2/EmergencyGatekeeper.sol",
+        "ownerContract": "EmergencyGatekeeper",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.signatureNonces",
+        "owner": "contracts/v2/SignatureNonces.sol",
+        "ownerContract": "SignatureNonces",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.consumerGuaranteesAnchor",
+        "owner": "contracts/v2/ConsumerGuaranteesAnchor.sol",
+        "ownerContract": "ConsumerGuaranteesAnchor",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.supplyChainAttestationAnchor",
+        "owner": "contracts/v2/SupplyChainAttestationAnchor.sol",
+        "ownerContract": "SupplyChainAttestationAnchor",
+        "resolvedSlot": "0x00000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.libraries.releaseReproducibility",
+        "owner": "contracts/v2/libraries/ReleaseReproducibility.sol",
+        "ownerContract": "ReleaseReproducibility",
+        "resolvedSlot": "0x000000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      },
+      {
+        "namespace": "truthbounty.v2.libraries.v2Errors",
+        "owner": "contracts/v2/libraries/V2Errors.sol",
+        "ownerContract": "V2Errors",
+        "resolvedSlot": "0x000000000000000000000000000000000000000000000000000000000000000000",
+        "ownership": "exclusive"
+      }
+    ],
+    "collisionDetection": {
+      "duplicateNamespace": "fail",
+      "duplicateResolvedSlot": "fail",
+      "hashCollision": "fail",
+      "inheritedDuplicate": "fail",
+      "renamedNamespace": "fail",
+      "safeNewNamespace": "pass",
+      "repurposeExistingNamespace": "fail"
+    },
+    "ownershipDocumentation": "deployments/releases/namespace-ownership.md"
+  },
+  "explorer": {
+    "contract": "all canonical V2 modules in artifacts",
+    "source": "pinned sources with sha256 above",
+    "compilerVersion": "0.8.28",
+    "evmVersion": "cancun",
+    "optimizerEnabled": true,
+    "optimizerRuns": 200,
+    "viaIR": true,
+    "bytecodeKeccak": "per-artifact bytecodeKeccak above",
+    "deployedBytecodeKeccak": "per-artifact deployedBytecodeKeccak above",
+    "metadataSolc": "0.8.28",
+    "libraries": "none linked; any non-empty link reference set fails verification",
+    "standardJsonNote": "verify with exactly these settings; constructor arguments are empty for anchors and per-deployment-manifest for stateful modules (see scripts/canonicalV2Manifest.ts)",
+    "networks": [
+      "optimism mainnet (chain id 10)",
+      "optimism sepolia (chain id 11155420)"
+    ]
+  },
+  "manifestDigest": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}

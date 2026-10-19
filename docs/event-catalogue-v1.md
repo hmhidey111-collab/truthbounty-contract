@@ -169,6 +169,18 @@ Reconstructs module registrations, upgrade proposals, approvals, executions, and
 | `UpgradeExecutedV1` | `uint256 proposalId`, `bytes32 moduleId` | `address oldImplementation`, `address newImplementation`, `address executor`, `uint64 timestamp`, `uint16 version` | Emitted when upgrade is executed. |
 | `UpgradeRolledBackV1` | `bytes32 moduleId`, `bytes32 reasonHash`, `address guardian` | `address oldImplementation`, `address restoredImplementation`, `uint64 timestamp`, `uint16 version` | Emitted on emergency rollback. |
 
+### 17. Appeal Domain (SC-017) Events
+Emitted by `AppealVerificationRound` (a V2 module emitting its own non-`V1`-canonical events). These are the **modular** appeal events — the `V1` canonical families above (`ITruthBountyEvents`) are unaffected by their evolution.
+
+| Event | Indexed Fields | Unindexed Fields | Description |
+|---|---|---|---|
+| `AppealRoundOpened` | `uint256 claimId`, `address openedBy` | `uint256 deadline`, `uint256 minStake`, `uint256 multiplierBps`, `uint256 roundIndex`, `uint256 maxRounds`, `uint256 requiredBond`, `uint256 bondLockId` | Emitted when a bond-gated appeal round opens. `requiredBond`/`bondLockId` and the ladder bounds (`roundIndex`, `maxRounds`) were added by V2-SC-059. |
+| `AppealVoteSubmitted` | `uint256 claimId`, `address verifier` | `bool support`, `uint256 stakeAmount`, `uint256 effectiveWeight` | Emitted on appeal vote submission. |
+| `AppealRoundClosed` | `uint256 claimId`, `address closedBy` | `uint256 totalTrueWeight`, `uint256 totalFalseWeight`, `uint256 verifierCount`, `uint256 roundIndex` | Emitted when an appeal round closes (`roundIndex` added by V2-SC-059). |
+| `AppealPathFinalized` | `uint256 claimId` | `uint256 roundIndex`, `uint256 totalTrueWeight`, `uint256 totalFalseWeight`, `uint256 verifierCount` | Emitted (new in V2-SC-059) when a claim's appeal path becomes irreversibly terminal. |
+| `DefaultAppealConfigUpdated` | — | `uint256 duration`, `uint256 minStake`, `uint256 multiplierBps`, `uint256 maxWeightCap`, `uint256 maxAppealRounds`, `uint256 appealBond`, `uint256 appealBondEscalationBps`, `uint256 maxAppealBond`, `uint256 maxVotersPerRound` | Emitted on governance config update (ladder/bond/voter fields added by V2-SC-059). |
+| `VaultUpdated` | `address oldVault`, `address newVault` | — | Emitted when the bond-custody vault is re-pointed. |
+
 ---
 
 ## Versioning & Breaking-Change Policy

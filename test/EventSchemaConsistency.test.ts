@@ -1,8 +1,12 @@
 import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 import { ethers } from "ethers";
 import { generateEventSchema } from "../scripts/generate-event-schema";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("Event Schema-to-ABI Consistency", function () {
   let schema: any;

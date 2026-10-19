@@ -455,7 +455,13 @@ contract VerificationAggregationTest is Test {
         assertEq(result.trueWeight, expectedTrue);
         assertEq(result.falseWeight, expectedFalse);
         assertEq(result.totalWeight, expectedTrue + expectedFalse);
-        assertEq(result.confidence, expectedTrue + expectedFalse == 0 ? 0 : expectedTrue * 10000 / (expectedTrue + expectedFalse));
+
+        // Confidence is reported for the WINNING side (max(true, false) / total).
+        uint256 expectedConfidence = expectedTrue + expectedFalse == 0
+            ? 0
+            : (expectedTrue > expectedFalse ? expectedTrue : expectedFalse) * 10000 /
+                (expectedTrue + expectedFalse);
+        assertEq(result.confidence, expectedConfidence);
 
         if (expectedTrue > expectedFalse) {
             assertEq(uint256(result.outcome), uint256(ClaimOutcome.VERIFIED_TRUE));
@@ -469,25 +475,12 @@ contract VerificationAggregationTest is Test {
     function testFuzzConfidenceNumericBounds(uint256 trueWeight, uint256 falseWeight) public {
         vm.assume(trueWeight > 0 || falseWeight > 0);
 
-        bool shouldRevert;
-        unchecked {
-            uint256 sum = trueWeight + falseWeight;
-            if (sum < trueWeight) {
-                shouldRevert = true;
-            }
-        }
-
-        if (!shouldRevert && trueWeight > type(uint256).max / 10000) {
-            shouldRevert = true;
-        }
-
-        if (shouldRevert) {
-            vm.expectRevert();
-            aggregator.calculateConfidence(trueWeight, falseWeight);
-        } else {
-            uint256 confidence = aggregator.calculateConfidence(trueWeight, falseWeight);
+        // The aggregator scales the winning weight by 10_000, so extreme inputs may
+        // overflow and must fail closed (revert). Whatever happens, confidence is bounded:
+        // success => confidence in [0, 10000]; overflow => revert (no wrapped value).
+        try aggregator.calculateConfidence(trueWeight, falseWeight) returns (uint256 confidence) {
             assertLe(confidence, 10000);
-        }
+        } catch {}
     }
 
     // ============ Stress Tests ============

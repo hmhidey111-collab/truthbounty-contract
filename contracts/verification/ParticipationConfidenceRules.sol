@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ParticipationThresholdTypes} from "./ParticipationThresholdTypes.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title ParticipationConfidenceRules
@@ -15,6 +16,7 @@ library ParticipationConfidenceRules {
 
     error InvalidConfidenceBps(uint256 value);
     error InvalidAppealMultiplierBps(uint256 value);
+    error WinningWeightExceedsTotal(uint256 winningWeight, uint256 totalWeight);
 
     /**
      * @dev Validate basis-point bounds before a round config is frozen.
@@ -87,8 +89,9 @@ library ParticipationConfidenceRules {
     }
 
     function _confidenceBps(uint256 winningWeight, uint256 totalWeight) private pure returns (uint256) {
+        if (winningWeight > totalWeight) revert WinningWeightExceedsTotal(winningWeight, totalWeight);
         if (totalWeight == 0) return 0;
-        return (winningWeight * ParticipationThresholdTypes.BPS_DENOMINATOR) / totalWeight;
+        return Math.mulDiv(winningWeight, ParticipationThresholdTypes.BPS_DENOMINATOR, totalWeight);
     }
 
     function _effectiveThresholds(
@@ -111,11 +114,12 @@ library ParticipationConfidenceRules {
 
     /// @dev Ceiling multiply keeps appeal thresholds strictly >= scaled base minimums.
     function _scaleMinimum(uint256 baseMinimum, uint256 multiplierBps) private pure returns (uint256) {
-        if (baseMinimum == 0 || multiplierBps <= ParticipationThresholdTypes.BPS_DENOMINATOR) {
-            return (baseMinimum * multiplierBps) / ParticipationThresholdTypes.BPS_DENOMINATOR;
-        }
-        return (baseMinimum * multiplierBps + ParticipationThresholdTypes.BPS_DENOMINATOR - 1)
-            / ParticipationThresholdTypes.BPS_DENOMINATOR;
+        return Math.mulDiv(
+            baseMinimum,
+            multiplierBps,
+            ParticipationThresholdTypes.BPS_DENOMINATOR,
+            Math.Rounding.Ceil
+        );
     }
 
     function _inconclusive(

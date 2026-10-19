@@ -38,11 +38,19 @@ interface ICrossChainEndpoint {
         bytes32 reason
     );
 
+    /// @notice The endpoint does not accept an empty payload.
+    error EmptyPayload();
+
+    /// @notice The payload exceeds the endpoint's documented 4 KiB limit.
+    /// @param actual Payload length in bytes.
+    /// @param maximum Maximum accepted payload length in bytes.
+    error MessagePayloadTooLarge(uint256 actual, uint256 maximum);
+
     /**
      * @dev Sends a cross-chain message to a target on a destination chain.
      * @param destinationChainId The ID of the target chain.
      * @param target The address of the target contract.
-     * @param payload The message payload.
+    * @param payload The non-empty message payload, at most 4,096 bytes.
      * @return messageId The unique identifier of the created message.
      */
     function sendMessage(

@@ -169,8 +169,8 @@ describe("StakeVault V2 custody", function () {
 
         const MODULE_SETTLEMENT = await vault.MODULE_SETTLEMENT();
         const MODULE_SLASHING = await vault.MODULE_SLASHING();
-        await registry.registerModule(MODULE_SETTLEMENT, settlement.address);
-        await registry.registerModule(MODULE_SLASHING, slashing.address);
+        await registry.permitModule(MODULE_SETTLEMENT, settlement.address);
+        await registry.permitModule(MODULE_SLASHING, slashing.address);
 
         const amount = ethers.parseEther("100");
         await token.mint(verifier.address, ethers.parseEther("1000"));

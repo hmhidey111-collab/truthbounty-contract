@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "kind": "invariant",
+  "test": "ExampleInvariant:invariant_balanceNonNegative",
+  "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "toolchain": {
+    "forge": "1.0.0-known",
+    "solc": "0.8.28",
+    "runnerOs": "linux"
+  },
+  "seed": "119",
+  "minimized": true,
+  "counterexample": {
+    "calls": 1,
+    "note": "fixture only — no secrets"
+  },
+  "createdAt": "2026-10-16T00:00:00.000Z",
+  "notes": "PREWAVE-SC-065 fixed regression fixture"
+}

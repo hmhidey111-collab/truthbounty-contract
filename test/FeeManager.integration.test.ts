@@ -217,9 +217,12 @@ describe("FeeManager Integration — Treasury", function () {
         );
 
         // Step 2: treasury (admin) settles the claim reward via TruthBountyClaims
+        // V2-SC-062: unique settlementId required
+        const sid1 = ethers.keccak256(ethers.toUtf8Bytes("fee-integration-treasury-1"));
         await claimsContract.connect(admin).settleClaim(
             await beneficiary.getAddress(),
-            ethers.parseEther("5")
+            ethers.parseEther("5"),
+            sid1
         );
 
         // Both systems operational; beneficiary received reward
@@ -393,9 +396,12 @@ describe("FeeManager Integration — Claims", function () {
         );
 
         // 2. Claim is settled; beneficiary receives reward
+        // V2-SC-062: unique settlementId required
+        const claimSid = ethers.keccak256(ethers.toUtf8Bytes("claims-integration-1"));
         await claimsContract.connect(admin).settleClaim(
             await beneficiary.getAddress(),
-            ethers.parseEther("10")
+            ethers.parseEther("10"),
+            claimSid
         );
 
         // FeeManager registered the fee
@@ -425,7 +431,9 @@ describe("FeeManager Integration — Claims", function () {
         }
 
         // Batch settle rewards
-        await claimsContract.connect(admin).settleClaimsBatch(recipients, amounts);
+        // V2-SC-062: unique settlementId required
+        const batchSid = ethers.keccak256(ethers.toUtf8Bytes("fee-integration-batch-1"));
+        await claimsContract.connect(admin).settleClaimsBatch(recipients, amounts, batchSid);
 
         // Three fee records created
         expect(await feeManager.getFeeRecordCount()).to.equal(3);
